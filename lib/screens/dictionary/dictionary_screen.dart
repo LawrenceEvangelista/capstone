@@ -78,6 +78,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     }
   }
 
+  // English Dictionary - Uses free API
   Future<List<Map<String, dynamic>>> _searchEnglishWord(String word) async {
     final response = await http.get(
       Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/$word'),
