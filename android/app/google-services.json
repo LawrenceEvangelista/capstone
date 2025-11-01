@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "173890793231",
+    "project_id": "flutter-pro-firebase-aefab",
+    "storage_bucket": "flutter-pro-firebase-aefab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:173890793231:android:834b8a5e4fdeaa2959587a",
+        "android_client_info": {
+          "package_name": "com.example.testapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC17UWq-wRPy04N1qsmlfFCfpIxD3dxGVI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
