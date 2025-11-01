@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:testapp/screens/favorites/favorites_provider.dart';
 import 'package:testapp/screens/story_screen.dart';
 
@@ -14,6 +15,48 @@ class FavoritesScreen extends StatefulWidget {
 class _FavoritesScreenState extends State<FavoritesScreen> {
   String searchQuery = '';
   String selectedCategory = 'All Categories';
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  Map<String, String> imageCache = {}; // Cache for image URLs
+
+  @override
+  void initState() {
+    super.initState();
+    _preloadImages();
+  }
+
+  // Preload all favorite images
+  Future<void> _preloadImages() async {
+    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+    final favorites = favoritesProvider.favorites;
+
+    for (var story in favorites) {
+      final storyId = story['id'];
+      if (storyId != null && !imageCache.containsKey(storyId)) {
+        final imageUrl = await _getImageUrl(storyId);
+        if (mounted) {
+          setState(() {
+            imageCache[storyId] = imageUrl;
+          });
+        }
+      }
+    }
+  }
+
+  // Get image URL from Firebase Storage
+  Future<String> _getImageUrl(String storyId) async {
+    try {
+      // Try PNG first
+      return await _storage.ref('images/$storyId.png').getDownloadURL();
+    } catch (e) {
+      try {
+        // Try JPG if PNG doesn't exist
+        return await _storage.ref('images/$storyId.jpg').getDownloadURL();
+      } catch (e) {
+        print('Error loading image for $storyId: $e');
+        return '';
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +205,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         // Get the favorites provider to check favorite status
         final favoritesProvider = Provider.of<FavoritesProvider>(context);
 
+        // Get cached image URL or empty string
+        final String imageUrl = imageCache[storyId] ?? '';
+
         return GestureDetector(
           onTap: () {
             // Navigate to StoryScreen when tapped
@@ -189,7 +235,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Image Placeholder
+                    // Image from Firebase Storage
                     Container(
                       width: 120,
                       height: 150,
@@ -201,17 +247,72 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         border: Border.all(color: Colors.grey, width: 2),
                         color: Colors.white,
                       ),
-                      child: story['image'] != null
-                          ? Image.asset(
-                        story['image'].toString(),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.image,
-                          color: Colors.grey,
-                          size: 40,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(10),
+                          bottomLeft: Radius.circular(10),
                         ),
-                      )
-                          : const Icon(Icons.image, color: Colors.grey, size: 40),
+                        child: imageUrl.isNotEmpty
+                            ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: const Color(0xFFFFD93D),
+                                strokeWidth: 2,
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.image,
+                            color: Colors.grey,
+                            size: 40,
+                          ),
+                        )
+                            : FutureBuilder<String>(
+                          future: _getImageUrl(storyId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFFFD93D),
+                                  strokeWidth: 2,
+                                ),
+                              );
+                            }
+                            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                              // Cache the URL
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (mounted) {
+                                  setState(() {
+                                    imageCache[storyId] = snapshot.data!;
+                                  });
+                                }
+                              });
+                              return Image.network(
+                                snapshot.data!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                  Icons.image,
+                                  color: Colors.grey,
+                                  size: 40,
+                                ),
+                              );
+                            }
+                            return const Icon(
+                              Icons.image,
+                              color: Colors.grey,
+                              size: 40,
+                            );
+                          },
+                        ),
+                      ),
                     ),
 
                     // Story Details
@@ -223,7 +324,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                           children: [
                             Text(
                               title,
-                              style: const TextStyle(
+                              style: GoogleFonts.fredoka(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -231,33 +332,39 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Category: $category',
-                              style: TextStyle(
+                              style: GoogleFonts.fredoka(
                                 fontSize: 14,
                                 color: Colors.black54,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Tap to continue reading',
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: GoogleFonts.fredoka(
                                 fontSize: 14,
                                 color: Colors.black54,
                                 fontStyle: FontStyle.italic,
                               ),
                             ),
                             const Spacer(),
-                            LinearProgressIndicator(
-                              value: progress,
-                              backgroundColor: Colors.white,
-                              color: Colors.blueAccent,
-                              minHeight: 6,
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                backgroundColor: Colors.white,
+                                color: const Color(0xFFFFD93D),
+                                minHeight: 6,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '${(progress * 100).toInt()}% read',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                              style: GoogleFonts.fredoka(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
@@ -275,11 +382,29 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   onTap: () {
                     // Remove from favorites when the heart is tapped
                     favoritesProvider.removeFavorite(storyId);
+                    // Remove from image cache
+                    setState(() {
+                      imageCache.remove(storyId);
+                    });
                   },
-                  child: Icon(
-                    Icons.favorite,
-                    color: Colors.red,
-                    size: 28,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.favorite,
+                      color: Colors.red,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),

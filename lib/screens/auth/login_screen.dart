@@ -76,10 +76,17 @@ class _LoginScreenState extends State<LoginScreen> {
       await _authService.signInWithGoogle(isSignUp: false);
       _navigateToHome(context);
       print("Google Sign-In successful!");
+    } on FirebaseAuthException catch (e) {
+      print("LoginScreen - Google Sign-In FirebaseAuthException: ${e.code} - ${e.message}");
+      setState(() {
+        errorMessage = e.message ?? 'Failed to sign in with Google.';
+        _isLoading = false;
+      });
+      _showCartoonishErrorDialog(context, errorMessage);
     } catch (e) {
       print("LoginScreen - Google Sign-In Exception: $e");
       setState(() {
-        errorMessage = 'Failed to sign in with Google. Please try again.';
+        errorMessage = 'Failed to sign in with Google: ${e.toString()}';
         _isLoading = false;
       });
       _showCartoonishErrorDialog(context, errorMessage);

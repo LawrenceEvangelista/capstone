@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:testapp/screens/auth/login_signup_screen.dart';
 import 'package:testapp/screens/auth/login_screen.dart';
 import 'package:testapp/screens/auth/signup_screen.dart';
@@ -12,16 +11,21 @@ import 'package:testapp/auth_service.dart';
 import 'package:testapp/screens/story_screen.dart';
 import 'package:testapp/screens/favorites/favorites_provider.dart';
 import 'package:testapp/screens/favorites/favorites_screen.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  await Supabase.initialize(
-    url: 'https://xqyebwxupizjcbuvxrjx.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhxeWVid3h1cGl6amNidXZ4cmp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODg2MjAsImV4cCI6MjA2MTY2NDYyMH0.dNbnCGAZFkhOL6GqRRYWjCv_7-i9J4IkmlT6n9MbtTY',
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => RecentlyViewedProvider()),
+      ],
+      child: MyApp(),
+    ),
   );
-  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {

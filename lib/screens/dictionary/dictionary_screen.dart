@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:animate_do/animate_do.dart';
-import 'package:translator/translator.dart'; // Add this package
+import 'dart:async';
+import 'dart:io';
 
 class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({super.key});
@@ -14,12 +15,18 @@ class DictionaryScreen extends StatefulWidget {
 
 class _DictionaryScreenState extends State<DictionaryScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final GoogleTranslator translator = GoogleTranslator();
   List<String> _recentSearches = ['happy', 'animal', 'school', 'friend', 'book'];
   List<Map<String, dynamic>> _wordDefinitions = [];
   bool _isLoading = false;
   String _errorMessage = '';
   String _selectedLanguage = 'English'; // Default language
+
+  // API Configuration
+  // For emulator, use: 'http://10.0.2.2:3000/api'
+  // For real device, use your computer's IP: 'http://192.168.x.x:3000/api'
+  // For localhost testing: 'http://localhost:3000/api'
+  static const String TAGALOG_API_BASE = 'http://192.168.1.8:3000/api';
+  static const String ENGLISH_API_BASE = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 
   // Cartoonish colors matching login screen style
   final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
@@ -45,6 +52,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
+      _wordDefinitions = [];
     });
 
     try {
@@ -81,7 +89,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   // English Dictionary - Uses free API
   Future<List<Map<String, dynamic>>> _searchEnglishWord(String word) async {
     final response = await http.get(
-      Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/$word'),
+      Uri.parse('$ENGLISH_API_BASE/$word'),
     );
 
     if (response.statusCode == 200) {
@@ -92,151 +100,70 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     }
   }
 
+  // Tagalog Dictionary - Uses YOUR custom API
   Future<List<Map<String, dynamic>>> _searchTagalogWord(String word) async {
     try {
-      // First, get English definition if the word is in English
-      List<Map<String, dynamic>> englishDefinitions = [];
-      String translatedWord = word;
+      print('Attempting to connect to: $TAGALOG_API_BASE/words/$word'); // Debug log
 
-      // Try to detect if it's an English word and get its definition
-      try {
-        englishDefinitions = await _searchEnglishWord(word);
-      } catch (e) {
-        // If not found in English dictionary, assume it's a Tagalog word
-        // Translate Tagalog word to English to get context
-        var translation = await translator.translate(word, from: 'tl', to: 'en');
-        translatedWord = translation.text;
+      final response = await http.get(
+        Uri.parse('$TAGALOG_API_BASE/words/${Uri.encodeComponent(word)}'),
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(Duration(seconds: 10)); // Add timeout
 
-        // Try to get English definition of the translated word
-        try {
-          englishDefinitions = await _searchEnglishWord(translatedWord);
-        } catch (e) {
-          // If still no definition found, create a simple translation entry
-        }
-      }
+      print('Response status: ${response.statusCode}'); // Debug log
+      print('Response body: ${response.body}'); // Debug log
 
-      // Create Tagalog dictionary entry with translations
-      Map<String, dynamic> tagalogEntry = await _createTagalogEntry(word, englishDefinitions);
-
-      return [tagalogEntry];
-    } catch (e) {
-      throw Exception('Translation failed');
-    }
-  }
-
-  // Missing method implementation
-  Future<Map<String, dynamic>> _createTagalogEntry(String originalWord, List<Map<String, dynamic>> englishDefinitions) async {
-    try {
-      String englishTranslation = '';
-      String tagalogTranslation = '';
-      List<Map<String, dynamic>> meanings = [];
-
-      // If we have English definitions, it means the original word was in English
-      if (englishDefinitions.isNotEmpty) {
-        englishTranslation = originalWord;
-        // Translate English word to Tagalog
-        var translation = await translator.translate(originalWord, from: 'en', to: 'tl');
-        tagalogTranslation = translation.text;
-
-        // Convert English definitions to bilingual format
-        for (var englishEntry in englishDefinitions) {
-          if (englishEntry['meanings'] != null) {
-            for (var meaning in englishEntry['meanings']) {
-              List<Map<String, dynamic>> bilingualDefinitions = [];
-
-              if (meaning['definitions'] != null) {
-                for (var def in meaning['definitions']) {
-                  // Translate English definition to Tagalog
-                  var translatedDef = await translator.translate(def['definition'], from: 'en', to: 'tl');
-                  String? translatedExample;
-
-                  if (def['example'] != null) {
-                    var exampleTranslation = await translator.translate(def['example'], from: 'en', to: 'tl');
-                    translatedExample = exampleTranslation.text;
-                  }
-
-                  bilingualDefinitions.add({
-                    'definition': translatedDef.text,
-                    'englishDefinition': def['definition'],
-                    'example': translatedExample,
-                    'englishExample': def['example'],
-                  });
-                }
-              }
-
-              meanings.add({
-                'partOfSpeech': _translatePartOfSpeech(meaning['partOfSpeech'] ?? ''),
-                'englishPartOfSpeech': meaning['partOfSpeech'],
-                'definitions': bilingualDefinitions,
-              });
-            }
-          }
-        }
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return [_convertTagalogApiResponse(data)];
+      } else if (response.statusCode == 404) {
+        throw Exception('Hindi nahanap ang salita sa diksyunaryo');
       } else {
-        // Original word is likely in Tagalog
-        tagalogTranslation = originalWord;
-        // Translate Tagalog word to English
-        var translation = await translator.translate(originalWord, from: 'tl', to: 'en');
-        englishTranslation = translation.text;
-
-        // Create basic definition entry for Tagalog word
-        meanings.add({
-          'partOfSpeech': 'salita', // Generic term for "word" in Tagalog
-          'englishPartOfSpeech': 'word',
-          'definitions': [
-            {
-              'definition': 'Tagalog na salita na nangangahulugang "$englishTranslation"',
-              'englishDefinition': 'Tagalog word meaning "$englishTranslation"',
-              'example': null,
-              'englishExample': null,
-            }
-          ],
-        });
+        throw Exception('Error: ${response.statusCode}');
       }
-
-      return {
-        'word': tagalogTranslation,
-        'englishTranslation': englishTranslation,
-        'phonetic': '',
-        'meanings': meanings,
-      };
+    } on TimeoutException catch (e) {
+      print('Timeout error: $e');
+      throw Exception('Timeout: Hindi makonekta sa server. Siguraduhing tumatakbo ang API.');
+    } on SocketException catch (e) {
+      print('Connection error: $e');
+      throw Exception('Hindi makonekta sa server. Tingnan ang IP address at firewall.');
     } catch (e) {
-      // Fallback simple entry if translation fails
-      return {
-        'word': originalWord,
-        'englishTranslation': null,
-        'phonetic': '',
-        'meanings': [
-          {
-            'partOfSpeech': 'salita',
-            'englishPartOfSpeech': 'word',
-            'definitions': [
-              {
-                'definition': 'Hindi mahanap ang kahulugan ng salitang ito.',
-                'englishDefinition': 'Definition not found for this word.',
-                'example': null,
-                'englishExample': null,
-              }
-            ],
-          }
-        ],
-      };
+      print('Error fetching Tagalog word: $e');
+      throw Exception('Error: $e');
     }
   }
 
-  String _translatePartOfSpeech(String pos) {
-    Map<String, String> posTranslations = {
-      'noun': 'pangngalan',
-      'verb': 'pandiwa',
-      'adjective': 'pang-uri',
-      'adverb': 'pang-abay',
-      'pronoun': 'panghalip',
-      'preposition': 'pang-ukol',
-      'conjunction': 'pangatnig',
-      'interjection': 'pandamdam',
-    };
+  // Convert your API response format to match the UI expectations
+  Map<String, dynamic> _convertTagalogApiResponse(Map<String, dynamic> apiData) {
+    List<Map<String, dynamic>> meanings = [];
 
-    return posTranslations[pos.toLowerCase()] ?? pos;
+    if (apiData['meanings'] != null) {
+      for (var meaning in apiData['meanings']) {
+        if (meaning['definitions'] != null && meaning['definitions'] is List) {
+          List<Map<String, dynamic>> definitions = [];
+
+          for (var def in meaning['definitions']) {
+            definitions.add({
+              'definition': def['definition'] ?? '',
+              'example': (def['examples'] != null && def['examples'].isNotEmpty)
+                  ? def['examples'][0]
+                  : null,
+            });
+          }
+
+          meanings.add({
+            'partOfSpeech': meaning['partOfSpeech'] ?? 'salita',
+            'definitions': definitions,
+          });
+        }
+      }
+    }
+
+    return {
+      'word': apiData['word'] ?? '',
+      'phonetic': apiData['pronunciation'] ?? '',
+      'meanings': meanings,
+    };
   }
 
   @override
@@ -265,6 +192,8 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 _recentSearches = language == 'English'
                     ? ['happy', 'animal', 'school', 'friend', 'book']
                     : ['mahal', 'kumain', 'bahay', 'tubig', 'maganda'];
+                _wordDefinitions = [];
+                _errorMessage = '';
               });
             },
             itemBuilder: (BuildContext context) => [
@@ -298,7 +227,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         ),
         child: Column(
           children: [
-            // Language indicator and search bar
+            // Search bar section
             FadeInDown(
               duration: const Duration(milliseconds: 600),
               child: Container(
@@ -312,7 +241,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Language indicator with translation info
+                    // Language indicator
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
@@ -326,12 +255,16 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.translate, color: Colors.white, size: 20),
+                          Icon(
+                            _selectedLanguage == 'English' ? Icons.book : Icons.menu_book_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             _selectedLanguage == 'English'
                                 ? 'English Dictionary'
-                                : 'Tagalog Dictionary (may salin)',
+                                : 'Tunay na Tagalog Dictionary',
                             style: GoogleFonts.fredoka(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -342,6 +275,8 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Search bar
                     Row(
                       children: [
                         Expanded(
@@ -433,6 +368,8 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
+
+                    // Recent searches
                     SizedBox(
                       height: 40,
                       child: ListView.builder(
@@ -479,8 +416,8 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                     const SizedBox(height: 16),
                     Text(
                       _selectedLanguage == 'English'
-                          ? 'Searching and translating...'
-                          : 'Naghahanap at nagsasalin...',
+                          ? 'Searching...'
+                          : 'Naghahanap...',
                       style: GoogleFonts.fredoka(
                         color: _primaryColor,
                         fontSize: 16,
@@ -496,18 +433,21 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.translate_outlined,
+                        Icons.search_off,
                         size: 64,
                         color: _accentColor.withOpacity(0.7),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        _errorMessage,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 18,
-                          color: _accentColor,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          _errorMessage,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 18,
+                            color: _accentColor,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -528,7 +468,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.translate,
+              Icons.menu_book,
               size: 120,
               color: _primaryColor.withOpacity(0.5),
             ),
@@ -547,7 +487,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             Text(
               _selectedLanguage == 'English'
                   ? 'Try: happy, love, book, water'
-                  : 'Subukan: tubig, dilig, mahal, pag-ibig',
+                  : 'Subukan: mahal, kumain, bahay, tubig',
               style: GoogleFonts.fredoka(
                 fontSize: 14,
                 color: Colors.grey.shade600,
@@ -567,7 +507,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         itemBuilder: (context, index) {
           final wordData = _wordDefinitions[index];
           final word = wordData['word'] as String;
-          final englishTranslation = wordData['englishTranslation'] as String?;
           final phonetic = wordData['phonetic'] ?? '';
           final meanings = wordData['meanings'] as List<dynamic>;
 
@@ -595,7 +534,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                         child: Icon(
                           _selectedLanguage == 'English'
                               ? Icons.menu_book
-                              : Icons.translate,
+                              : Icons.auto_stories,
                           color: _accentColor,
                           size: 32,
                         ),
@@ -613,23 +552,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                                 color: _primaryColor,
                               ),
                             ),
-                            if (englishTranslation != null && _selectedLanguage == 'Tagalog')
-                              Container(
-                                margin: const EdgeInsets.only(top: 4),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _primaryColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'English: $englishTranslation',
-                                  style: GoogleFonts.fredoka(
-                                    fontSize: 14,
-                                    color: _primaryColor,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
                             if (phonetic.isNotEmpty)
                               Text(
                                 phonetic,
@@ -660,7 +582,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   Widget _buildMeaning(Map<String, dynamic> meaning) {
     final partOfSpeech = meaning['partOfSpeech'] as String;
-    final englishPartOfSpeech = meaning['englishPartOfSpeech'] as String?;
     final definitions = meaning['definitions'] as List<dynamic>;
 
     return Column(
@@ -676,28 +597,13 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               width: 1,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                partOfSpeech,
-                style: GoogleFonts.fredoka(
-                  fontWeight: FontWeight.bold,
-                  color: _accentColor,
-                  fontSize: 18,
-                ),
-              ),
-              if (englishPartOfSpeech != null && _selectedLanguage == 'Tagalog') ...[
-                Text(
-                  ' ($englishPartOfSpeech)',
-                  style: GoogleFonts.fredoka(
-                    fontWeight: FontWeight.normal,
-                    color: _accentColor.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ],
+          child: Text(
+            partOfSpeech,
+            style: GoogleFonts.fredoka(
+              fontWeight: FontWeight.bold,
+              color: _accentColor,
+              fontSize: 18,
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -711,9 +617,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   Widget _buildDefinition(int index, Map<String, dynamic> definition) {
     final definitionText = definition['definition'] as String;
-    final englishDefinition = definition['englishDefinition'] as String?;
     final example = definition['example'] as String?;
-    final englishExample = definition['englishExample'] as String?;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,110 +652,51 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    definitionText,
-                    style: GoogleFonts.fredoka(
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  if (englishDefinition != null && _selectedLanguage == 'Tagalog') ...[
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue.shade200),
-                      ),
-                      child: Text(
-                        'English: $englishDefinition',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 14,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+              child: Text(
+                definitionText,
+                style: GoogleFonts.fredoka(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ],
         ),
-        if (example != null) ...[
+        if (example != null && example.isNotEmpty) ...[
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.only(left: 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.grey.shade300,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.format_quote,
-                        color: _accentColor.withOpacity(0.7),
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          example,
-                          style: GoogleFonts.fredoka(
-                            fontSize: 14,
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                  width: 1,
                 ),
-                if (englishExample != null && _selectedLanguage == 'Tagalog') ...[
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.green.shade200),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.translate,
-                          color: Colors.green.shade600,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'English: $englishExample',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 13,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                        ),
-                      ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.format_quote,
+                    color: _accentColor.withOpacity(0.7),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      example,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 14,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
                   ),
                 ],
-              ],
+              ),
             ),
           ),
         ],

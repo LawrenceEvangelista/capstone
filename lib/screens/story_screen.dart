@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:testapp/screens/favorites/favorites_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
 
 class StoryScreen extends StatefulWidget {
   final String storyId;
@@ -17,6 +19,7 @@ class StoryScreen extends StatefulWidget {
 
 class _StoryScreenState extends State<StoryScreen> {
   final _controller = GlobalKey<PageFlipWidgetState>();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   bool isLoading = true;
   bool _isEnglish = true;
   String storyTitle = '';
@@ -34,6 +37,88 @@ class _StoryScreenState extends State<StoryScreen> {
   void initState() {
     super.initState();
     _fetchStoryData();
+    _trackStoryView();
+  }
+
+  Future<void> _trackStoryView() async {
+    try {
+      // Fetch story data from Firebase
+      final snapshot = await FirebaseDatabase.instance
+          .ref()
+          .child('stories/${widget.storyId}')
+          .once();
+
+      if (snapshot.snapshot.value != null && snapshot.snapshot.value is Map) {
+        final data = snapshot.snapshot.value as Map;
+
+        // Get image URL from Firebase Storage
+        String imageUrl = '';
+        try {
+          imageUrl = await _storage
+              .ref('images/${widget.storyId}.png')
+              .getDownloadURL();
+        } catch (e) {
+          try {
+            imageUrl = await _storage
+                .ref('images/${widget.storyId}.jpg')
+                .getDownloadURL();
+          } catch (e) {
+            print('Error loading image: $e');
+          }
+        }
+
+        final storyData = {
+          'id': widget.storyId,
+          'title': data['titleEng'] ?? data['titleTag'] ?? 'No Title',
+          'imageUrl': imageUrl,
+          'progress': data['progress'] ?? 0.0,
+        };
+
+        // Add to recently viewed
+        if (mounted) {
+          await Provider.of<RecentlyViewedProvider>(context, listen: false)
+              .addRecentlyViewed(storyData);
+        }
+      }
+    } catch (e) {
+      print('Error tracking story view: $e');
+    }
+  }
+
+  Future<String> _loadPageImage(int pageNumber) async {
+    try {
+      // Try with space format first: "PAGE 1.png"
+      String imageUrl = await _storage
+          .ref('storypages/${widget.storyId}/PAGE $pageNumber.png')
+          .getDownloadURL();
+      print('Successfully loaded: storypages/${widget.storyId}/PAGE $pageNumber.png');
+      return imageUrl;
+    } catch (e) {
+      print('Error loading PAGE $pageNumber.png: $e');
+
+      // Try alternative format: "page1.png"
+      try {
+        String imageUrl = await _storage
+            .ref('storypages/${widget.storyId}/page$pageNumber.png')
+            .getDownloadURL();
+        print('Successfully loaded: storypages/${widget.storyId}/page$pageNumber.png');
+        return imageUrl;
+      } catch (e) {
+        print('Error loading page$pageNumber.png: $e');
+
+        // Try JPG format
+        try {
+          String imageUrl = await _storage
+              .ref('storypages/${widget.storyId}/PAGE $pageNumber.jpg')
+              .getDownloadURL();
+          print('Successfully loaded: storypages/${widget.storyId}/PAGE $pageNumber.jpg');
+          return imageUrl;
+        } catch (e) {
+          print('Error loading PAGE $pageNumber.jpg: $e');
+          return ''; // Return empty if all attempts fail
+        }
+      }
+    }
   }
 
   Future<void> _fetchStoryData() async {
@@ -70,15 +155,37 @@ class _StoryScreenState extends State<StoryScreen> {
             return numA.compareTo(numB);
           });
 
-          for (String pageKey in sortedPageKeys) {
+          // Load images from Firebase Storage for each page
+          for (int i = 0; i < sortedPageKeys.length; i++) {
+            String pageKey = sortedPageKeys[i];
             if (pagesData[pageKey] is Map) {
               Map<dynamic, dynamic> pageContent = pagesData[pageKey] as Map;
+
+              // Load the image URL from Firebase Storage
+              String imageUrl = await _loadPageImage(i + 1);
+
               combinedPages.add({
                 'textEng': pageContent['textEng'] ?? '',
                 'textTag': pageContent['textTag'] ?? '',
-                'image': 'assets/pic${(combinedPages.length % 5) + 1}.png',
+                'image': imageUrl, // Use Firebase Storage URL instead of asset
               });
             }
+          }
+        }
+
+        // Get cover image for favorites
+        String coverImageUrl = '';
+        try {
+          coverImageUrl = await _storage
+              .ref('images/${widget.storyId}.png')
+              .getDownloadURL();
+        } catch (e) {
+          try {
+            coverImageUrl = await _storage
+                .ref('images/${widget.storyId}.jpg')
+                .getDownloadURL();
+          } catch (e) {
+            print('Error loading cover image: $e');
           }
         }
 
@@ -89,7 +196,7 @@ class _StoryScreenState extends State<StoryScreen> {
           'titleTag': titleTag,
           'category': category,
           'title': _isEnglish ? (titleEng ?? 'No Title') : (titleTag ?? 'Walang Pamagat'),
-          'image': combinedPages.isNotEmpty ? combinedPages[0]['image'] : 'assets/pic1.png',
+          'image': coverImageUrl.isNotEmpty ? coverImageUrl : (combinedPages.isNotEmpty ? combinedPages[0]['image'] : ''),
           'progress': 0.5,
         };
 
@@ -475,7 +582,7 @@ class _StoryScreenState extends State<StoryScreen> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       child: PageFlipWidget(
-                        key: ValueKey(_isEnglish), // Add this key to force rebuild
+                        key: ValueKey(_isEnglish),
                         backgroundColor: Colors.white,
                         lastPage: Center(
                           child: Container(
@@ -651,12 +758,64 @@ class StoryPage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background image
+        // Background image - now from Firebase Storage
         ClipRRect(
           borderRadius: BorderRadius.circular(23),
-          child: Image.asset(
+          child: imageUrl.isNotEmpty
+              ? Image.network(
             imageUrl,
             fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: Colors.grey.shade200,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: primaryColor,
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('Error loading image: $error');
+              return Container(
+                color: Colors.grey.shade300,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.broken_image,
+                        size: 64,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Image not found',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          )
+              : Container(
+            color: Colors.grey.shade300,
+            child: Center(
+              child: Icon(
+                Icons.image_not_supported,
+                size: 64,
+                color: Colors.grey.shade500,
+              ),
+            ),
           ),
         ),
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../home/home_screen.dart';
 import '../stories/stories_screen.dart';
 import '../favorites/favorites_screen.dart';
-import '../quiz/quiz_screen.dart';
+import '../quiz/quiz_home_screen.dart';
 import '../dictionary/dictionary_screen.dart';
 
 class BottomNav extends StatefulWidget {
@@ -17,7 +17,7 @@ class _BottomNavState extends State<BottomNav> {
     HomeScreen(),
     StoriesScreen(),
     FavoritesScreen(),
-    QuizScreen(),
+    QuizHomeScreen(),
     DictionaryScreen(),
   ];
 

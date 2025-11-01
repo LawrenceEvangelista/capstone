@@ -31,6 +31,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true // Add this for Firebase
     }
 
     buildTypes {
@@ -44,4 +45,19 @@ android {
 
 flutter {
     source = "../.."
+}
+
+// ADD THESE DEPENDENCIES - This is what's missing!
+dependencies {
+    // Firebase BOM (Bill of Materials) - manages all Firebase versions
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
+    // Firebase Authentication
+    implementation("com.google.firebase:firebase-auth")
+
+    // Google Sign-In (Required for Google authentication)
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    // Multi-dex support (for Firebase)
+    implementation("androidx.multidex:multidex:2.0.1")
 }

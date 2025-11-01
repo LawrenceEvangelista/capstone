@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../story_screen.dart';
 
 class StoriesScreen extends StatefulWidget {
@@ -16,14 +16,10 @@ class _StoriesScreenState extends State<StoriesScreen> {
   String selectedReadStatus = 'All Status';
   bool isLoading = true;
 
-  // Firebase reference
+  // Firebase references
   final DatabaseReference _databaseReference =
   FirebaseDatabase.instance.ref().child('stories');
-
-  // Supabase client
-  final supabase = Supabase.instance.client;
-  final String supabaseBaseUrl = 'https://xqyebwxupizjcbuvxrjx.supabase.co';
-  final String supabaseBucket = 'images';
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   List<String> readStatuses = ['All Status', 'Read', 'Unread'];
   List<String> allCategories = ['Folktale', 'Legend', 'Fable'];
@@ -52,63 +48,77 @@ class _StoriesScreenState extends State<StoriesScreen> {
         final validCategories = {'Folktale', 'Legend', 'Fable'};
         Set<String> categories = {};
 
-        data.forEach((key, value) {
-          if (value is Map) {
-            String imageUrl;
-            try {
-              imageUrl = supabase.storage
-                  .from(supabaseBucket)
-                  .getPublicUrl('$key.png');
-            } catch (e) {
-              imageUrl =
-              '$supabaseBaseUrl/storage/v1/object/public/$supabaseBucket/$key.jpg';
-            }
+        // Use Future.wait to fetch all images concurrently
+        await Future.wait(
+          data.entries.map((entry) async {
+            final key = entry.key;
+            final value = entry.value;
 
-            final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
-            final text = value['textEng'] ?? value['textTag'] ?? '';
+            if (value is Map) {
+              String imageUrl = '';
 
-            // Get the typeEng and normalize it for consistent categories
-            String rawCategory = value['typeEng'] ?? '';
-            String normalizedCategory = 'Uncategorized';
-
-            // Normalize the category (case-insensitive matching)
-            if (rawCategory.isNotEmpty) {
-              String lowerCaseCategory = rawCategory.toLowerCase();
-
-              if (lowerCaseCategory == 'folktale' || lowerCaseCategory == 'folktales') {
-                normalizedCategory = 'Folktale';
-              } else if (lowerCaseCategory == 'legend' || lowerCaseCategory == 'legends') {
-                normalizedCategory = 'Legend';
-              } else if (lowerCaseCategory == 'fable' || lowerCaseCategory == 'fables') {
-                normalizedCategory = 'Fable';
-              } else {
-                // Only add as category if it's not a story title (simple heuristic - words > 3)
-                if (rawCategory.split(' ').length <= 3 && !rawCategory.contains('The')) {
-                  normalizedCategory = rawCategory;
-                } else {
-                  normalizedCategory = 'Uncategorized';
+              try {
+                // Try to get PNG image from Firebase Storage
+                imageUrl = await _storage
+                    .ref('images/$key.png')
+                    .getDownloadURL();
+              } catch (e) {
+                try {
+                  // If PNG doesn't exist, try JPG
+                  imageUrl = await _storage
+                      .ref('images/$key.jpg')
+                      .getDownloadURL();
+                } catch (e) {
+                  print('Error loading image for $key: $e');
                 }
               }
+
+              final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
+              final text = value['textEng'] ?? value['textTag'] ?? '';
+
+              // Get the typeEng and normalize it for consistent categories
+              String rawCategory = value['typeEng'] ?? '';
+              String normalizedCategory = 'Uncategorized';
+
+              // Normalize the category (case-insensitive matching)
+              if (rawCategory.isNotEmpty) {
+                String lowerCaseCategory = rawCategory.toLowerCase();
+
+                if (lowerCaseCategory == 'folktale' || lowerCaseCategory == 'folktales') {
+                  normalizedCategory = 'Folktale';
+                } else if (lowerCaseCategory == 'legend' || lowerCaseCategory == 'legends') {
+                  normalizedCategory = 'Legend';
+                } else if (lowerCaseCategory == 'fable' || lowerCaseCategory == 'fables') {
+                  normalizedCategory = 'Fable';
+                } else {
+                  // Only add as category if it's not a story title (simple heuristic - words > 3)
+                  if (rawCategory.split(' ').length <= 3 && !rawCategory.contains('The')) {
+                    normalizedCategory = rawCategory;
+                  } else {
+                    normalizedCategory = 'Uncategorized';
+                  }
+                }
+              }
+
+              // Add normalized category to our valid set
+              if (normalizedCategory != 'Uncategorized') {
+                categories.add(normalizedCategory);
+              }
+
+              final isRead = value['isRead'] ?? false;
+
+              fetchedStories.add({
+                'id': key,
+                'title': title,
+                'text': text,
+                'imageUrl': imageUrl,
+                'category': normalizedCategory,
+                'isRead': isRead,
+                'progress': value['progress'] ?? 0.0,
+              });
             }
-
-            // Add normalized category to our valid set
-            if (normalizedCategory != 'Uncategorized') {
-              categories.add(normalizedCategory);
-            }
-
-            final isRead = value['isRead'] ?? false;
-
-            fetchedStories.add({
-              'id': key,
-              'title': title,
-              'text': text,
-              'imageUrl': imageUrl,
-              'category': normalizedCategory,
-              'isRead': isRead,
-              'progress': value['progress'] ?? 0.0,
-            });
-          }
-        });
+          }),
+        );
 
         setState(() {
           allStories = fetchedStories;
@@ -310,7 +320,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
               ),
               child: Row(
                 children: [
-                  // Story image from Supabase
+                  // Story image from Firebase Storage
                   Container(
                     width: 120,
                     height: 150,
