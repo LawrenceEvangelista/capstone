@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:animate_do/animate_do.dart'; // Added for animations
-import 'package:testapp/auth_service.dart';
+import 'package:testapp/services/auth_service.dart';
 import '../home/home_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import FontAwesomeIcons
 

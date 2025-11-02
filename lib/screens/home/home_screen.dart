@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_database/firebase_database.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:testapp/screens/auth/profile_screen.dart';
-import 'package:testapp/screens/story_screen.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:provider/provider.dart';
-import 'package:testapp/providers/recently_viewed_provider.dart';
+import 'package:testapp/screens/stories/story_screen.dart';
 
+// Create a main layout widget that will contain both the HomeScreen and the bottom navigation
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
@@ -18,9 +17,10 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
+  // Define the list of screens to be shown
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Placeholder(),
+    const Placeholder(), // Replace with actual screens
     const Placeholder(),
     const Placeholder(),
   ];
@@ -64,6 +64,7 @@ class _MainLayoutState extends State<MainLayout> {
   }
 }
 
+// Modify HomeScreen to be a child screen instead of the main entry point
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -71,27 +72,21 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-final FirebaseStorage _storage = FirebaseStorage.instance;
-
 class _HomeScreenState extends State<HomeScreen> {
   String username = 'Loading...';
   List<Map<String, dynamic>> stories = [];
+  final supabase = Supabase.instance.client;
   final DatabaseReference _databaseReference =
   FirebaseDatabase.instance.ref().child('stories');
+
+  final String supabaseBaseUrl = 'https://xqyebwxupizjcbuvxrjx.supabase.co';
+  final String supabaseBucket = 'images';
 
   @override
   void initState() {
     super.initState();
     fetchUsername();
     fetchStories();
-    initializeRecentlyViewedUser();
-  }
-
-  void initializeRecentlyViewedUser() {
-    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
-    final recentlyViewedProvider =
-    Provider.of<RecentlyViewedProvider>(context, listen: false);
-    recentlyViewedProvider.setCurrentUserId(user?.uid);
   }
 
   Future<void> fetchUsername() async {
@@ -112,41 +107,30 @@ class _HomeScreenState extends State<HomeScreen> {
         Map<dynamic, dynamic> data = snapshot.value as Map;
         List<Map<String, dynamic>> fetchedStories = [];
 
-        await Future.wait(
-          data.entries.map((entry) async {
-            final key = entry.key;
-            final value = entry.value;
-
-            if (value is Map) {
-              String imageUrl = '';
-
-              try {
-                imageUrl = await _storage
-                    .ref('images/$key.png')
-                    .getDownloadURL();
-              } catch (e) {
-                try {
-                  imageUrl = await _storage
-                      .ref('images/$key.jpg')
-                      .getDownloadURL();
-                } catch (e) {
-                  print('Error loading image for $key: $e');
-                }
-              }
-
-              final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
-              final text = value['textEng'] ?? value['textTag'] ?? '';
-
-              fetchedStories.add({
-                'id': key,
-                'title': title,
-                'text': text,
-                'imageUrl': imageUrl,
-                'progress': value['progress'] ?? 0.0,
-              });
+        data.forEach((key, value) {
+          if (value is Map) {
+            String imageUrl;
+            try {
+              imageUrl = supabase.storage
+                  .from(supabaseBucket)
+                  .getPublicUrl('$key.png');
+            } catch (e) {
+              imageUrl =
+              '$supabaseBaseUrl/storage/v1/object/public/$supabaseBucket/$key.jpg';
             }
-          }),
-        );
+
+            final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
+            final text = value['textEng'] ?? value['textTag'] ?? '';
+
+            fetchedStories.add({
+              'id': key,
+              'title': title,
+              'text': text,
+              'imageUrl': imageUrl,
+              'progress': value['progress'] ?? 0.0,
+            });
+          }
+        });
 
         setState(() {
           stories = fetchedStories;
@@ -157,31 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Helper methods to filter stories
-  List<Map<String, dynamic>> get continueReadingStories {
-    return stories.where((story) {
-      final progress = (story['progress'] is double) ? story['progress'] : 0.0;
-      return progress > 0 && progress < 1.0;
-    }).toList();
-  }
-
-  List<Map<String, dynamic>> get newStories {
-    return stories.where((story) {
-      final progress = (story['progress'] is double) ? story['progress'] : 0.0;
-      return progress == 0.0;
-    }).take(5).toList();
-  }
-
-  List<Map<String, dynamic>> get completedStories {
-    return stories.where((story) {
-      final progress = (story['progress'] is double) ? story['progress'] : 0.0;
-      return progress >= 1.0;
-    }).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final recentlyViewedStories = Provider.of<RecentlyViewedProvider>(context).recentlyViewed;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -200,54 +161,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 24),
                       _buildSearchBar(),
                       const SizedBox(height: 32),
-
-                      // Fun Daily Challenge Card
-                      _buildDailyChallengeCard(),
-                      const SizedBox(height: 32),
-
-                      // Categories
                       _buildSectionTitle('Explore Categories'),
                       const SizedBox(height: 16),
                       _buildCategoriesRow(),
                       const SizedBox(height: 36),
-
-                      // Continue Reading (only if there are stories in progress)
-                      if (continueReadingStories.isNotEmpty) ...[
-                        _buildSectionTitle('Continue Reading'),
-                        const SizedBox(height: 16),
-                        _buildStoryList(continueReadingStories),
-                        const SizedBox(height: 36),
-                      ],
-
-                      // New Stories
-                      if (newStories.isNotEmpty) ...[
-                        _buildSectionTitle('New Stories'),
-                        const SizedBox(height: 16),
-                        _buildStoryList(newStories),
-                        const SizedBox(height: 36),
-                      ],
-
-                      // Recently Viewed
-                      if (recentlyViewedStories.isNotEmpty) ...[
-                        _buildSectionTitle('Recently Viewed'),
-                        const SizedBox(height: 16),
-                        _buildStoryList(recentlyViewedStories),
-                        const SizedBox(height: 36),
-                      ],
-
-                      // Recommended For You
                       _buildSectionTitle('Recommended For You'),
                       const SizedBox(height: 16),
                       _buildStoryList(stories),
                       const SizedBox(height: 36),
-
-                      // Completed Stories
-                      if (completedStories.isNotEmpty) ...[
-                        _buildSectionTitle('Completed Stories'),
-                        const SizedBox(height: 16),
-                        _buildStoryList(completedStories),
-                        const SizedBox(height: 24),
-                      ],
+                      _buildSectionTitle('Recently Viewed'),
+                      const SizedBox(height: 16),
+                      _buildStoryList(stories),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -256,237 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildDailyChallengeCard() {
-    return GestureDetector(
-      onTap: () {
-        _showDailyChallengeDialog();
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFD93D), Color(0xFFFFA93D)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFFFD93D).withOpacity(0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.emoji_events_rounded,
-                size: 40,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Daily Challenge',
-                    style: GoogleFonts.fredoka(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Read 1 story today! 🎯',
-                    style: GoogleFonts.fredoka(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showDailyChallengeDialog() {
-    final recentlyViewedStories = Provider.of<RecentlyViewedProvider>(context, listen: false).recentlyViewed;
-    // Calculate how many stories were completed today
-    int storiesReadToday = recentlyViewedStories.length; // You can modify this logic
-    bool challengeCompleted = storiesReadToday >= 1;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Trophy icon with animation effect
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: challengeCompleted
-                          ? [Color(0xFFFFD93D), Color(0xFFFFA93D)]
-                          : [Colors.grey.shade300, Colors.grey.shade400],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: challengeCompleted
-                            ? const Color(0xFFFFD93D).withOpacity(0.4)
-                            : Colors.grey.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    challengeCompleted ? Icons.emoji_events_rounded : Icons.lock_rounded,
-                    size: 60,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Title
-                Text(
-                  challengeCompleted ? '🎉 Challenge Complete!' : 'Daily Challenge',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2D2D2D),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Description
-                Text(
-                  challengeCompleted
-                      ? 'Great job! You read a story today! 🌟'
-                      : 'Read 1 story to complete today\'s challenge!',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(
-                    fontSize: 16,
-                    color: const Color(0xFF515151),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Progress indicator
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Stories Read Today',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF515151),
-                            ),
-                          ),
-                          Text(
-                            '$storiesReadToday / 1',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: challengeCompleted
-                                  ? const Color(0xFF4CAF50)
-                                  : const Color(0xFFFFD93D),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: storiesReadToday >= 1 ? 1.0 : storiesReadToday / 1,
-                          backgroundColor: Colors.grey.shade300,
-                          color: challengeCompleted
-                              ? const Color(0xFF4CAF50)
-                              : const Color(0xFFFFD93D),
-                          minHeight: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Close button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFD93D),
-                      foregroundColor: const Color(0xFF2D2D2D),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      challengeCompleted ? 'Awesome!' : 'Got it!',
-                      style: GoogleFonts.fredoka(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 

@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:animate_do/animate_do.dart';
-import 'dart:async';
-import 'dart:io';
 
 class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({super.key});
@@ -19,14 +17,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   List<Map<String, dynamic>> _wordDefinitions = [];
   bool _isLoading = false;
   String _errorMessage = '';
-  String _selectedLanguage = 'English'; // Default language
-
-  // API Configuration
-  // For emulator, use: 'http://10.0.2.2:3000/api'
-  // For real device, use your computer's IP: 'http://192.168.x.x:3000/api'
-  // For localhost testing: 'http://localhost:3000/api'
-  static const String TAGALOG_API_BASE = 'http://192.168.1.8:3000/api';
-  static const String ENGLISH_API_BASE = 'https://api.dictionaryapi.dev/api/v2/entries/en';
 
   // Cartoonish colors matching login screen style
   final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
@@ -52,118 +42,41 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
-      _wordDefinitions = [];
     });
 
     try {
-      List<Map<String, dynamic>> results = [];
-
-      if (_selectedLanguage == 'English') {
-        results = await _searchEnglishWord(word);
-      } else if (_selectedLanguage == 'Tagalog') {
-        results = await _searchTagalogWord(word);
-      }
-
-      setState(() {
-        _isLoading = false;
-        _wordDefinitions = results;
-
-        // Add to recent searches if not already there
-        if (!_recentSearches.contains(word.toLowerCase())) {
-          _recentSearches.insert(0, word.toLowerCase());
-          if (_recentSearches.length > 10) {
-            _recentSearches.removeLast();
-          }
-        }
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = _selectedLanguage == 'English'
-            ? 'Something went wrong. Please try again.'
-            : 'May problema. Subukan ulit.';
-      });
-    }
-  }
-
-  // English Dictionary - Uses free API
-  Future<List<Map<String, dynamic>>> _searchEnglishWord(String word) async {
-    final response = await http.get(
-      Uri.parse('$ENGLISH_API_BASE/$word'),
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return List<Map<String, dynamic>>.from(data);
-    } else {
-      throw Exception('Word not found');
-    }
-  }
-
-  // Tagalog Dictionary - Uses YOUR custom API
-  Future<List<Map<String, dynamic>>> _searchTagalogWord(String word) async {
-    try {
-      print('Attempting to connect to: $TAGALOG_API_BASE/words/$word'); // Debug log
-
       final response = await http.get(
-        Uri.parse('$TAGALOG_API_BASE/words/${Uri.encodeComponent(word)}'),
-        headers: {'Content-Type': 'application/json'},
-      ).timeout(Duration(seconds: 10)); // Add timeout
-
-      print('Response status: ${response.statusCode}'); // Debug log
-      print('Response body: ${response.body}'); // Debug log
+        Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/$word'),
+      );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return [_convertTagalogApiResponse(data)];
-      } else if (response.statusCode == 404) {
-        throw Exception('Hindi nahanap ang salita sa diksyunaryo');
-      } else {
-        throw Exception('Error: ${response.statusCode}');
-      }
-    } on TimeoutException catch (e) {
-      print('Timeout error: $e');
-      throw Exception('Timeout: Hindi makonekta sa server. Siguraduhing tumatakbo ang API.');
-    } on SocketException catch (e) {
-      print('Connection error: $e');
-      throw Exception('Hindi makonekta sa server. Tingnan ang IP address at firewall.');
-    } catch (e) {
-      print('Error fetching Tagalog word: $e');
-      throw Exception('Error: $e');
-    }
-  }
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          _wordDefinitions = data.cast<Map<String, dynamic>>();
+          _isLoading = false;
 
-  // Convert your API response format to match the UI expectations
-  Map<String, dynamic> _convertTagalogApiResponse(Map<String, dynamic> apiData) {
-    List<Map<String, dynamic>> meanings = [];
-
-    if (apiData['meanings'] != null) {
-      for (var meaning in apiData['meanings']) {
-        if (meaning['definitions'] != null && meaning['definitions'] is List) {
-          List<Map<String, dynamic>> definitions = [];
-
-          for (var def in meaning['definitions']) {
-            definitions.add({
-              'definition': def['definition'] ?? '',
-              'example': (def['examples'] != null && def['examples'].isNotEmpty)
-                  ? def['examples'][0]
-                  : null,
-            });
+          // Add to recent searches if not already there
+          if (!_recentSearches.contains(word.toLowerCase())) {
+            _recentSearches.insert(0, word.toLowerCase());
+            if (_recentSearches.length > 10) {
+              _recentSearches.removeLast();
+            }
           }
-
-          meanings.add({
-            'partOfSpeech': meaning['partOfSpeech'] ?? 'salita',
-            'definitions': definitions,
-          });
-        }
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Word not found. Try another word!';
+          _wordDefinitions = [];
+        });
       }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Oops! Something went wrong. Check your connection.';
+        _wordDefinitions = [];
+      });
     }
-
-    return {
-      'word': apiData['word'] ?? '',
-      'phonetic': apiData['pronunciation'] ?? '',
-      'meanings': meanings,
-    };
   }
 
   @override
@@ -171,7 +84,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _selectedLanguage == 'English' ? 'My Dictionary' : 'Aking Diksyunaryo',
+          'Kids Dictionary',
           style: GoogleFonts.fredoka(
             textStyle: const TextStyle(
               fontWeight: FontWeight.bold,
@@ -182,44 +95,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         ),
         backgroundColor: _primaryColor,
         elevation: 0,
-        actions: [
-          // Language selector
-          PopupMenuButton<String>(
-            icon: Icon(Icons.language, color: Colors.white),
-            onSelected: (String language) {
-              setState(() {
-                _selectedLanguage = language;
-                _recentSearches = language == 'English'
-                    ? ['happy', 'animal', 'school', 'friend', 'book']
-                    : ['mahal', 'kumain', 'bahay', 'tubig', 'maganda'];
-                _wordDefinitions = [];
-                _errorMessage = '';
-              });
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem(
-                value: 'English',
-                child: Row(
-                  children: [
-                    Text('🇺🇸', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 8),
-                    Text('English', style: GoogleFonts.fredoka()),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Tagalog',
-                child: Row(
-                  children: [
-                    Text('🇵🇭', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 8),
-                    Text('Tagalog', style: GoogleFonts.fredoka()),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -227,7 +102,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         ),
         child: Column(
           children: [
-            // Search bar section
             FadeInDown(
               duration: const Duration(milliseconds: 600),
               child: Container(
@@ -241,42 +115,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Language indicator
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [_accentColor, _primaryColor],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _selectedLanguage == 'English' ? Icons.book : Icons.menu_book_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            _selectedLanguage == 'English'
-                                ? 'English Dictionary'
-                                : 'Tunay na Tagalog Dictionary',
-                            style: GoogleFonts.fredoka(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Search bar
                     Row(
                       children: [
                         Expanded(
@@ -295,9 +133,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                             child: TextField(
                               controller: _searchController,
                               decoration: InputDecoration(
-                                hintText: _selectedLanguage == 'English'
-                                    ? 'Type an English word...'
-                                    : 'Mag-type ng Tagalog na salita...',
+                                hintText: 'Search for a word...',
                                 hintStyle: GoogleFonts.fredoka(
                                   color: Colors.grey,
                                 ),
@@ -345,7 +181,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                             ),
                             child: Text(
-                              _selectedLanguage == 'English' ? 'Search' : 'Hanap',
+                              'Search',
                               style: GoogleFonts.fredoka(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -358,9 +194,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _selectedLanguage == 'English'
-                          ? 'Tap on a word to see its meaning:'
-                          : 'I-tap ang salita para sa kahulugan:',
+                      'Recent Searches',
                       style: GoogleFonts.fredoka(
                         color: _primaryColor,
                         fontWeight: FontWeight.bold,
@@ -368,8 +202,6 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // Recent searches
                     SizedBox(
                       height: 40,
                       child: ListView.builder(
@@ -407,23 +239,8 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             Expanded(
               child: _isLoading
                   ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      color: _primaryColor,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _selectedLanguage == 'English'
-                          ? 'Searching...'
-                          : 'Naghahanap...',
-                      style: GoogleFonts.fredoka(
-                        color: _primaryColor,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
+                child: CircularProgressIndicator(
+                  color: _primaryColor,
                 ),
               )
                   : _errorMessage.isNotEmpty
@@ -438,16 +255,13 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                         color: _accentColor.withOpacity(0.7),
                       ),
                       const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          _errorMessage,
-                          style: GoogleFonts.fredoka(
-                            fontSize: 18,
-                            color: _accentColor,
-                          ),
-                          textAlign: TextAlign.center,
+                      Text(
+                        _errorMessage,
+                        style: GoogleFonts.fredoka(
+                          fontSize: 18,
+                          color: _accentColor,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -468,31 +282,17 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.menu_book,
-              size: 120,
+              Icons.book,
+              size: 80,
               color: _primaryColor.withOpacity(0.5),
             ),
             const SizedBox(height: 20),
             Text(
-              _selectedLanguage == 'English'
-                  ? 'Search for a word to see its definition!'
-                  : 'Maghanap ng salita para sa kahulugan!',
+              'Search for a word to get started!',
               style: GoogleFonts.fredoka(
                 fontSize: 18,
                 color: _primaryColor,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _selectedLanguage == 'English'
-                  ? 'Try: happy, love, book, water'
-                  : 'Subukan: mahal, kumain, bahay, tubig',
-              style: GoogleFonts.fredoka(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -532,9 +332,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _selectedLanguage == 'English'
-                              ? Icons.menu_book
-                              : Icons.auto_stories,
+                          Icons.menu_book,
                           color: _accentColor,
                           size: 32,
                         ),
@@ -662,7 +460,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             ),
           ],
         ),
-        if (example != null && example.isNotEmpty) ...[
+        if (example != null) ...[
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.only(left: 40),

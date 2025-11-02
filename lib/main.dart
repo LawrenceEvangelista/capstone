@@ -7,25 +7,15 @@ import 'package:testapp/screens/auth/signup_screen.dart';
 import 'package:testapp/screens/home/home_screen.dart';
 import 'package:testapp/screens/auth/forgot_password_screen.dart';
 import 'package:testapp/screens/layout/auth_layout.dart';
-import 'package:testapp/auth_service.dart';
-import 'package:testapp/screens/story_screen.dart';
 import 'package:testapp/screens/favorites/favorites_provider.dart';
 import 'package:testapp/screens/favorites/favorites_screen.dart';
-import 'package:testapp/providers/recently_viewed_provider.dart';
+import 'package:testapp/screens/story_screen.dart'; // ✅ Added this
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
-        ChangeNotifierProvider(create: (_) => RecentlyViewedProvider()),
-      ],
-      child: MyApp(),
-    ),
-  );
+  runApp(MyApp()); // ✅ Corrected
 }
 
 class MyApp extends StatefulWidget {
@@ -66,12 +56,9 @@ class _MyAppState extends State<MyApp> {
           '/login_signup': (context) => LoginSignupScreen(),
           '/login': (context) => LoginScreen(),
           '/signup': (context) => SignupScreen(),
-          '/forgot_password': (context) => ForgotPasswordScreen(authService: AuthService()),
           '/home': (context) => HomeScreen(),
           '/favorites': (context) => FavoritesScreen(),
-          // Remove the '/story' route as it requires a storyId parameter
         },
-        // Override the onGenerateRoute to handle routes with parameters
         onGenerateRoute: (settings) {
           if (settings.name == '/home') {
             return MaterialPageRoute(
@@ -79,9 +66,7 @@ class _MyAppState extends State<MyApp> {
               settings: settings,
             );
           }
-          // Handle the story route with parameter
           if (settings.name?.startsWith('/story/') == true) {
-            // Extract storyId from the route
             final storyId = settings.name!.split('/')[2];
             return MaterialPageRoute(
               builder: (context) => StoryScreen(storyId: storyId),

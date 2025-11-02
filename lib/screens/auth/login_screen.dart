@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:testapp/auth_service.dart';
+import 'package:testapp/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:animate_do/animate_do.dart';
 import '../home/home_screen.dart';
@@ -76,17 +76,10 @@ class _LoginScreenState extends State<LoginScreen> {
       await _authService.signInWithGoogle(isSignUp: false);
       _navigateToHome(context);
       print("Google Sign-In successful!");
-    } on FirebaseAuthException catch (e) {
-      print("LoginScreen - Google Sign-In FirebaseAuthException: ${e.code} - ${e.message}");
-      setState(() {
-        errorMessage = e.message ?? 'Failed to sign in with Google.';
-        _isLoading = false;
-      });
-      _showCartoonishErrorDialog(context, errorMessage);
     } catch (e) {
       print("LoginScreen - Google Sign-In Exception: $e");
       setState(() {
-        errorMessage = 'Failed to sign in with Google: ${e.toString()}';
+        errorMessage = 'Failed to sign in with Google. Please try again.';
         _isLoading = false;
       });
       _showCartoonishErrorDialog(context, errorMessage);
