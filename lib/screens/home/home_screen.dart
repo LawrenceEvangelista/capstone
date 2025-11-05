@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_database/firebase_database.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:testapp/screens/auth/profile_screen.dart';
-import 'package:testapp/screens/stories/story_screen.dart';
+import 'package:testapp/screens/story_screen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
 
-// Create a main layout widget that will contain both the HomeScreen and the bottom navigation
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
 
@@ -17,10 +18,9 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
 
-  // Define the list of screens to be shown
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Placeholder(), // Replace with actual screens
+    const Placeholder(),
     const Placeholder(),
     const Placeholder(),
   ];
@@ -37,7 +37,7 @@ class _MainLayoutState extends State<MainLayout> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFFFFD93D),
+        selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         elevation: 16,
@@ -64,7 +64,6 @@ class _MainLayoutState extends State<MainLayout> {
   }
 }
 
-// Modify HomeScreen to be a child screen instead of the main entry point
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -72,34 +71,54 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+final FirebaseStorage _storage = FirebaseStorage.instance;
+
 class _HomeScreenState extends State<HomeScreen> {
   String username = 'Loading...';
   List<Map<String, dynamic>> stories = [];
-  final supabase = Supabase.instance.client;
+  bool _isLoading = true;
+  String? _errorMessage;
   final DatabaseReference _databaseReference =
   FirebaseDatabase.instance.ref().child('stories');
-
-  final String supabaseBaseUrl = 'https://xqyebwxupizjcbuvxrjx.supabase.co';
-  final String supabaseBucket = 'images';
 
   @override
   void initState() {
     super.initState();
     fetchUsername();
     fetchStories();
+    initializeRecentlyViewedUser();
+  }
+
+  void initializeRecentlyViewedUser() {
+    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+    final recentlyViewedProvider =
+    Provider.of<RecentlyViewedProvider>(context, listen: false);
+    recentlyViewedProvider.setCurrentUserId(user?.uid);
   }
 
   Future<void> fetchUsername() async {
-    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    try {
+      firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        setState(() {
+          username = user.displayName ?? 'No Username';
+        });
+      }
+    } catch (e) {
+      print('Error fetching username: $e');
       setState(() {
-        username = user.displayName ?? 'No Username';
+        username = 'Guest User';
       });
     }
   }
 
   Future<void> fetchStories() async {
     try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
       DatabaseEvent event = await _databaseReference.once();
       DataSnapshot snapshot = event.snapshot;
 
@@ -107,44 +126,185 @@ class _HomeScreenState extends State<HomeScreen> {
         Map<dynamic, dynamic> data = snapshot.value as Map;
         List<Map<String, dynamic>> fetchedStories = [];
 
-        data.forEach((key, value) {
-          if (value is Map) {
-            String imageUrl;
-            try {
-              imageUrl = supabase.storage
-                  .from(supabaseBucket)
-                  .getPublicUrl('$key.png');
-            } catch (e) {
-              imageUrl =
-              '$supabaseBaseUrl/storage/v1/object/public/$supabaseBucket/$key.jpg';
+        await Future.wait(
+          data.entries.map((entry) async {
+            final key = entry.key;
+            final value = entry.value;
+
+            if (value is Map) {
+              String imageUrl = '';
+
+              try {
+                imageUrl = await _storage
+                    .ref('images/$key.png')
+                    .getDownloadURL();
+              } catch (e) {
+                try {
+                  imageUrl = await _storage
+                      .ref('images/$key.jpg')
+                      .getDownloadURL();
+                } catch (e) {
+                  print('Error loading image for $key: $e');
+                  // Use a placeholder image URL or empty string
+                  imageUrl = '';
+                }
+              }
+
+              final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
+              final text = value['textEng'] ?? value['textTag'] ?? '';
+
+              fetchedStories.add({
+                'id': key,
+                'title': title,
+                'text': text,
+                'imageUrl': imageUrl,
+                'progress': value['progress'] ?? 0.0,
+              });
             }
-
-            final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
-            final text = value['textEng'] ?? value['textTag'] ?? '';
-
-            fetchedStories.add({
-              'id': key,
-              'title': title,
-              'text': text,
-              'imageUrl': imageUrl,
-              'progress': value['progress'] ?? 0.0,
-            });
-          }
-        });
+          }),
+        );
 
         setState(() {
           stories = fetchedStories;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          stories = [];
+          _isLoading = false;
         });
       }
     } catch (e) {
       print('Error fetching stories: $e');
+      setState(() {
+        _errorMessage = 'Unable to load stories. Please check your connection and try again.';
+        _isLoading = false;
+        stories = [];
+      });
     }
+  }
+
+  // Helper methods to filter stories
+  List<Map<String, dynamic>> get continueReadingStories {
+    return stories.where((story) {
+      final progress = (story['progress'] is double) ? story['progress'] : 0.0;
+      return progress > 0 && progress < 1.0;
+    }).toList();
+  }
+
+  List<Map<String, dynamic>> get newStories {
+    return stories.where((story) {
+      final progress = (story['progress'] is double) ? story['progress'] : 0.0;
+      return progress == 0.0;
+    }).take(5).toList();
+  }
+
+  List<Map<String, dynamic>> get completedStories {
+    return stories.where((story) {
+      final progress = (story['progress'] is double) ? story['progress'] : 0.0;
+      return progress >= 1.0;
+    }).toList();
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: Theme.of(context).colorScheme.error.withOpacity(0.7),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Oops! Something went wrong',
+            style: GoogleFonts.fredoka(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _errorMessage ?? 'Failed to load content',
+            style: GoogleFonts.fredoka(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              fetchStories();
+              fetchUsername();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              'Try Again',
+              style: GoogleFonts.fredoka(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Loading stories...',
+            style: GoogleFonts.fredoka(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context);
+    final recentlyViewedStories = recentlyViewedProvider.getRecentlyViewedByDate(days: 7); // Show stories from last 7 days
+    
+    // Show loading state
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: _buildLoadingWidget(),
+      );
+    }
+    
+    // Show error state
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: _buildErrorWidget(),
+      );
+    }
+    
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,18 +321,54 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 24),
                       _buildSearchBar(),
                       const SizedBox(height: 32),
+
+                      // Fun Daily Challenge Card
+                      _buildDailyChallengeCard(),
+                      const SizedBox(height: 32),
+
+                      // Categories
                       _buildSectionTitle('Explore Categories'),
                       const SizedBox(height: 16),
                       _buildCategoriesRow(),
                       const SizedBox(height: 36),
+
+                      // Continue Reading (only if there are stories in progress)
+                      if (continueReadingStories.isNotEmpty) ...[
+                        _buildSectionTitle('Continue Reading'),
+                        const SizedBox(height: 16),
+                        _buildStoryList(continueReadingStories),
+                        const SizedBox(height: 36),
+                      ],
+
+                      // New Stories
+                      if (newStories.isNotEmpty) ...[
+                        _buildSectionTitle('New Stories'),
+                        const SizedBox(height: 16),
+                        _buildStoryList(newStories),
+                        const SizedBox(height: 36),
+                      ],
+
+                      // Recently Viewed
+                      if (recentlyViewedStories.isNotEmpty) ...[
+                        _buildSectionTitle('Recently Viewed'),
+                        const SizedBox(height: 16),
+                        _buildStoryList(recentlyViewedStories),
+                        const SizedBox(height: 36),
+                      ],
+
+                      // Recommended For You
                       _buildSectionTitle('Recommended For You'),
                       const SizedBox(height: 16),
                       _buildStoryList(stories),
                       const SizedBox(height: 36),
-                      _buildSectionTitle('Recently Viewed'),
-                      const SizedBox(height: 16),
-                      _buildStoryList(stories),
-                      const SizedBox(height: 24),
+
+                      // Completed Stories
+                      if (completedStories.isNotEmpty) ...[
+                        _buildSectionTitle('Completed Stories'),
+                        const SizedBox(height: 16),
+                        _buildStoryList(completedStories),
+                        const SizedBox(height: 24),
+                      ],
                     ],
                   ),
                 ),
@@ -184,12 +380,244 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildDailyChallengeCard() {
+    return GestureDetector(
+      onTap: () {
+        _showDailyChallengeDialog();
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Theme.of(context).primaryColor, Theme.of(context).colorScheme.secondary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).primaryColor.withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.emoji_events_rounded,
+                size: 40,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Daily Challenge',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Read 1 story today! 🎯',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 14,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDailyChallengeDialog() {
+    final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context, listen: false);
+    // Calculate how many stories were read today using proper date filtering
+    final todayStories = recentlyViewedProvider.getTodayStories;
+    int storiesReadToday = todayStories.length;
+    bool challengeCompleted = storiesReadToday >= 1;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Trophy icon with animation effect
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: challengeCompleted
+                          ? [Theme.of(context).primaryColor, Theme.of(context).colorScheme.secondary]
+                          : [Colors.grey.shade300, Colors.grey.shade400],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: challengeCompleted
+                            ? Theme.of(context).primaryColor.withOpacity(0.4)
+                            : Colors.grey.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    challengeCompleted ? Icons.emoji_events_rounded : Icons.lock_rounded,
+                    size: 60,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Title
+                Text(
+                  challengeCompleted ? '🎉 Challenge Complete!' : 'Daily Challenge',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Description
+                Text(
+                  challengeCompleted
+                      ? 'Great job! You read a story today! 🌟'
+                      : 'Read 1 story to complete today\'s challenge!',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Progress indicator
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Stories Read Today',
+                            style: GoogleFonts.fredoka(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                          Text(
+                            '$storiesReadToday / 1',
+                            style: GoogleFonts.fredoka(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: challengeCompleted
+                                  ? Colors.green
+                                  : Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: storiesReadToday >= 1 ? 1.0 : storiesReadToday / 1,
+                          backgroundColor: Colors.grey.shade300,
+                          color: challengeCompleted
+                              ? Colors.green
+                              : Theme.of(context).primaryColor,
+                          minHeight: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Close button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Theme.of(context).textTheme.labelLarge?.color,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      challengeCompleted ? 'Awesome!' : 'Got it!',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Color(0xFFFFD93D),
-        boxShadow: [
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
+        boxShadow: const [
           BoxShadow(
             color: Color(0x29000000),
             offset: Offset(0, 3),
@@ -220,10 +648,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              child: const CircleAvatar(
+              child: CircleAvatar(
                 radius: 24,
                 backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Color(0xFF515151), size: 28),
+                child: Icon(Icons.person, color: Theme.of(context).textTheme.bodyLarge?.color, size: 28),
               ),
             ),
           ),
@@ -234,19 +662,19 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'Welcome back,',
                 style: GoogleFonts.fredoka(
-                  textStyle: const TextStyle(
+                  textStyle: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF515151),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                 ),
               ),
               Text(
                 username,
                 style: GoogleFonts.sniglet(
-                  textStyle: const TextStyle(
+                  textStyle: TextStyle(
                     fontSize: 22,
-                    color: Color(0xFF2D2D2D),
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
@@ -277,13 +705,13 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.grey.shade600,
             fontSize: 16,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search_rounded,
-            color: Color(0xFF515151),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             size: 24,
           ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).scaffoldBackgroundColor,
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
@@ -295,12 +723,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: Color(0xFFFFD93D), width: 2),
+            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
           ),
         ),
         style: GoogleFonts.fredoka(
-          textStyle: const TextStyle(
-            color: Color(0xFF2D2D2D),
+          textStyle: TextStyle(
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontSize: 16,
           ),
         ),
@@ -312,7 +740,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -356,13 +784,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Color(0xFFFFD93D).withOpacity(0.2),
+              color: Theme.of(context).primaryColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
               size: 32,
-              color: const Color(0xFFFFD93D),
+              color: Theme.of(context).primaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -372,7 +800,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: GoogleFonts.fredoka(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: const Color(0xFF515151),
+              color: Theme.of(context).textTheme.bodyMedium?.color,
             ),
           ),
         ],
@@ -389,13 +817,13 @@ class _HomeScreenState extends State<HomeScreen> {
           style: GoogleFonts.fredoka(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF2D2D2D),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFD93D).withOpacity(0.2),
+            color: Theme.of(context).primaryColor.withOpacity(0.2),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -405,14 +833,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: GoogleFonts.fredoka(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF2D2D2D),
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(width: 4),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
-                color: Color(0xFF2D2D2D),
+                color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ],
           ),
@@ -426,8 +854,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return Container(
         height: 180,
         alignment: Alignment.center,
-        child: const CircularProgressIndicator(
-          color: Color(0xFFFFD93D),
+        child: CircularProgressIndicator(
+          color: Theme.of(context).primaryColor,
           strokeWidth: 3,
         ),
       );
@@ -510,7 +938,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: LinearProgressIndicator(
                                     value: progress,
                                     backgroundColor: Colors.white.withOpacity(0.3),
-                                    color: const Color(0xFFFFD93D),
+                                    color: Theme.of(context).primaryColor,
                                     minHeight: 6,
                                   ),
                                 ),
@@ -537,7 +965,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: GoogleFonts.fredoka(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF2D2D2D),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                 ],

@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:animate_do/animate_do.dart'; // Added for animations
 import 'package:testapp/services/auth_service.dart';
-import '../home/home_screen.dart';
+import 'package:testapp/screens/layout/bottomnav.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import FontAwesomeIcons
 
 class SignupScreen extends StatefulWidget {
@@ -29,11 +29,11 @@ class _SignupScreenState extends State<SignupScreen> {
   String errorMessage = '';
   final AuthService _authService = AuthService();
 
-  // Cartoonish colors - matching login screen
-  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
-  final Color _primaryColor = const Color(0xFFFF6D00); // Orange
-  final Color _accentColor = const Color(0xFF8E24AA); // Purple
-  final Color _buttonColor = const Color(0xFFFF9800); // Orange
+  // Consistent app colors - using theme colors
+  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow background
+  final Color _primaryColor = const Color(0xFFFFD93D); // Mustard yellow (consistent primary)
+  final Color _accentColor = const Color(0xFF8E24AA); // Purple accent
+  final Color _buttonColor = const Color(0xFFFFD93D); // Mustard yellow buttons
 
   @override
   void dispose() {
@@ -60,9 +60,17 @@ class _SignupScreenState extends State<SignupScreen> {
         User? user = userCredential.user;
         if (user != null) {
           await user.updateDisplayName(_usernameController.text.trim());
-          // If you have a method to upload profile image, call it here
+          // Upload profile image if selected
           if (_profileImage != null) {
-            // Example: await _authService.uploadProfileImage(user.uid, _profileImage!);
+            try {
+              await _authService.uploadProfileImage(
+                userId: user.uid, 
+                imageFile: _profileImage!
+              );
+            } catch (e) {
+              print("Profile image upload failed: $e");
+              // Continue with signup even if image upload fails
+            }
           }
         }
 
@@ -71,7 +79,7 @@ class _SignupScreenState extends State<SignupScreen> {
           context,
           PageRouteBuilder(
             pageBuilder:
-                (context, animation, secondaryAnimation) => const HomeScreen(),
+                (context, animation, secondaryAnimation) => const BottomNav(),
             transitionsBuilder: (
                 context,
                 animation,
@@ -119,7 +127,7 @@ class _SignupScreenState extends State<SignupScreen> {
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-          const HomeScreen(),
+          const BottomNav(),
           transitionsBuilder:
               (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);

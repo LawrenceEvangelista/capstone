@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:testapp/screens/favorites/favorites_provider.dart';
-import 'package:testapp/screens/story_screen.dart';
+import 'package:testapp/screens/stories/story_screen.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({Key? key}) : super(key: key);

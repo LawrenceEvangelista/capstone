@@ -27,11 +27,11 @@ class _StoryScreenState extends State<StoryScreen> {
   String errorMessage = '';
   Map<String, dynamic> storyData = {};
 
-  // Cartoonish colors - matching signup screen
-  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
-  final Color _primaryColor = const Color(0xFFFF6D00); // Orange
-  final Color _accentColor = const Color(0xFF8E24AA); // Purple
-  final Color _buttonColor = const Color(0xFFFF9800); // Orange
+  // Consistent app colors - using theme colors
+  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow background
+  final Color _primaryColor = const Color(0xFFFFD93D); // Mustard yellow (consistent primary)
+  final Color _accentColor = const Color(0xFF8E24AA); // Purple accent
+  final Color _buttonColor = const Color(0xFFFFD93D); // Mustard yellow buttons
 
   @override
   void initState() {
@@ -238,10 +238,10 @@ class _StoryScreenState extends State<StoryScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Row(
           children: [
-            Icon(Icons.quiz, color: _primaryColor, size: 28),
+            Icon(Icons.quiz, color: Theme.of(context).primaryColor, size: 28),
             const SizedBox(width: 10),
             Text(
               'Coming Soon!',
@@ -249,7 +249,7 @@ class _StoryScreenState extends State<StoryScreen> {
                 textStyle: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: _primaryColor,
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
             ),
@@ -265,7 +265,7 @@ class _StoryScreenState extends State<StoryScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _accentColor,
+              backgroundColor: Theme.of(context).colorScheme.secondary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
@@ -297,7 +297,7 @@ class _StoryScreenState extends State<StoryScreen> {
     final bool isFavorite = favoritesProvider.isFavorite(widget.storyId);
 
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Container(
         child: SafeArea(
           child: isLoading
@@ -305,13 +305,13 @@ class _StoryScreenState extends State<StoryScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(color: _primaryColor),
+                CircularProgressIndicator(color: Theme.of(context).primaryColor),
                 const SizedBox(height: 20),
                 Text(
                   'Loading story...',
                   style: GoogleFonts.fredoka(
                     fontSize: 18,
-                    color: _primaryColor,
+                    color: Theme.of(context).primaryColor,
                   ),
                 ),
               ],
@@ -322,13 +322,13 @@ class _StoryScreenState extends State<StoryScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, color: _primaryColor, size: 60),
+                Icon(Icons.error_outline, color: Theme.of(context).primaryColor, size: 60),
                 const SizedBox(height: 20),
                 Text(
                   errorMessage,
                   style: GoogleFonts.fredoka(
                     fontSize: 18,
-                    color: Colors.red,
+                    color: Theme.of(context).colorScheme.error,
                   ),
                 ),
               ],
@@ -343,7 +343,7 @@ class _StoryScreenState extends State<StoryScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFD93D),
+                    color: Theme.of(context).primaryColor,
                     borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(20),
                       bottomRight: Radius.circular(20),
@@ -372,7 +372,7 @@ class _StoryScreenState extends State<StoryScreen> {
                             ),
                             child: Icon(
                               Icons.arrow_back_ios_new_rounded,
-                              color: _primaryColor,
+                              color: Theme.of(context).primaryColor,
                               size: 22,
                             ),
                           ),
@@ -384,7 +384,7 @@ class _StoryScreenState extends State<StoryScreen> {
                         style: GoogleFonts.fredoka(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: _primaryColor,
+                          color: Theme.of(context).primaryColor,
                         ),
                       ),
                       const Spacer(),
@@ -404,7 +404,7 @@ class _StoryScreenState extends State<StoryScreen> {
                               _isEnglish
                                   ? Icons.translate
                                   : Icons.g_translate,
-                              color: _primaryColor,
+                              color: Theme.of(context).primaryColor,
                               size: 22,
                             ),
                           ),
@@ -424,11 +424,11 @@ class _StoryScreenState extends State<StoryScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
-                          color: _primaryColor.withOpacity(0.2),
+                          color: Theme.of(context).primaryColor.withOpacity(0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -447,7 +447,7 @@ class _StoryScreenState extends State<StoryScreen> {
                             foreground: Paint()
                               ..style = PaintingStyle.stroke
                               ..strokeWidth = 4
-                              ..color = Colors.white,
+                              ..color = Theme.of(context).scaffoldBackgroundColor,
                           ),
                         ),
                         // Main text
@@ -457,7 +457,7 @@ class _StoryScreenState extends State<StoryScreen> {
                           style: GoogleFonts.fredoka(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: _primaryColor,
+                            color: Theme.of(context).primaryColor,
                           ),
                         ),
                       ],
@@ -491,7 +491,7 @@ class _StoryScreenState extends State<StoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
@@ -513,7 +513,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                 isFavorite ? 'Favorited' : 'Favorite',
                                 style: GoogleFonts.fredoka(
                                   fontSize: 14,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
                                 ),
                               ),
                             ],
@@ -527,7 +527,7 @@ class _StoryScreenState extends State<StoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
@@ -541,7 +541,7 @@ class _StoryScreenState extends State<StoryScreen> {
                             children: [
                               Icon(
                                 Icons.quiz,
-                                color: _accentColor,
+                                color: Theme.of(context).colorScheme.secondary,
                                 size: 22,
                               ),
                               const SizedBox(width: 5),
@@ -549,7 +549,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                 'Quiz',
                                 style: GoogleFonts.fredoka(
                                   fontSize: 14,
-                                  color: Colors.black87,
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
                                 ),
                               ),
                             ],
@@ -570,11 +570,11 @@ class _StoryScreenState extends State<StoryScreen> {
                     padding: const EdgeInsets.all(16.0),
                     child: Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: _primaryColor, width: 2.5),
+                        border: Border.all(color: Theme.of(context).primaryColor, width: 2.5),
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: _primaryColor.withOpacity(0.2),
+                            color: Theme.of(context).primaryColor.withOpacity(0.2),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -583,12 +583,12 @@ class _StoryScreenState extends State<StoryScreen> {
                       clipBehavior: Clip.hardEdge,
                       child: PageFlipWidget(
                         key: ValueKey(_isEnglish),
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                         lastPage: Center(
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).scaffoldBackgroundColor,
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Column(
@@ -599,7 +599,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                   height: 120,
                                   width: 120,
                                   errorBuilder: (context, error, stackTrace) =>
-                                      Icon(Icons.check_circle, size: 100, color: _accentColor),
+                                      Icon(Icons.check_circle, size: 100, color: Theme.of(context).colorScheme.secondary),
                                 ),
                                 const SizedBox(height: 24),
                                 Text(
@@ -607,7 +607,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                   style: GoogleFonts.fredoka(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
-                                    color: _primaryColor,
+                                    color: Theme.of(context).primaryColor,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -617,14 +617,14 @@ class _StoryScreenState extends State<StoryScreen> {
                                   width: 180,
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: [_buttonColor, _accentColor],
+                                      colors: [Theme.of(context).primaryColor, Theme.of(context).colorScheme.secondary],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(25),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: _accentColor.withOpacity(0.3),
+                                        color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
                                         blurRadius: 10,
                                         offset: const Offset(0, 5),
                                       ),
@@ -664,7 +664,7 @@ class _StoryScreenState extends State<StoryScreen> {
                               'No story content available',
                               style: GoogleFonts.fredoka(
                                 fontSize: 18,
-                                color: Colors.black54,
+                                color: Theme.of(context).textTheme.bodyMedium?.color,
                               ),
                             ),
                           ),
@@ -678,7 +678,7 @@ class _StoryScreenState extends State<StoryScreen> {
                             imageUrl: storyPages[index]['image']!,
                             pageNumber: index + 1,
                             totalPages: storyPages.length,
-                            primaryColor: _primaryColor,
+                            primaryColor: Theme.of(context).primaryColor,
                           ),
                         ),
                       ),
@@ -697,7 +697,7 @@ class _StoryScreenState extends State<StoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -705,7 +705,7 @@ class _StoryScreenState extends State<StoryScreen> {
                         children: [
                           Icon(
                             Icons.swipe_left,
-                            color: _accentColor,
+                            color: Theme.of(context).colorScheme.secondary,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -714,13 +714,13 @@ class _StoryScreenState extends State<StoryScreen> {
                             style: GoogleFonts.fredoka(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                              color: Theme.of(context).textTheme.bodyLarge?.color,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Icon(
                             Icons.swipe_right,
-                            color: _accentColor,
+                            color: Theme.of(context).colorScheme.secondary,
                             size: 20,
                           ),
                         ],
@@ -826,7 +826,7 @@ class StoryPage extends StatelessWidget {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
+              color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.85),
               borderRadius: BorderRadius.circular(18),
               boxShadow: [
                 BoxShadow(
@@ -845,7 +845,7 @@ class StoryPage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.fredoka(
                 fontSize: 18,
-                color: Colors.black,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontWeight: FontWeight.w500,
                 height: 1.3,
               ),

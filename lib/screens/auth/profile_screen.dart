@@ -20,11 +20,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditingPassword = false;
   final AuthService _authService = AuthService();
 
-  // Cartoonish colors
-  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
-  final Color _primaryColor = const Color(0xFFFF6D00); // Orange
-  final Color _accentColor = const Color(0xFF8E24AA); // Purple
-  final Color _errorColor = const Color(0xFFE53935); // Red
+
+  // Consistent app colors - using theme colors
+  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow background
+  final Color _primaryColor = const Color(0xFFFFD93D); // Mustard yellow (consistent primary)
+  final Color _accentColor = const Color(0xFF8E24AA); // Purple accent
+  final Color _errorColor = const Color(0xFFE53935); // Red (semantic color)
 
   @override
   void initState() {

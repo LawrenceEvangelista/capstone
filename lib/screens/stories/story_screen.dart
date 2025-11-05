@@ -5,34 +5,27 @@ import 'package:provider/provider.dart';
 import 'package:testapp/screens/favorites/favorites_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
 
 class StoryScreen extends StatefulWidget {
   final String storyId;
-  // This field is essential for passing the category from the list view
-  final Map<String, dynamic>? initialStoryData;
 
-  const StoryScreen({
-    Key? key,
-    required this.storyId,
-    this.initialStoryData,
-  }) : super(key: key);
+  const StoryScreen({Key? key, required this.storyId}) : super(key: key);
 
   @override
   State<StoryScreen> createState() => _StoryScreenState();
 }
 
 class _StoryScreenState extends State<StoryScreen> {
-  // We keep the controller to support the initial 'goToPage' functionality.
   final _controller = GlobalKey<PageFlipWidgetState>();
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   bool isLoading = true;
   bool _isEnglish = true;
   String storyTitle = '';
   List<Map<String, String>> storyPages = [];
   String errorMessage = '';
-  Map<String, dynamic> storyData = {}; // This map holds the data for saving
-
-  // 1. STATE FOR TRACKING PROGRESS (Logic disabled as package version lacks callback)
-  int _currentPage = 0;
+  Map<String, dynamic> storyData = {};
 
   // Cartoonish colors - matching signup screen
   final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
@@ -43,45 +36,88 @@ class _StoryScreenState extends State<StoryScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialStoryData != null) {
-      storyData = Map.from(widget.initialStoryData!);
-    }
     _fetchStoryData();
+    _trackStoryView();
   }
 
-  // 2. METHOD TO UPDATE PROGRESS IN FIREBASE (Now only called when the last page is reached, if logic is added)
-  // NOTE: This function's real-time use is now limited because PageFlipWidget (v0.2.5+1) lacks an onPageFlip/onFlip callback.
-  Future<void> _updateStoryProgress(int pageIndex) async {
-    // pageIndex is 0-based.
-    final totalPages = storyPages.length;
-    if (totalPages == 0) return;
-
-    // Calculate progress as a fraction (0.0 to 1.0)
-    final newProgress = (pageIndex + 1) / totalPages;
-    double clampedProgress = newProgress.clamp(0.0, 1.0);
-
-    // If the story is fully read, update the isRead flag
-    bool isRead = clampedProgress == 1.0;
-
-    // Update the local storyData map
-    storyData['progress'] = clampedProgress;
-    storyData['isRead'] = isRead;
-
+  Future<void> _trackStoryView() async {
     try {
-      final DatabaseReference storyRef = FirebaseDatabase.instance
+      // Fetch story data from Firebase
+      final snapshot = await FirebaseDatabase.instance
           .ref()
-          .child('stories')
-          .child(widget.storyId);
+          .child('stories/${widget.storyId}')
+          .once();
 
-      // Save the progress and read status back to Firebase
-      await storyRef.update({
-        'progress': clampedProgress,
-        'isRead': isRead,
-      });
+      if (snapshot.snapshot.value != null && snapshot.snapshot.value is Map) {
+        final data = snapshot.snapshot.value as Map;
 
+        // Get image URL from Firebase Storage
+        String imageUrl = '';
+        try {
+          imageUrl = await _storage
+              .ref('images/${widget.storyId}.png')
+              .getDownloadURL();
+        } catch (e) {
+          try {
+            imageUrl = await _storage
+                .ref('images/${widget.storyId}.jpg')
+                .getDownloadURL();
+          } catch (e) {
+            print('Error loading image: $e');
+          }
+        }
+
+        final storyData = {
+          'id': widget.storyId,
+          'title': data['titleEng'] ?? data['titleTag'] ?? 'No Title',
+          'imageUrl': imageUrl,
+          'progress': data['progress'] ?? 0.0,
+        };
+
+        // Add to recently viewed
+        if (mounted) {
+          await Provider.of<RecentlyViewedProvider>(context, listen: false)
+              .addRecentlyViewed(storyData);
+        }
+      }
     } catch (e) {
-      // Log error but don't disrupt the user experience
-      print('Error updating story progress: $e');
+      print('Error tracking story view: $e');
+    }
+  }
+
+  Future<String> _loadPageImage(int pageNumber) async {
+    try {
+      // Try with space format first: "PAGE 1.png"
+      String imageUrl = await _storage
+          .ref('storypages/${widget.storyId}/PAGE $pageNumber.png')
+          .getDownloadURL();
+      print('Successfully loaded: storypages/${widget.storyId}/PAGE $pageNumber.png');
+      return imageUrl;
+    } catch (e) {
+      print('Error loading PAGE $pageNumber.png: $e');
+
+      // Try alternative format: "page1.png"
+      try {
+        String imageUrl = await _storage
+            .ref('storypages/${widget.storyId}/page$pageNumber.png')
+            .getDownloadURL();
+        print('Successfully loaded: storypages/${widget.storyId}/page$pageNumber.png');
+        return imageUrl;
+      } catch (e) {
+        print('Error loading page$pageNumber.png: $e');
+
+        // Try JPG format
+        try {
+          String imageUrl = await _storage
+              .ref('storypages/${widget.storyId}/PAGE $pageNumber.jpg')
+              .getDownloadURL();
+          print('Successfully loaded: storypages/${widget.storyId}/PAGE $pageNumber.jpg');
+          return imageUrl;
+        } catch (e) {
+          print('Error loading PAGE $pageNumber.jpg: $e');
+          return ''; // Return empty if all attempts fail
+        }
+      }
     }
   }
 
@@ -100,14 +136,7 @@ class _StoryScreenState extends State<StoryScreen> {
 
         final String? titleEng = data['titleEng'];
         final String? titleTag = data['titleTag'];
-
-        // Check all known keys for the category in the database
-        final String? categoryFromDB = data['typeEng'] ?? data['type'] ?? data['category'];
-
-        // Fetch existing progress from the database
-        final double? dbProgress = (data['progress'] is int)
-            ? (data['progress'] as int).toDouble()
-            : data['progress'] as double?;
+        final String? category = data['category'] ?? 'Uncategorized';
 
         List<Map<String, String>> combinedPages = [];
 
@@ -126,55 +155,56 @@ class _StoryScreenState extends State<StoryScreen> {
             return numA.compareTo(numB);
           });
 
-          for (String pageKey in sortedPageKeys) {
+          // Load images from Firebase Storage for each page
+          for (int i = 0; i < sortedPageKeys.length; i++) {
+            String pageKey = sortedPageKeys[i];
             if (pagesData[pageKey] is Map) {
               Map<dynamic, dynamic> pageContent = pagesData[pageKey] as Map;
+
+              // Load the image URL from Firebase Storage
+              String imageUrl = await _loadPageImage(i + 1);
+
               combinedPages.add({
                 'textEng': pageContent['textEng'] ?? '',
                 'textTag': pageContent['textTag'] ?? '',
-                'image': 'assets/pic${(combinedPages.length % 5) + 1}.png',
+                'image': imageUrl, // Use Firebase Storage URL instead of asset
               });
             }
           }
         }
 
-        // Re-build storyData, ensuring the 'category' is the most reliable one.
-        String finalCategory = categoryFromDB ?? storyData['category'] ?? 'Uncategorized';
+        // Get cover image for favorites
+        String coverImageUrl = '';
+        try {
+          coverImageUrl = await _storage
+              .ref('images/${widget.storyId}.png')
+              .getDownloadURL();
+        } catch (e) {
+          try {
+            coverImageUrl = await _storage
+                .ref('images/${widget.storyId}.jpg')
+                .getDownloadURL();
+          } catch (e) {
+            print('Error loading cover image: $e');
+          }
+        }
 
-        // Use DB progress if available, otherwise use progress from initial data, otherwise default
-        final double finalProgress = dbProgress ?? storyData['progress'] ?? 0.0;
-
+        // Store story data for favorites
         storyData = {
           'id': widget.storyId,
           'titleEng': titleEng,
           'titleTag': titleTag,
-          'category': finalCategory,
+          'category': category,
           'title': _isEnglish ? (titleEng ?? 'No Title') : (titleTag ?? 'Walang Pamagat'),
-          'image': storyData['imageUrl'] ?? (combinedPages.isNotEmpty ? combinedPages[0]['image'] : 'assets/pic1.png'),
-          'progress': finalProgress,
+          'image': coverImageUrl.isNotEmpty ? coverImageUrl : (combinedPages.isNotEmpty ? combinedPages[0]['image'] : ''),
+          'progress': 0.5,
         };
-
-        // Calculate initial page index based on progress
-        // We use floor() to get the index of the last *fully* read page.
-        final int initialPage = (finalProgress * combinedPages.length).floor().clamp(0, combinedPages.length - 1);
 
         setState(() {
           storyTitle = _isEnglish ? (titleEng ?? 'No Title') : (titleTag ?? 'Walang Pamagat');
           storyPages = combinedPages;
           isLoading = false;
-          // Set the initial current page based on loaded progress
-          _currentPage = initialPage;
         });
-
-        // After state update, jump to the correct page if not at the start
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (storyPages.isNotEmpty && _currentPage > 0) {
-            // The goToPage method expects the page number (1-based), so we jump to page _currentPage + 1.
-            _controller.currentState?.goToPage(_currentPage + 1);
-          }
-        });
-
-
       } else {
         setState(() {
           errorMessage = 'Story not found or invalid format';
@@ -449,13 +479,13 @@ class _StoryScreenState extends State<StoryScreen> {
                       // Favorite button
                       GestureDetector(
                         onTap: () {
-                          // The storyData map now holds the consolidated and correct category
+                          // Toggle favorite status
                           favoritesProvider.toggleFavorite(widget.storyId, {
-                            'id': storyData['id'],
+                            'id': widget.storyId,
                             'title': storyTitle,
-                            'category': storyData['category'], // Using the consolidated category
+                            'category': storyData['category'],
                             'image': storyData['image'],
-                            'progress': storyData['progress'] ?? 0.5,
+                            'progress': 0.5,
                           });
                         },
                         child: Container(
@@ -464,7 +494,6 @@ class _StoryScreenState extends State<StoryScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
-                              // CORRECTED: Fixed the typo from BoxBoxShadow to BoxShadow
                               BoxShadow(
                                 color: Colors.grey.withOpacity(0.3),
                                 blurRadius: 8,
@@ -553,11 +582,7 @@ class _StoryScreenState extends State<StoryScreen> {
                       ),
                       clipBehavior: Clip.hardEdge,
                       child: PageFlipWidget(
-                        key: ValueKey(_isEnglish), // Add this key to force rebuild
-                        // COMPILATION FIX: Removed the 'onPageChange' parameter entirely
-                        // as this specific version (0.2.5+1) does not support it,
-                        // causing the persistent "No named parameter" error.
-
+                        key: ValueKey(_isEnglish),
                         backgroundColor: Colors.white,
                         lastPage: Center(
                           child: Container(
@@ -733,12 +758,64 @@ class StoryPage extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background image
+        // Background image - now from Firebase Storage
         ClipRRect(
           borderRadius: BorderRadius.circular(23),
-          child: Image.asset(
+          child: imageUrl.isNotEmpty
+              ? Image.network(
             imageUrl,
             fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: Colors.grey.shade200,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: primaryColor,
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                        : null,
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('Error loading image: $error');
+              return Container(
+                color: Colors.grey.shade300,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.broken_image,
+                        size: 64,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Image not found',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          )
+              : Container(
+            color: Colors.grey.shade300,
+            child: Center(
+              child: Icon(
+                Icons.image_not_supported,
+                size: 64,
+                color: Colors.grey.shade500,
+              ),
+            ),
           ),
         ),
 

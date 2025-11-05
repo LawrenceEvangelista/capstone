@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:testapp/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:animate_do/animate_do.dart';
-import '../home/home_screen.dart';
+import '../layout/bottomnav.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,11 +21,11 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
   bool _isLoading = false;
 
-  // Cartoonish colors
-  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
-  final Color _primaryColor = const Color(0xFFFF6D00); // Orange
-  final Color _accentColor = const Color(0xFF8E24AA); // Purple
-  final Color _buttonColor = const Color(0xFFFF9800); // Orange
+  // Consistent app colors - using theme colors
+  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow background
+  final Color _primaryColor = const Color(0xFFFFD93D); // Mustard yellow (consistent primary)
+  final Color _accentColor = const Color(0xFF8E24AA); // Purple accent
+  final Color _buttonColor = const Color(0xFFFFD93D); // Mustard yellow buttons
   final Color _googleButtonColor = Colors.white; // White for Google button
 
   @override
@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context,
       PageRouteBuilder(
         pageBuilder:
-            (context, animation, secondaryAnimation) => const HomeScreen(),
+            (context, animation, secondaryAnimation) => const BottomNav(),
         transitionsBuilder: (
             context,
             animation,
@@ -310,6 +310,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
+                                }
+                                // Email format validation
+                                final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
+                                if (!emailRegex.hasMatch(value)) {
+                                  return 'Please enter a valid email address';
                                 }
                                 return null;
                               },

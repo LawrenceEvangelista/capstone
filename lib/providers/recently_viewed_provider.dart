@@ -8,6 +8,39 @@ class RecentlyViewedProvider with ChangeNotifier {
   String? _currentUserId;
 
   List<Map<String, dynamic>> get recentlyViewed => _recentlyViewed;
+
+  // Get recently viewed stories filtered by date (e.g., last 7 days, last 30 days)
+  List<Map<String, dynamic>> getRecentlyViewedByDate({int days = 7}) {
+    final cutoffDate = DateTime.now().subtract(Duration(days: days));
+    return _recentlyViewed.where((story) {
+      final viewedAt = DateTime.tryParse(story['viewedAt'] ?? '');
+      return viewedAt != null && viewedAt.isAfter(cutoffDate);
+    }).toList();
+  }
+
+  // Get stories viewed today
+  List<Map<String, dynamic>> get getTodayStories {
+    final today = DateTime.now();
+    return _recentlyViewed.where((story) {
+      final viewedAt = DateTime.tryParse(story['viewedAt'] ?? '');
+      return viewedAt != null && 
+             viewedAt.year == today.year && 
+             viewedAt.month == today.month && 
+             viewedAt.day == today.day;
+    }).toList();
+  }
+
+  // Get stories from this week
+  List<Map<String, dynamic>> get getThisWeekStories {
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekStartDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    
+    return _recentlyViewed.where((story) {
+      final viewedAt = DateTime.tryParse(story['viewedAt'] ?? '');
+      return viewedAt != null && viewedAt.isAfter(weekStartDate);
+    }).toList();
+  }
   void setCurrentUserId(String? userId) {
     if (_currentUserId != userId) {
       _currentUserId = userId;
@@ -55,7 +88,7 @@ class RecentlyViewedProvider with ChangeNotifier {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('recently_viewed', json.encode(_recentlyViewed));
+    await prefs.setString(prefsKey, json.encode(_recentlyViewed));
 
     notifyListeners();
   }

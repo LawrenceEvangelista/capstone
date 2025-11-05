@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class AuthService {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -25,9 +27,11 @@ class AuthService {
     }
   }
 
-  // Google Sign In
   Future<UserCredential> signInWithGoogle({bool isSignUp = false}) async {
     try {
+      // First, sign out from previous session to ensure clean state
+      await _googleSignIn.signOut();
+
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
@@ -48,38 +52,19 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      // Check if this user exists in Firebase already
-      try {
-        final userMethods = await firebaseAuth.fetchSignInMethodsForEmail(googleUser.email!);
-        final isNewUser = userMethods.isEmpty;
+      // Sign in with credential - this automatically creates the account if it doesn't exist
+      final UserCredential userCredential = await firebaseAuth.signInWithCredential(credential);
 
-        // If it's a login attempt but user doesn't exist
-        if (!isSignUp && isNewUser) {
-          throw FirebaseAuthException(
-            code: 'user-not-found',
-            message: 'No user found for this Google account. Please sign up first.',
-          );
-        }
-
-        // If it's a signup attempt but user exists
-        if (isSignUp && !isNewUser) {
-          throw FirebaseAuthException(
-            code: 'account-exists',
-            message: 'An account already exists with this email. Please log in instead.',
-          );
-        }
-      } catch (e) {
-        if (e is FirebaseAuthException) {
-          rethrow;
-        }
-        // Continue if error checking methods (likely means new user)
-      }
-
-      // Once signed in, return the UserCredential
-      return await firebaseAuth.signInWithCredential(credential);
+      print("Google Sign-In successful! User: ${userCredential.user?.email}");
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print("AuthService signInWithGoogle FirebaseAuthException: ${e.code} - ${e.message}");
+      await _googleSignIn.signOut(); // Clean up on error
+      rethrow;
     } catch (e) {
       print("AuthService signInWithGoogle error: $e");
-      rethrow; // Rethrow to handle in UI
+      await _googleSignIn.signOut(); // Clean up on error
+      rethrow;
     }
   }
 
@@ -99,11 +84,11 @@ class AuthService {
     }
   }
 
-  // Sign out
   Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut(); // Sign out from Google
-      await firebaseAuth.signOut(); // Sign out from Firebase
+      await firebaseAuth.signOut(); // Sign out from Firebase first
+      await _googleSignIn.signOut(); // Then sign out from Google
+      print("Sign out successful");
     } catch (e) {
       print("AuthService signOut error: $e");
       rethrow;
@@ -126,6 +111,28 @@ class AuthService {
       await currentUser?.updateDisplayName(username);
     } catch (e) {
       print("AuthService updateUsername error: $e");
+      rethrow;
+    }
+  }
+
+  // Upload profile image to Firebase Storage
+  Future<String?> uploadProfileImage({required String userId, required File imageFile}) async {
+    try {
+      final storageRef = FirebaseStorage.instance.ref();
+      final profileImagesRef = storageRef.child("profile_images/$userId.jpg");
+      
+      // Upload the file
+      await profileImagesRef.putFile(imageFile);
+      
+      // Get the download URL
+      String downloadURL = await profileImagesRef.getDownloadURL();
+      
+      // Update the user's photo URL
+      await currentUser?.updatePhotoURL(downloadURL);
+      
+      return downloadURL;
+    } catch (e) {
+      print("AuthService uploadProfileImage error: $e");
       rethrow;
     }
   }

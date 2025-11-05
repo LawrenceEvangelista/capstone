@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../home/home_screen.dart';
 import '../stories/stories_screen.dart';
 import '../favorites/favorites_screen.dart';
+import '../quiz/quiz_list_screen.dart';
 import '../dictionary/dictionary_screen.dart';
 
 class BottomNav extends StatefulWidget {
@@ -16,6 +17,7 @@ class _BottomNavState extends State<BottomNav> {
     HomeScreen(),
     StoriesScreen(),
     FavoritesScreen(),
+    QuizListScreen(),
     DictionaryScreen(),
   ];
 
@@ -24,7 +26,7 @@ class _BottomNavState extends State<BottomNav> {
     'Stories',
     'Favorites',
     'Quiz',
-    'Dictionary',  // Changed from 'Settings' to 'Dictionary'
+    'Dictionary',
   ];
 
   int _selectedIndex = 0;
