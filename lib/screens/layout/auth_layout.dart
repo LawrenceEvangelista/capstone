@@ -12,6 +12,14 @@ class AuthLayout extends StatelessWidget {
       stream:
           FirebaseAuth.instance.authStateChanges(), // Listen to auth changes
       builder: (context, snapshot) {
+        print('🔍 AuthLayout - StreamBuilder state: ${snapshot.connectionState}');
+        print('🔍 AuthLayout - Has data: ${snapshot.hasData}');
+        if (snapshot.hasData) {
+          print('🔍 AuthLayout - User authenticated: ${snapshot.data?.email}');
+        } else {
+          print('🔍 AuthLayout - No user authenticated');
+        }
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
