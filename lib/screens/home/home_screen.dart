@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:testapp/screens/auth/profile_screen.dart';
-import 'package:testapp/screens/story_screen.dart';
+import 'package:testapp/screens/stories//story_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/providers/recently_viewed_provider.dart';

@@ -755,132 +755,243 @@ class StoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Background image - now from Firebase Storage
-        ClipRRect(
-          borderRadius: BorderRadius.circular(23),
-          child: imageUrl.isNotEmpty
-              ? Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                color: Colors.grey.shade200,
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: primaryColor,
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                        : null,
-                  ),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              print('Error loading image: $error');
-              return Container(
-                color: Colors.grey.shade300,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.broken_image,
-                        size: 64,
-                        color: Colors.grey.shade500,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Image not found',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
+    // Calculate if text is long
+    final bool isLongText = pageContent.length > 120;
+    final screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(23),
+        color: Colors.white,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(23),
+        child: Column(
+          children: [
+            // Image section - adaptive height
+            Expanded(
+              flex: isLongText ? 48 : 55,
+              child: Stack(
+                children: [
+                  // Main image
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: imageUrl.isNotEmpty
+                        ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey.shade200,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: primaryColor,
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey.shade300,
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.broken_image,
+                                  size: 48,
+                                  color: Colors.grey.shade500,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Image not found',
+                                  style: GoogleFonts.fredoka(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                        : Container(
+                      color: Colors.grey.shade300,
+                      child: Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          size: 48,
+                          color: Colors.grey.shade500,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              );
-            },
-          )
-              : Container(
-            color: Colors.grey.shade300,
-            child: Center(
-              child: Icon(
-                Icons.image_not_supported,
-                size: 64,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ),
-        ),
 
-        // Text container
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-              border: Border.all(
-                color: primaryColor.withOpacity(0.3),
-                width: 1.5,
+                  // Page number - top right corner on image
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '$pageNumber/$totalPages',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Text(
-              pageContent,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.fredoka(
-                fontSize: 18,
-                color: Colors.black,
-                fontWeight: FontWeight.w500,
-                height: 1.3,
-              ),
-            ),
-          ),
-        ),
 
-        // Page number indicator
-        Positioned(
-          bottom: 8,
-          right: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: primaryColor,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+            // Thin decorative separator
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    primaryColor.withOpacity(0.3),
+                    primaryColor,
+                    primaryColor.withOpacity(0.3),
+                  ],
                 ),
-              ],
+              ),
             ),
-            child: Text(
-              'Page $pageNumber/$totalPages',
-              style: GoogleFonts.fredoka(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+
+            // Text section - compact and scrollable
+            Expanded(
+              flex: isLongText ? 52 : 45,
+              child: Container(
+                width: double.infinity,
                 color: Colors.white,
+                child: Stack(
+                  children: [
+                    // Decorative corner patterns
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: CustomPaint(
+                        size: const Size(40, 40),
+                        painter: CornerDecoration(primaryColor),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Transform.flip(
+                        flipX: true,
+                        child: CustomPaint(
+                          size: const Size(40, 40),
+                          painter: CornerDecoration(primaryColor),
+                        ),
+                      ),
+                    ),
+
+                    // Scrollable text with proper padding
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Column(
+                            children: [
+                              // Subtle scroll indicator at top
+                              if (isLongText)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  width: 40,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+
+                              Text(
+                                pageContent,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.fredoka(
+                                  fontSize: isLongText ? 15 : 17,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.35,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+
+                              // Bottom padding for scroll space
+                              if (isLongText) const SizedBox(height: 8),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
+}
+// Custom painter for decorative corners
+class CornerDecoration extends CustomPainter {
+  final Color color;
+
+  CornerDecoration(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..quadraticBezierTo(0, 0, 0, size.height)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
