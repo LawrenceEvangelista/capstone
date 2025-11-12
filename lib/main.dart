@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:testapp/screens/splash/splash_screen.dart';
-import 'package:testapp/screens/auth/login_signup_screen.dart';
-import 'package:testapp/screens/auth/login_screen.dart';
-import 'package:testapp/screens/auth/signup_screen.dart';
-import 'package:testapp/screens/home/home_screen.dart';
-import 'package:testapp/screens/layout/bottomnav.dart';
-import 'package:testapp/screens/auth/forgot_password_screen.dart';
-import 'package:testapp/screens/layout/auth_layout.dart';
-import 'package:testapp/services/auth_service.dart';
-import 'package:testapp/screens/stories/story_screen.dart';
-import 'package:testapp/screens/favorites/favorites_screen.dart';
-import 'package:testapp/screens/favorites/favorites_provider.dart';
-import 'package:testapp/providers/recently_viewed_provider.dart';
+// 🧠 Providers (state management)
+import 'package:testapp/features/favorites/provider/favorites_provider.dart';
+import 'package:testapp/features/stories/provider/recently_viewed_provider.dart';
+// 🖥 Screens
+import 'package:testapp/features/splash/presentation/screens/splash_screen.dart';
+import 'package:testapp/features/auth/presentation/screens/login_signup_screen.dart';
+import 'package:testapp/features/auth/presentation/screens/login_screen.dart';
+import 'package:testapp/features/auth/presentation/screens/signup_screen.dart';
+import 'package:testapp/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:testapp/features/layout/presentation/auth_layout.dart';
+import 'package:testapp/features/home/presentation/screens/home_screen.dart';
+import 'package:testapp/features/stories/presentation/screens/story_screen.dart';
+import 'package:testapp/features/favorites/presentation/screens/favorites_screen.dart';
+// 🧭 Layout
+import 'package:testapp/features/layout/presentation/bottomnav.dart';
+import 'package:testapp/core/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +34,8 @@ void main() async {
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
   _MyAppState createState() => _MyAppState();
 
