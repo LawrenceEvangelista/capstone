@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:testapp/features/auth/presentation/screens/profile_screen.dart';
 import 'package:testapp/features/stories/presentation/screens/story_screen.dart';
+import 'package:testapp/features/dictionary/presentation/screens/dictionary_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/features/stories/provider/recently_viewed_provider.dart';
@@ -20,7 +21,7 @@ class _MainLayoutState extends State<MainLayout> {
 
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Placeholder(),
+    const DictionaryScreen(),
     const Placeholder(),
     const Placeholder(),
   ];
@@ -47,8 +48,8 @@ class _MainLayoutState extends State<MainLayout> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark_rounded),
-            label: 'Bookmarks',
+            icon: Icon(Icons.book_rounded),
+            label: 'Dictionary',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history_rounded),
@@ -80,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _errorMessage;
   final DatabaseReference _databaseReference =
   FirebaseDatabase.instance.ref().child('stories');
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -87,6 +89,12 @@ class _HomeScreenState extends State<HomeScreen> {
     fetchUsername();
     fetchStories();
     initializeRecentlyViewedUser();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void initializeRecentlyViewedUser() {
@@ -152,11 +160,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
               final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
               final text = value['textEng'] ?? value['textTag'] ?? '';
+              final type = value['typeEng'] ?? value['typeTag'] ?? 'Other';
 
               fetchedStories.add({
                 'id': key,
                 'title': title,
                 'text': text,
+                'type': type,
                 'imageUrl': imageUrl,
                 'progress': value['progress'] ?? 0.0,
               });
@@ -279,6 +289,263 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCategoryStories(String category) {
+    // Filter stories by category (case-insensitive)
+    final filteredStories = stories.where((story) {
+      final storyType = story['type'] ?? '';
+      return storyType.toLowerCase() == category.toLowerCase();
+    }).toList();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      category,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: filteredStories.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No stories found in this category',
+                          style: GoogleFonts.fredoka(fontSize: 16),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredStories.length,
+                        itemBuilder: (context, index) {
+                          final story = filteredStories[index];
+                          return ListTile(
+                            leading: story['imageUrl'] != null && story['imageUrl']!.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      story['imageUrl'],
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(Icons.book, color: Theme.of(context).primaryColor),
+                                  ),
+                            title: Text(
+                              story['title'] ?? 'No Title',
+                              style: GoogleFonts.fredoka(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: Text(
+                              '${(story['progress'] * 100).toStringAsFixed(0)}% Completed',
+                              style: GoogleFonts.fredoka(fontSize: 12),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StoryScreen(storyId: story['id']),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAllStories(String sectionTitle) {
+    List<Map<String, dynamic>> displayStories = [];
+    
+    if (sectionTitle == 'Continue Reading') {
+      displayStories = continueReadingStories;
+    } else if (sectionTitle == 'New Stories') {
+      displayStories = newStories;
+    } else if (sectionTitle == 'Completed Stories') {
+      displayStories = completedStories;
+    } else {
+      displayStories = stories;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      sectionTitle,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: displayStories.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No stories found',
+                          style: GoogleFonts.fredoka(),
+                        ),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 0.75,
+                        ),
+                        itemCount: displayStories.length,
+                        itemBuilder: (context, index) {
+                          final story = displayStories[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => StoryScreen(storyId: story['id']),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.15),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                    clipBehavior: Clip.hardEdge,
+                                    child: Stack(
+                                      children: [
+                                        Image.network(
+                                          story['imageUrl'] ?? '',
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                              child: Icon(
+                                                Icons.book,
+                                                color: Theme.of(context).primaryColor,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.bottomCenter,
+                                                end: Alignment.topCenter,
+                                                colors: [
+                                                  Colors.black.withOpacity(0.7),
+                                                  Colors.transparent,
+                                                ],
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '${((story['progress'] ?? 0) * 100).toStringAsFixed(0)}%',
+                                              style: GoogleFonts.fredoka(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  story['title'] ?? 'No Title',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.fredoka(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -699,6 +966,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       child: TextField(
+        controller: _searchController,
+        onSubmitted: (value) {
+          if (value.isNotEmpty) {
+            _searchStories(value);
+          }
+        },
         decoration: InputDecoration(
           hintText: 'Search a story',
           hintStyle: GoogleFonts.fredoka(
@@ -710,6 +983,15 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Theme.of(context).textTheme.bodyLarge?.color,
             size: 24,
           ),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, color: Theme.of(context).primaryColor),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {});
+                  },
+                )
+              : null,
           filled: true,
           fillColor: Theme.of(context).scaffoldBackgroundColor,
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
@@ -732,7 +1014,126 @@ class _HomeScreenState extends State<HomeScreen> {
             fontSize: 16,
           ),
         ),
+        onChanged: (value) {
+          setState(() {});
+        },
       ),
+    );
+  }
+
+  void _searchStories(String query) {
+    final filtered = stories
+        .where((story) =>
+            story['title'].toString().toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    if (filtered.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No stories found matching "$query"'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Results for "$query"',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final story = filtered[index];
+                    return ListTile(
+                      leading: story['imageUrl'] != null &&
+                              story['imageUrl']!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                story['imageUrl'],
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(Icons.book,
+                                        color: Theme.of(context).primaryColor),
+                                  );
+                                },
+                              ),
+                            )
+                          : Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(Icons.book,
+                                  color: Theme.of(context).primaryColor),
+                            ),
+                      title: Text(
+                        story['title'] ?? 'No Title',
+                        style: GoogleFonts.fredoka(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        '${((story['progress'] ?? 0) * 100).toStringAsFixed(0)}% Completed',
+                        style: GoogleFonts.fredoka(fontSize: 12),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                StoryScreen(storyId: story['id']),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -753,13 +1154,17 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildCategory(Icons.pets_rounded, 'Animals'),
+          _buildCategory(Icons.auto_stories_rounded, 'Fable', () {
+            _showCategoryStories('Fable');
+          }),
           _buildDivider(),
-          _buildCategory(Icons.flag_rounded, 'Filipino\nCulture'),
+          _buildCategory(Icons.book_rounded, 'Folktale', () {
+            _showCategoryStories('Folktale');
+          }),
           _buildDivider(),
-          _buildCategory(Icons.auto_stories_rounded, 'Folklore'),
-          _buildDivider(),
-          _buildCategory(Icons.volunteer_activism_rounded, 'Values'),
+          _buildCategory(Icons.castle_rounded, 'Legend', () {
+            _showCategoryStories('Legend');
+          }),
         ],
       ),
     );
@@ -773,11 +1178,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategory(IconData icon, String label) {
+  Widget _buildCategory(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
-      onTap: () {
-        // Category tap action
-      },
+      onTap: onTap,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -809,43 +1212,48 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.fredoka(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).textTheme.bodyLarge?.color,
+    return GestureDetector(
+      onTap: () {
+        _showAllStories(title);
+      },
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.fredoka(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              Text(
-                'See all',
-                style: GoogleFonts.fredoka(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'See all',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
                   color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

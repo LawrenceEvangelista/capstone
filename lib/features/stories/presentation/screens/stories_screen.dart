@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:testapp/features/stories/presentation/screens/story_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:async';
 
 class StoriesScreen extends StatefulWidget {
   const StoriesScreen({super.key});
@@ -15,6 +17,10 @@ class _StoriesScreenState extends State<StoriesScreen> {
   String selectedCategory = 'All Categories';
   String selectedReadStatus = 'All Status';
   bool isLoading = true;
+  Timer? _searchTimer;
+  int _currentPage = 0;
+  bool _hasMoreStories = true;
+  bool _isLoadingMore = false;
 
   // Firebase references
   final DatabaseReference _databaseReference =
@@ -24,16 +30,60 @@ class _StoriesScreenState extends State<StoriesScreen> {
   List<String> readStatuses = ['All Status', 'Read', 'Unread'];
   List<String> allCategories = ['Folktale', 'Legend', 'Fable'];
   List<Map<String, dynamic>> allStories = [];
+  Map<String, String> imageUrlCache = {}; // Cache for image URLs
 
   @override
-  void initState() {
-    super.initState();
-    fetchStories();
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
   }
 
-  Future<void> fetchStories() async {
+  /// Generate Firebase Storage URL without needing to fetch it
+  /// This avoids the trial-and-error PNG/JPG requests
+  Future<String> _getImageUrl(String storyKey) async {
+    // Return cached URL if available
+    if (imageUrlCache.containsKey(storyKey)) {
+      return imageUrlCache[storyKey]!;
+    }
+
+    String imageUrl = '';
+    try {
+      // Try PNG first (single request)
+      imageUrl = await _storage
+          .ref('images/$storyKey.png')
+          .getDownloadURL();
+    } catch (e) {
+      try {
+        // Fall back to JPG if PNG doesn't exist
+        imageUrl = await _storage
+            .ref('images/$storyKey.jpg')
+            .getDownloadURL();
+      } catch (e) {
+        // Use placeholder if neither exists
+        imageUrl = '';
+      }
+    }
+
+    // Cache the result
+    imageUrlCache[storyKey] = imageUrl;
+    return imageUrl;
+  }
+
+  Future<void> fetchStories({bool refresh = false}) async {
+    if (refresh) {
+      _currentPage = 0;
+      _hasMoreStories = true;
+      allStories.clear();
+    }
+
+    if (!_hasMoreStories || _isLoadingMore) return;
+
     setState(() {
-      isLoading = true;
+      if (allStories.isEmpty) {
+        isLoading = true;
+      } else {
+        _isLoadingMore = true;
+      }
     });
 
     try {
@@ -48,33 +98,35 @@ class _StoriesScreenState extends State<StoriesScreen> {
         final validCategories = {'Folktale', 'Legend', 'Fable'};
         Set<String> categories = {};
 
-        // Use Future.wait to fetch all images concurrently
+        // Get all story keys
+        List<String> storyKeys = data.keys.cast<String>().toList();
+
+        // Pagination: get 10 stories per page
+        const int pageSize = 10;
+        int startIndex = _currentPage * pageSize;
+        int endIndex = (startIndex + pageSize).clamp(0, storyKeys.length);
+
+        if (startIndex >= storyKeys.length) {
+          _hasMoreStories = false;
+          setState(() {
+            _isLoadingMore = false;
+          });
+          return;
+        }
+
+        // Get stories for current page
+        List<String> pageKeys = storyKeys.sublist(startIndex, endIndex);
+
+        // Fetch images concurrently (optimization #2)
         await Future.wait(
-          data.entries.map((entry) async {
-            final key = entry.key;
-            final value = entry.value;
+          pageKeys.map((key) async {
+            final value = data[key];
 
             if (value is Map) {
-              String imageUrl = '';
+              String imageUrl = await _getImageUrl(key);
 
-              try {
-                // Try to get PNG image from Firebase Storage
-                imageUrl = await _storage
-                    .ref('images/$key.png')
-                    .getDownloadURL();
-              } catch (e) {
-                try {
-                  // If PNG doesn't exist, try JPG
-                  imageUrl = await _storage
-                      .ref('images/$key.jpg')
-                      .getDownloadURL();
-                } catch (e) {
-                  print('Error loading image for $key: $e');
-                }
-              }
-
+              // OPTIMIZATION: Don't fetch textEng/textTag/pages here (lazy-load in StoryScreen)
               final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
-              final text = value['textEng'] ?? value['textTag'] ?? '';
 
               // Get the typeEng and normalize it for consistent categories
               String rawCategory = value['typeEng'] ?? '';
@@ -110,7 +162,6 @@ class _StoriesScreenState extends State<StoriesScreen> {
               fetchedStories.add({
                 'id': key,
                 'title': title,
-                'text': text,
                 'imageUrl': imageUrl,
                 'category': normalizedCategory,
                 'isRead': isRead,
@@ -120,27 +171,26 @@ class _StoriesScreenState extends State<StoriesScreen> {
           }),
         );
 
-        //orig
-        //allCategories = <dynamic>{...validCategories, ...categories} // Remove duplicates
-            //.toList()
-          //..sort(); // <--- Error occurs here because the first line hasn't ended.
+        // Update categories (only on first page)
+        if (_currentPage == 0) {
+          allCategories = <String>{...validCategories, ...categories}
+              .toList()
+            ..sort();
+        }
 
         setState(() {
-          allStories = fetchedStories;
-          // Use the predefined categories as a base and add any valid ones we found
-
-          // FIX 1: Combine the sets into a list. The result of .toList() is a List.
-          // FIX 2: Use the cascade operator (..) to apply sort() directly to the List.
-          allCategories = <String>{...validCategories, ...categories}.toList()
-            ..sort(); // The cascade operator applies sort() and returns the List itself.
-
+          allStories.addAll(fetchedStories);
+          _currentPage++;
+          _hasMoreStories = endIndex < storyKeys.length;
           isLoading = false;
+          _isLoadingMore = false;
         });
       }
     } catch (e) {
       print('Error fetching stories: $e');
       setState(() {
         isLoading = false;
+        _isLoadingMore = false;
       });
     }
   }
@@ -173,8 +223,12 @@ class _StoriesScreenState extends State<StoriesScreen> {
               ),
               child: TextField(
                 onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
+                  // OPTIMIZATION #5: Debounce search (500ms delay)
+                  _searchTimer?.cancel();
+                  _searchTimer = Timer(const Duration(milliseconds: 500), () {
+                    setState(() {
+                      searchQuery = value;
+                    });
                   });
                 },
                 decoration: InputDecoration(
@@ -185,6 +239,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                       ? IconButton(
                     icon: const Icon(Icons.clear),
                     onPressed: () {
+                      _searchTimer?.cancel();
                       setState(() {
                         searchQuery = '';
                       });
@@ -291,12 +346,28 @@ class _StoriesScreenState extends State<StoriesScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: fetchStories,
+      onRefresh: () => fetchStories(refresh: true),
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
-        itemCount: filteredStories.length,
+        itemCount: filteredStories.length + (_hasMoreStories ? 1 : 0),
         separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
+          // Show loading indicator at bottom when more stories available
+          if (index == filteredStories.length) {
+            // Trigger load more when user scrolls to bottom
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!_isLoadingMore) {
+                fetchStories();
+              }
+            });
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
           var story = filteredStories[index];
           return GestureDetector(
             onTap: () {
@@ -309,7 +380,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
               ).then((_) {
                 // Refresh the stories list when returning from StoryScreen
                 // to update read status
-                fetchStories();
+                fetchStories(refresh: true);
               });
             },
             child: Container(
@@ -327,7 +398,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
               ),
               child: Row(
                 children: [
-                  // Story image from Firebase Storage
+                  // Story image from Firebase Storage with error handling
                   Container(
                     width: 120,
                     height: 150,
@@ -336,9 +407,36 @@ class _StoriesScreenState extends State<StoriesScreen> {
                         topLeft: Radius.circular(12),
                         bottomLeft: Radius.circular(12),
                       ),
-                      image: DecorationImage(
-                        image: NetworkImage(story['imageUrl']),
-                        fit: BoxFit.cover,
+                    ),
+                    child: story['imageUrl'].isNotEmpty
+                        ? CachedNetworkImage(
+                      imageUrl: story['imageUrl'],
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey.shade300,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey.shade300,
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
+                        : Container(
+                      color: Colors.grey.shade300,
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey,
                       ),
                     ),
                   ),
@@ -356,6 +454,8 @@ class _StoriesScreenState extends State<StoriesScreen> {
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Category: ${story['category']}',

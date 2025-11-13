@@ -22,11 +22,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
 
   // Consistent app colors - using theme colors
-  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow background
   final Color _primaryColor = const Color(0xFFFFD93D); // Mustard yellow (consistent primary)
   final Color _accentColor = const Color(0xFF8E24AA); // Purple accent
-  final Color _buttonColor = const Color(0xFFFFD93D); // Mustard yellow buttons
-  final Color _googleButtonColor = Colors.white; // White for Google button
 
   @override
   void dispose() {
@@ -169,18 +166,21 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: Colors.transparent,
       body: Container(
         decoration: BoxDecoration(
-          // Optional cartoon background pattern
-          image: const DecorationImage(
-            image: AssetImage('assets/cartoon_background.png'),
-            opacity: 0.1,
-            fit: BoxFit.cover,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFFFE57F), // Bright yellow top
+              Color(0xFFFFD54F), // Golden middle
+              Color(0xFFFFC947), // Warm orange bottom
+            ],
           ),
         ),
-        child: SingleChildScrollView(
-          child: SafeArea(
+        child: SafeArea(
+          child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Form(
@@ -189,69 +189,63 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    const SizedBox(height: 30),
-                    // Logo with bounce animation
+                    // Top decorative elements
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildFloatingStars(),
+                          SizedBox(width: 20),
+                          _buildFloatingStars(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Logo with animation
                     FadeInDown(
                       duration: const Duration(milliseconds: 600),
                       child: Center(
                         child: Container(
-                          height: 180,
-                          width: 180,
+                          width: 160,
+                          height: 160,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Colors.white.withOpacity(0.3),
                             shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: _primaryColor.withOpacity(0.3),
-                                blurRadius: 15,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.5),
+                              width: 3,
+                            ),
                           ),
                           child: Center(
                             child: Image.asset(
                               'assets/images/kp_logo2.png',
-                              height: 150,
+                              height: 120,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
+
                     // Welcome text with animation
                     FadeInDown(
                       delay: const Duration(milliseconds: 200),
                       duration: const Duration(milliseconds: 600),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Text shadow effect
-                          Text(
-                            'Welcome Back!',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.fredoka(
-                              fontSize: 34,
-                              fontWeight: FontWeight.bold,
-                              foreground:
-                              Paint()
-                                ..style = PaintingStyle.stroke
-                                ..strokeWidth = 6
-                                ..color = Colors.white,
-                            ),
-                          ),
-                          // Main text
-                          Text(
-                            'Welcome Back!',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.fredoka(
-                              fontSize: 34,
-                              fontWeight: FontWeight.bold,
-                              color: _primaryColor,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        'Welcome Back!',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.fredoka(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
+
                     // Subtitle text with animation
                     FadeInDown(
                       delay: const Duration(milliseconds: 300),
@@ -260,186 +254,63 @@ class _LoginScreenState extends State<LoginScreen> {
                         'We missed you! 😊',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.fredoka(
-                          fontSize: 18,
-                          color: Colors.black87,
+                          fontSize: 16,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
+
                     // Email field with animation
                     FadeInDown(
                       delay: const Duration(milliseconds: 400),
                       duration: const Duration(milliseconds: 600),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.email_rounded,
-                                color: _primaryColor,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Email',
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                  color: _primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(25),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: TextFormField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                // Email format validation
-                                final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
-                                if (!emailRegex.hasMatch(value)) {
-                                  return 'Please enter a valid email address';
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                                prefixIcon: Container(
-                                  margin: const EdgeInsets.only(
-                                    left: 15,
-                                    right: 10,
-                                  ),
-                                  child: Icon(
-                                    Icons.alternate_email,
-                                    color: _accentColor,
-                                  ),
-                                ),
-                                hintText: 'your.email@example.com',
-                                hintStyle: GoogleFonts.fredoka(
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              style: GoogleFonts.fredoka(fontSize: 16),
-                            ),
-                          ),
-                        ],
+                      child: _buildTextField(
+                        controller: _emailController,
+                        label: 'Email',
+                        hint: 'your.email@example.com',
+                        icon: Icons.email_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          // Email format validation
+                          final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
+                          if (!emailRegex.hasMatch(value)) {
+                            return 'Please enter a valid email address';
+                          }
+                          return null;
+                        },
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
+
                     // Password field with animation
                     FadeInDown(
                       delay: const Duration(milliseconds: 500),
                       duration: const Duration(milliseconds: 600),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.lock_rounded,
-                                color: _primaryColor,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Password',
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                  color: _primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(25),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: TextFormField(
-                              controller: _passwordController,
-                              obscureText: !_isPasswordVisible,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(25),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 16,
-                                ),
-                                prefixIcon: Container(
-                                  margin: const EdgeInsets.only(
-                                    left: 15,
-                                    right: 10,
-                                  ),
-                                  child: Icon(
-                                    Icons.vpn_key_rounded,
-                                    color: _accentColor,
-                                  ),
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: _accentColor,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
-                                  },
-                                ),
-                                hintText: '••••••••',
-                                hintStyle: GoogleFonts.fredoka(
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              style: GoogleFonts.fredoka(fontSize: 16),
-                            ),
-                          ),
-                        ],
+                      child: _buildPasswordField(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hint: '••••••••',
+                        isVisible: _isPasswordVisible,
+                        onVisibilityToggle: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(height: 6),
+
+                    // Forgot Password link with animation
                     FadeInDown(
                       delay: const Duration(milliseconds: 600),
                       duration: const Duration(milliseconds: 600),
@@ -459,31 +330,27 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: GoogleFonts.fredoka(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: _accentColor,
+                              color: Colors.white,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
+
                     // Login button with animation
                     FadeInDown(
                       delay: const Duration(milliseconds: 700),
                       duration: const Duration(milliseconds: 600),
                       child: Container(
-                        height: 60,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [_buttonColor, _primaryColor],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: _primaryColor.withOpacity(0.3),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
+                              color: Color(0xFFFFA07A).withOpacity(0.4),
+                              blurRadius: 12,
+                              offset: Offset(0, 6),
                             ),
                           ],
                         ),
@@ -491,140 +358,108 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: _isLoading
                               ? null
                               : () {
-                            print("ElevatedButton pressed");
-                            if (_formKey.currentState!.validate()) {
-                              print("Form is valid");
-                              _handleLogin(context);
-                            } else {
-                              print("Form is invalid");
-                            }
-                          },
+                                  if (_formKey.currentState!.validate()) {
+                                    _handleLogin(context);
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
+                            backgroundColor: Color(0xFFFFA07A),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            disabledBackgroundColor: Colors.transparent,
+                            elevation: 0,
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                )
                               : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Log In',
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.login_rounded, size: 24),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Log In',
+                                      style: GoogleFonts.fredoka(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Icon(
-                                Icons.login_rounded,
-                                color: Colors.white,
-                                size: 24,
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    // OR divider
-                    FadeInDown(
-                      delay: const Duration(milliseconds: 750),
-                      duration: const Duration(milliseconds: 600),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 1,
-                              color: Colors.grey.withOpacity(0.5),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 15),
-                            child: Text(
-                              'OR',
-                              style: GoogleFonts.fredoka(
-                                fontSize: 16,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Container(
-                              height: 1,
-                              color: Colors.grey.withOpacity(0.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
+
                     // Google Sign-In button
                     FadeInDown(
                       delay: const Duration(milliseconds: 800),
                       duration: const Duration(milliseconds: 600),
                       child: Container(
-                        height: 55,
                         decoration: BoxDecoration(
-                          color: _googleButtonColor,
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              color: Colors.white.withOpacity(0.2),
+                              blurRadius: 12,
+                              offset: Offset(0, 6),
                             ),
                           ],
-                          border: Border.all(
-                            color: Colors.grey.withOpacity(0.2),
-                            width: 1,
-                          ),
                         ),
                         child: ElevatedButton(
-                          onPressed: _isLoading
-                              ? null
-                              : () => _handleGoogleSignIn(context),
+                          onPressed: _isLoading ? null : () => _handleGoogleSignIn(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
-                            disabledBackgroundColor: Colors.transparent,
+                            elevation: 0,
                           ),
                           child: _isLoading
-                              ? CircularProgressIndicator(
-                            color: _accentColor,
-                          )
+                              ? SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFF8E24AA),
+                                    strokeWidth: 3,
+                                  ),
+                                )
                               : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/google_logo.png',
-                                height: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Continue with Google',
-                                style: GoogleFonts.fredoka(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/google_logo.png',
+                                      height: 22,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Continue with Google',
+                                      style: GoogleFonts.fredoka(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
+
                     // Sign up text with animation
                     FadeInDown(
                       delay: const Duration(milliseconds: 900),
@@ -635,8 +470,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             "Don't have an account?",
                             style: GoogleFonts.fredoka(
-                              fontSize: 16,
-                              color: Colors.black87,
+                              fontSize: 15,
+                              color: Colors.white,
                             ),
                           ),
                           TextButton(
@@ -646,54 +481,31 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               "Sign Up",
                               style: GoogleFonts.fredoka(
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: _accentColor,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    // Cartoon characters (optional)
-                    FadeInUp(
-                      delay: const Duration(milliseconds: 950),
-                      duration: const Duration(milliseconds: 800),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(
-                                    'assets/images/cartoon1.png',
-                                  ),
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Container(
-                              width: 50,
-                              height: 50,
-                              decoration: const BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(
-                                    'assets/images/cartoon2.png',
-                                  ),
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+
+                    // Bottom decorative elements
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildSmallStar(),
+                          SizedBox(width: 16),
+                          _buildSmallStar(),
+                          SizedBox(width: 16),
+                          _buildSmallStar(),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -702,5 +514,148 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  // Helper widget for text fields
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    required String? Function(String?) validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.fredoka(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            validator: validator,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 14,
+              ),
+              prefixIcon: Icon(icon, color: Color(0xFF8E24AA)),
+              hintText: hint,
+              hintStyle: GoogleFonts.fredoka(
+                color: Colors.grey,
+              ),
+            ),
+            style: GoogleFonts.fredoka(fontSize: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helper widget for password fields
+  Widget _buildPasswordField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required bool isVisible,
+    required VoidCallback onVisibilityToggle,
+    required String? Function(String?) validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.fredoka(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            obscureText: !isVisible,
+            validator: validator,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 14,
+              ),
+              prefixIcon: Icon(Icons.lock_rounded,
+                  color: Color(0xFF8E24AA)),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  isVisible ? Icons.visibility_off : Icons.visibility,
+                  color: Color(0xFF8E24AA),
+                ),
+                onPressed: onVisibilityToggle,
+              ),
+              hintText: hint,
+              hintStyle: GoogleFonts.fredoka(
+                color: Colors.grey,
+              ),
+            ),
+            style: GoogleFonts.fredoka(fontSize: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helper widget for floating stars
+  Widget _buildFloatingStars() {
+    return Column(
+      children: [
+        Icon(Icons.star_rounded, color: Colors.white, size: 24),
+        SizedBox(height: 8),
+        Icon(Icons.star_rounded,
+            color: Colors.white.withOpacity(0.6), size: 16),
+      ],
+    );
+  }
+
+  // Helper widget for small stars
+  Widget _buildSmallStar() {
+    return Icon(Icons.star_rounded, color: Colors.white, size: 20);
   }
 }

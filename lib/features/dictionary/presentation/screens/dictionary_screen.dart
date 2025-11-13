@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:animate_do/animate_do.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/services.dart';
 
 class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({super.key});
@@ -20,6 +21,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   bool _isLoading = false;
   String _errorMessage = '';
   String _selectedLanguage = 'English'; // Default language
+  Set<String> _profanitySet = {}; // Loaded from JSON
 
   // API Configuration
   // For emulator, use: 'http://10.0.2.2:3000/api'
@@ -36,14 +38,91 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   @override
   void initState() {
     super.initState();
-    // Load a default word on start
-    _searchWord('hello');
+    _loadProfanityBlocklist();
+  }
+
+  /// Load profanity blocklist from assets JSON file
+  Future<void> _loadProfanityBlocklist() async {
+    try {
+      final jsonString = await rootBundle.loadString('assets/config/profanity_blocklist.json');
+      final jsonData = json.decode(jsonString) as Map<String, dynamic>;
+      final blocklist = List<String>.from(jsonData['blocklist'] ?? []);
+      
+      setState(() {
+        _profanitySet = blocklist.map((w) => w.toLowerCase()).toSet();
+      });
+      
+      // Load default word after blocklist is ready
+      _searchWord('hello');
+    } catch (e) {
+      print('Error loading profanity blocklist: $e');
+      // Continue anyway with empty blocklist
+      _searchWord('hello');
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Check if a single word contains profanities
+  bool _containsProfanity(String word) {
+    if (word.isEmpty || _profanitySet.isEmpty) return false;
+    String lowerWord = word.toLowerCase().trim();
+    
+    // Check exact matches in blocklist (O(1) lookup)
+    if (_profanitySet.contains(lowerWord)) {
+      return true;
+    }
+    
+    // Check for censored variations (f*ck, b*tch, etc.)
+    String cleanedWord = lowerWord.replaceAll(RegExp(r'[\*\-_]'), '');
+    for (String blocked in _profanitySet) {
+      String cleanedBlocked = blocked.replaceAll(RegExp(r'[\*\-_]'), '');
+      if (cleanedWord == cleanedBlocked) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  /// Filter out profanities from API results
+  List<Map<String, dynamic>> _filterProfanities(
+    List<Map<String, dynamic>> results
+  ) {
+    return results.where((wordData) {
+      final word = wordData['word'] as String? ?? '';
+      
+      // Check if word is profane
+      if (_containsProfanity(word)) {
+        print('🚫 Blocked profanity: $word');
+        return false;
+      }
+      
+      // Check if any definitions contain profane language
+      final meanings = wordData['meanings'] as List<dynamic>? ?? [];
+      for (var meaning in meanings) {
+        if (meaning is Map<String, dynamic>) {
+          final definitions = meaning['definitions'] as List<dynamic>? ?? [];
+          for (var def in definitions) {
+            if (def is Map<String, dynamic>) {
+              final definition = def['definition'] as String? ?? '';
+              final example = def['example'] as String? ?? '';
+              
+              if (_containsProfanity(definition) || _containsProfanity(example)) {
+                print('🚫 Blocked definition with profanity: $word');
+                return false;
+              }
+            }
+          }
+        }
+      }
+      
+      return true;
+    }).toList();
   }
 
   Future<void> _searchWord(String word) async {
@@ -88,13 +167,35 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   // English Dictionary - Uses free API
   Future<List<Map<String, dynamic>>> _searchEnglishWord(String word) async {
+    // First check: block search if word itself is profane
+    if (_containsProfanity(word)) {
+      throw Exception(
+        _selectedLanguage == 'English'
+            ? 'This word is not appropriate for this dictionary.'
+            : 'Ang salitang ito ay hindi angkop para sa diksyunaryo.'
+      );
+    }
+
     final response = await http.get(
       Uri.parse('$ENGLISH_API_BASE/$word'),
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      return List<Map<String, dynamic>>.from(data);
+      final results = List<Map<String, dynamic>>.from(data);
+      
+      // Filter out profanities from API results
+      final filtered = _filterProfanities(results);
+      
+      if (filtered.isEmpty) {
+        throw Exception(
+          _selectedLanguage == 'English'
+              ? 'This word or its definitions contain inappropriate content.'
+              : 'Ang salita o ang mga kahulugan ay naglalaman ng hindi angkop na nilalaman.'
+        );
+      }
+      
+      return filtered;
     } else {
       throw Exception('Word not found');
     }
@@ -102,6 +203,15 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   // Tagalog Dictionary - Uses YOUR custom API
   Future<List<Map<String, dynamic>>> _searchTagalogWord(String word) async {
+    // First check: block search if word itself is profane
+    if (_containsProfanity(word)) {
+      throw Exception(
+        _selectedLanguage == 'English'
+            ? 'This word is not appropriate for this dictionary.'
+            : 'Ang salitang ito ay hindi angkop para sa diksyunaryo.'
+      );
+    }
+
     try {
       print('Attempting to connect to: $TAGALOG_API_BASE/words/$word'); // Debug log
 
@@ -115,7 +225,20 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return [_convertTagalogApiResponse(data)];
+        final converted = _convertTagalogApiResponse(data);
+        
+        // Filter out profanities from API results
+        final filtered = _filterProfanities([converted]);
+        
+        if (filtered.isEmpty) {
+          throw Exception(
+            _selectedLanguage == 'English'
+                ? 'This word or its definitions contain inappropriate content.'
+                : 'Ang salita o ang mga kahulugan ay naglalaman ng hindi angkop na nilalaman.'
+          );
+        }
+        
+        return filtered;
       } else if (response.statusCode == 404) {
         throw Exception('Hindi nahanap ang salita sa diksyunaryo');
       } else {
@@ -369,34 +492,52 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Recent searches
-                    SizedBox(
-                      height: 40,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _recentSearches.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ActionChip(
-                              backgroundColor: Colors.white,
-                              shadowColor: _accentColor.withOpacity(0.2),
-                              elevation: 3,
-                              label: Text(
-                                _recentSearches[index],
-                                style: GoogleFonts.fredoka(
-                                  color: _accentColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              onPressed: () {
-                                _searchController.text = _recentSearches[index];
-                                _searchWord(_recentSearches[index]);
+                    // Recent searches with clear button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 40,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _recentSearches.length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: ActionChip(
+                                    backgroundColor: Colors.white,
+                                    shadowColor: _accentColor.withOpacity(0.2),
+                                    elevation: 3,
+                                    label: Text(
+                                      _recentSearches[index],
+                                      style: GoogleFonts.fredoka(
+                                        color: _accentColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      _searchController.text = _recentSearches[index];
+                                      _searchWord(_recentSearches[index]);
+                                    },
+                                  ),
+                                );
                               },
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close, color: Colors.white),
+                          onPressed: () {
+                            setState(() {
+                              _recentSearches.clear();
+                            });
+                          },
+                          tooltip: _selectedLanguage == 'English'
+                              ? 'Clear recent searches'
+                              : 'Burahin ang recent',
+                        ),
+                      ],
                     ),
                   ],
                 ),

@@ -30,7 +30,7 @@ class AuthLayout extends StatelessWidget {
           return const BottomNav(); // Return HomeScreen directly instead of navigation
         } else {
           // If not logged in, show LoginScreen
-          return LoginScreen();
+          return const LoginScreen();
         }
       },
     );

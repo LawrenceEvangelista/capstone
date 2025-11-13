@@ -95,7 +95,7 @@ class RecentlyViewedProvider with ChangeNotifier {
   Future<void> clearRecentlyViewed() async {
     _recentlyViewed.clear();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('recently_viewed');
+    await prefs.remove(_getPrefsKey());
     notifyListeners();
   }
 }

@@ -11,14 +11,13 @@ import 'package:testapp/features/stories/provider/recently_viewed_provider.dart'
 class StoryScreen extends StatefulWidget {
   final String storyId;
 
-  const StoryScreen({super.key, required this.storyId});
+  const StoryScreen({Key? key, required this.storyId}) : super(key: key);
 
   @override
   State<StoryScreen> createState() => _StoryScreenState();
 }
 
 class _StoryScreenState extends State<StoryScreen> {
-  final _controller = GlobalKey<PageFlipWidgetState>();
   final FirebaseStorage _storage = FirebaseStorage.instance;
   bool isLoading = true;
   bool _isEnglish = true;
@@ -745,22 +744,18 @@ class StoryPage extends StatelessWidget {
   final Color primaryColor;
 
   const StoryPage({
-    super.key,
+    Key? key,
     required this.pageContent,
     required this.imageUrl,
     required this.pageNumber,
     required this.totalPages,
     required this.primaryColor,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // Calculate if text is long
     final bool isLongText = pageContent.length > 120;
-    final screenHeight = MediaQuery
-        .of(context)
-        .size
-        .height;
 
     return Container(
       decoration: BoxDecoration(
