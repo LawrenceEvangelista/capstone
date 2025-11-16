@@ -6,6 +6,8 @@ import 'package:animate_do/animate_do.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/localization_provider.dart';
 
 class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({super.key});
@@ -322,22 +324,26 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             itemBuilder: (BuildContext context) => [
               PopupMenuItem(
                 value: 'English',
-                child: Row(
-                  children: [
-                    Text('🇺🇸', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 8),
-                    Text('English', style: GoogleFonts.fredoka()),
-                  ],
+                child: Consumer<LocalizationProvider>(
+                  builder: (context, localization, _) => Row(
+                    children: [
+                      Text('🇺🇸', style: TextStyle(fontSize: 20)),
+                      SizedBox(width: 8),
+                      Text(localization.translate('english'), style: GoogleFonts.fredoka()),
+                    ],
+                  ),
                 ),
               ),
               PopupMenuItem(
                 value: 'Tagalog',
-                child: Row(
-                  children: [
-                    Text('🇵🇭', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 8),
-                    Text('Tagalog', style: GoogleFonts.fredoka()),
-                  ],
+                child: Consumer<LocalizationProvider>(
+                  builder: (context, localization, _) => Row(
+                    children: [
+                      Text('🇵🇭', style: TextStyle(fontSize: 20)),
+                      SizedBox(width: 8),
+                      Text(localization.translate('tagalog'), style: GoogleFonts.fredoka()),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -384,14 +390,18 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                             size: 20,
                           ),
                           SizedBox(width: 8),
-                          Text(
-                            _selectedLanguage == 'English'
-                                ? 'English Dictionary'
-                                : 'Tunay na Tagalog Dictionary',
-                            style: GoogleFonts.fredoka(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          Flexible(
+                            child: Text(
+                              _selectedLanguage == 'English'
+                                  ? 'English Dictionary'
+                                  : 'Tunay na Tagalog Dictionary',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.fredoka(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ],

@@ -4,6 +4,8 @@ import 'package:testapp/features/stories/presentation/screens/stories_screen.dar
 import 'package:testapp/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:testapp/features/quiz/presentation/screens/quiz_list_screen.dart';
 import 'package:testapp/features/dictionary/presentation/screens/dictionary_screen.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/localization_provider.dart';
 
 class BottomNav extends StatefulWidget {
   const BottomNav({super.key});
@@ -13,20 +15,20 @@ class BottomNav extends StatefulWidget {
 }
 
 class _BottomNavState extends State<BottomNav> {
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    StoriesScreen(),
-    FavoritesScreen(),
-    QuizListScreen(),
-    DictionaryScreen(),
+  final List<Widget> _screens = [
+    const HomeScreen(),
+    const StoriesScreen(),
+    const FavoritesScreen(),
+    const QuizListScreen(),
+    const DictionaryScreen(),
   ];
 
-  static const List<String> _labels = [
-    'Home',
-    'Stories',
-    'Favorites',
-    'Quiz',
-    'Dictionary',
+  static const List<String> _labelKeys = [
+    'home',
+    'stories',
+    'favorites',
+    'quiz',
+    'dictionary',
   ];
 
   int _selectedIndex = 0;
@@ -49,9 +51,10 @@ class _BottomNavState extends State<BottomNav> {
         showSelectedLabels: true,
         showUnselectedLabels: true,
         items: List.generate(_screens.length, (index) {
+          final localization = Provider.of<LocalizationProvider>(context, listen: false);
           return BottomNavigationBarItem(
             icon: Icon(_getIcon(index)),
-            label: _labels[index],
+            label: localization.translate(_labelKeys[index]),
           );
         }),
       ),

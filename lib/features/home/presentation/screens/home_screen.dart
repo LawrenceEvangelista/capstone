@@ -7,7 +7,8 @@ import 'package:testapp/features/stories/presentation/screens/story_screen.dart'
 import 'package:testapp/features/dictionary/presentation/screens/dictionary_screen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
-import 'package:testapp/features/stories/provider/recently_viewed_provider.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -42,22 +43,22 @@ class _MainLayoutState extends State<MainLayout> {
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         elevation: 16,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
+            icon: const Icon(Icons.home_rounded),
+            label: Provider.of<LocalizationProvider>(context, listen: false).translate('home'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book_rounded),
-            label: 'Dictionary',
+            icon: const Icon(Icons.book_rounded),
+            label: Provider.of<LocalizationProvider>(context, listen: false).translate('dictionary'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history_rounded),
-            label: 'History',
+            icon: const Icon(Icons.history_rounded),
+            label: Provider.of<LocalizationProvider>(context, listen: false).translate('history'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_rounded),
-            label: 'Settings',
+            icon: const Icon(Icons.settings_rounded),
+            label: Provider.of<LocalizationProvider>(context, listen: false).translate('settings'),
           ),
         ],
       ),
@@ -217,6 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildErrorWidget() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -228,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Oops! Something went wrong',
+            localization.translate('errorOccurred'),
             style: GoogleFonts.fredoka(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -237,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _errorMessage ?? 'Failed to load content',
+            _errorMessage ?? localization.translate('failedToLoadContent'),
             style: GoogleFonts.fredoka(
               fontSize: 16,
               color: Colors.grey.shade600,
@@ -258,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
             child: Text(
-              'Try Again',
+              localization.translate('tryAgain'),
               style: GoogleFonts.fredoka(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -272,6 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLoadingWidget() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -281,7 +284,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Loading stories...',
+            localization.translate('loadingStories'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.fredoka(
               fontSize: 16,
               color: Colors.grey.shade600,
@@ -299,6 +304,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return storyType.toLowerCase() == category.toLowerCase();
     }).toList();
 
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
+
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -311,17 +318,22 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      category,
-                      style: GoogleFonts.fredoka(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        category,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.fredoka(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -331,11 +343,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              Expanded(
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                ),
                 child: filteredStories.isEmpty
                     ? Center(
                         child: Text(
-                          'No stories found in this category',
+                          localization.translate('noStoriesInCategory'),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.fredoka(fontSize: 16),
                         ),
                       )
@@ -365,10 +382,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                             title: Text(
                               story['title'] ?? 'No Title',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.fredoka(fontWeight: FontWeight.w600),
                             ),
                             subtitle: Text(
                               '${(story['progress'] * 100).toStringAsFixed(0)}% Completed',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.fredoka(fontSize: 12),
                             ),
                             onTap: () {
@@ -394,11 +415,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showAllStories(String sectionTitle) {
     List<Map<String, dynamic>> displayStories = [];
     
-    if (sectionTitle == 'Continue Reading') {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
+    
+    if (sectionTitle == localization.translate('continueReading')) {
       displayStories = continueReadingStories;
-    } else if (sectionTitle == 'New Stories') {
+    } else if (sectionTitle == localization.translate('newStories')) {
       displayStories = newStories;
-    } else if (sectionTitle == 'Completed Stories') {
+    } else if (sectionTitle == localization.translate('completedStories')) {
       displayStories = completedStories;
     } else {
       displayStories = stories;
@@ -416,17 +439,22 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      sectionTitle,
-                      style: GoogleFonts.fredoka(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        sectionTitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.fredoka(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -436,11 +464,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              Expanded(
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.75,
+                ),
                 child: displayStories.isEmpty
                     ? Center(
                         child: Text(
-                          'No stories found',
+                          localization.translate('noStoriesFound'),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.fredoka(),
                         ),
                       )
@@ -468,7 +501,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
+                                Flexible(
+                                  fit: FlexFit.loose,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(12),
@@ -527,13 +561,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
-                                  story['title'] ?? 'No Title',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.fredoka(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
+                                Flexible(
+                                  child: Text(
+                                    story['title'] ?? 'No Title',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.fredoka(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -552,6 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context);
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     final recentlyViewedStories = recentlyViewedProvider.getRecentlyViewedByDate(days: 7); // Show stories from last 7 days
     
     // Show loading state
@@ -594,14 +631,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 32),
 
                       // Categories
-                      _buildSectionTitle('Explore Categories'),
+                      _buildSectionTitle(localization.translate('exploreCategories')),
                       const SizedBox(height: 16),
                       _buildCategoriesRow(),
                       const SizedBox(height: 36),
 
                       // Continue Reading (only if there are stories in progress)
                       if (continueReadingStories.isNotEmpty) ...[
-                        _buildSectionTitle('Continue Reading'),
+                        _buildSectionTitle(localization.translate('continueReading')),
                         const SizedBox(height: 16),
                         _buildStoryList(continueReadingStories),
                         const SizedBox(height: 36),
@@ -609,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       // New Stories
                       if (newStories.isNotEmpty) ...[
-                        _buildSectionTitle('New Stories'),
+                        _buildSectionTitle(localization.translate('newStories')),
                         const SizedBox(height: 16),
                         _buildStoryList(newStories),
                         const SizedBox(height: 36),
@@ -617,21 +654,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       // Recently Viewed
                       if (recentlyViewedStories.isNotEmpty) ...[
-                        _buildSectionTitle('Recently Viewed'),
+                        _buildSectionTitle(localization.translate('recentlyViewed')),
                         const SizedBox(height: 16),
                         _buildStoryList(recentlyViewedStories),
                         const SizedBox(height: 36),
                       ],
 
                       // Recommended For You
-                      _buildSectionTitle('Recommended For You'),
+                      _buildSectionTitle(localization.translate('recommendedForYou')),
                       const SizedBox(height: 16),
                       _buildStoryList(stories),
                       const SizedBox(height: 36),
 
                       // Completed Stories
                       if (completedStories.isNotEmpty) ...[
-                        _buildSectionTitle('Completed Stories'),
+                        _buildSectionTitle(localization.translate('completedStories')),
                         const SizedBox(height: 16),
                         _buildStoryList(completedStories),
                         const SizedBox(height: 24),
@@ -648,6 +685,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildDailyChallengeCard() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return GestureDetector(
       onTap: () {
         _showDailyChallengeDialog();
@@ -685,12 +723,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(width: 16),
-            Expanded(
+            Flexible(
+              fit: FlexFit.loose,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Daily Challenge',
+                    localization.translate('dailyChallenge'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.fredoka(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -699,7 +740,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Read 1 story today! 🎯',
+                    '${localization.translate('storiesReadToday')}! 🎯',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.fredoka(
                       fontSize: 14,
                       color: Colors.white.withOpacity(0.9),
@@ -720,6 +763,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showDailyChallengeDialog() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context, listen: false);
     // Calculate how many stories were read today using proper date filtering
     final todayStories = recentlyViewedProvider.getTodayStories;
@@ -774,8 +818,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Title
                 Text(
-                  challengeCompleted ? '🎉 Challenge Complete!' : 'Daily Challenge',
+                  challengeCompleted ? '🎉 ${localization.translate('challengeComplete')}!' : localization.translate('dailyChallenge'),
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.fredoka(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
@@ -787,9 +833,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Description
                 Text(
                   challengeCompleted
-                      ? 'Great job! You read a story today! 🌟'
-                      : 'Read 1 story to complete today\'s challenge!',
+                      ? '${localization.translate('greatJob')} 🌟'
+                      : '${localization.translate('readStoriesToday')} ${localization.translate('to')} ${localization.translate('completeChallenge')}!',
                   textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.fredoka(
                     fontSize: 16,
                     color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -810,7 +858,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Stories Read Today',
+                            localization.translate('storiesReadToday'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.fredoka(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -819,6 +869,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           Text(
                             '$storiesReadToday / 1',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.fredoka(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -880,6 +932,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeader() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -927,7 +980,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Welcome back,',
+                localization.translate('welcomeBack'),
                 style: GoogleFonts.fredoka(
                   textStyle: TextStyle(
                     fontSize: 14,
@@ -953,6 +1006,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSearchBar() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -973,7 +1027,7 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
         decoration: InputDecoration(
-          hintText: 'Search a story',
+          hintText: localization.translate('searchStories'),
           hintStyle: GoogleFonts.fredoka(
             color: Colors.grey.shade600,
             fontSize: 16,
@@ -1028,9 +1082,10 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
 
     if (filtered.isEmpty) {
+      final localization = Provider.of<LocalizationProvider>(context, listen: false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No stories found matching "$query"'),
+          content: Text('${localization.translate('noStoriesFoundMatching')} "$query"'),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -1049,6 +1104,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -1069,7 +1125,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              Expanded(
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  // limit the modal list height so the Column has a bounded height
+                  maxHeight: MediaQuery.of(context).size.height * 0.6,
+                ),
                 child: ListView.builder(
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
@@ -1197,13 +1257,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.fredoka(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).textTheme.bodyMedium?.color,
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.fredoka(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
             ),
           ),
         ],
@@ -1212,6 +1276,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return GestureDetector(
       onTap: () {
         _showAllStories(title);
@@ -1236,7 +1301,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 Text(
-                  'See all',
+                  localization.translate('seeAll'),
                   style: GoogleFonts.fredoka(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -1369,6 +1434,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   Text(
                     title,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.fredoka(
                       fontSize: 14,

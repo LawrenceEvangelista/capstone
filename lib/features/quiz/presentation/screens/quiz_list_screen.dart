@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:testapp/features/stories/data/models/story_model.dart';
 import 'package:testapp/features/quiz/presentation/screens/quiz_qa.dart'; // ✅ Correct import path
+import '../../../../providers/localization_provider.dart';
 
 class QuizListScreen extends StatefulWidget {
   const QuizListScreen({super.key});
@@ -48,11 +50,12 @@ class _QuizListScreenState extends State<QuizListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFD93D),
-        title: Text('Story Quizzes', style: GoogleFonts.sniglet(fontSize: 20)),
+        title: Text(localization.translate('storyQuizzes'), style: GoogleFonts.sniglet(fontSize: 20)),
         centerTitle: true,
       ),
       body: Column(
@@ -80,7 +83,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Search a story or category...',
+                  hintText: localization.translate('searchStories'),
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
                   fillColor: Colors.white,
@@ -99,7 +102,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
-                const Text('Category: '),
+                Text('${localization.translate('filterByCategory')}: '),
                 const SizedBox(width: 8),
                 DropdownButton<String>(
                   value: selectedCategory,
@@ -111,12 +114,16 @@ class _QuizListScreenState extends State<QuizListScreen> {
                   items: ['All Categories', ...allCategories]
                       .map((value) => DropdownMenuItem(
                     value: value,
-                    child: Text(value),
+                    child: Text(
+                      _localizedLabel(value, localization),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ))
                       .toList(),
                 ),
                 const Spacer(),
-                const Text('Status: '),
+                Text('${localization.translate('status')}: '),
                 const SizedBox(width: 8),
                 DropdownButton<String>(
                   value: selectedQuizStatus,
@@ -128,7 +135,11 @@ class _QuizListScreenState extends State<QuizListScreen> {
                   items: quizStatuses
                       .map((value) => DropdownMenuItem(
                     value: value,
-                    child: Text(value),
+                    child: Text(
+                      _localizedLabel(value, localization),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ))
                       .toList(),
                 ),
@@ -145,7 +156,34 @@ class _QuizListScreenState extends State<QuizListScreen> {
     );
   }
 
+  String _localizedLabel(String value, LocalizationProvider localization) {
+    // Map some UI values to localization keys where they differ
+    String mappedKey = value.toLowerCase();
+
+    if (value == 'All Categories' || value == 'All') {
+      mappedKey = 'allStories';
+    } else if (value == 'Fables') {
+      mappedKey = 'fable';
+    } else if (value == 'Fable') {
+      mappedKey = 'fable';
+    } else if (value == 'Folktale') {
+      mappedKey = 'folktale';
+    } else if (value == 'Legend') {
+      mappedKey = 'legend';
+    } else if (value == 'Fiction') {
+      mappedKey = 'fiction';
+    } else {
+      mappedKey = value.replaceAll(' ', '').toLowerCase();
+    }
+
+    final translated = localization.translate(mappedKey);
+    // If translation isn't present, localization returns the key itself.
+    if (translated == mappedKey) return value;
+    return translated;
+  }
+
   Widget _buildStoryList() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     // 🧠 Filtering logic
     List<StoryModel> filteredStories = allStories.where((story) {
       final matchesCategory = selectedCategory == 'All Categories' ||
@@ -211,12 +249,14 @@ class _QuizListScreenState extends State<QuizListScreen> {
                       children: [
                         Text(
                           story.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.fredoka(
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          story.category,
+                          _localizedLabel(story.category, localization),
                           style: GoogleFonts.fredoka(
                               fontSize: 14, color: Colors.black54),
                         ),

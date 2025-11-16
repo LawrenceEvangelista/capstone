@@ -174,22 +174,30 @@ class _SignupScreenState extends State<SignupScreen> {
           children: [
             Icon(Icons.error_outline, color: _primaryColor, size: 28),
             const SizedBox(width: 10),
-            Text(
-              'Oops! Signup Error',
-              style: GoogleFonts.fredoka(
-                textStyle: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
+            Flexible(
+              child: Text(
+                'Oops! Signup Error',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.fredoka(
+                  textStyle: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
                 ),
               ),
             ),
           ],
         ),
-        content: Text(
-          errorMessage,
-          style: GoogleFonts.fredoka(
-            textStyle: const TextStyle(fontSize: 16),
+        content: Flexible(
+          child: Text(
+            errorMessage,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.fredoka(
+              textStyle: const TextStyle(fontSize: 16),
+            ),
           ),
         ),
         actions: [

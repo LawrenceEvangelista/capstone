@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:testapp/core/services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   final AuthService authService;
@@ -170,10 +172,14 @@ class ForgotPasswordScreen extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: Text(
           'Reset Link Sent',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.poppins(),
         ),
         content: Text(
           'A password reset link has been sent to your email address. Please check your inbox.',
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
           style: GoogleFonts.poppins(),
         ),
         actions: [
@@ -195,15 +201,27 @@ class ForgotPasswordScreen extends StatelessWidget {
   void _showErrorDialog(BuildContext context, String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Error', style: GoogleFonts.poppins()),
-        content: Text(message, style: GoogleFonts.poppins()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('OK', style: GoogleFonts.poppins()),
+      builder: (context) => Consumer<LocalizationProvider>(
+        builder: (context, localization, _) => AlertDialog(
+          title: Text(
+            localization.translate('error'),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(),
           ),
-        ],
+          content: Text(
+            message,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(localization.translate('ok'), style: GoogleFonts.poppins()),
+            ),
+          ],
+        ),
       ),
     );
   }

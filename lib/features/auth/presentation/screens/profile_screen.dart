@@ -3,6 +3,9 @@ import 'package:animate_do/animate_do.dart';
 import 'package:testapp/core/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:testapp/core/widgets/language_switcher.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,6 +49,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(context);
+    
     return Scaffold(
       backgroundColor: _backgroundColor,
       appBar: AppBar(
@@ -56,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         iconTheme: const IconThemeData(color: Colors.white, size: 30),
         title: Text(
-          'My Profile',
+          localization.translate('profile'),
           style: GoogleFonts.fredoka(
             textStyle: const TextStyle(
               color: Colors.white,
@@ -70,11 +75,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: Container(
         decoration: BoxDecoration(
           color: _backgroundColor,
-          image: const DecorationImage(
-            image: AssetImage('assets/cartoon_background.png'),
-            opacity: 0.1,
-            fit: BoxFit.cover,
-          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -153,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       child: Text(
-                        'Edit Your Profile',
+                        localization.translate('editProfile'),
                         style: GoogleFonts.fredoka(
                           textStyle: const TextStyle(
                             fontSize: 22,
@@ -211,12 +211,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               validator: (value) {
                                 if (_isEditingUsername &&
                                     (value == null || value.isEmpty)) {
-                                  return 'Please enter your username';
+                                  return localization.translate('username');
                                 }
                                 return null;
                               },
                               decoration: InputDecoration(
-                                labelText: 'Username',
+                                labelText: localization.translate('username'),
                                 labelStyle: GoogleFonts.fredoka(
                                   textStyle: TextStyle(
                                     color: _primaryColor,
@@ -308,7 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     decoration: InputDecoration(
-                                      labelText: 'Current Password',
+                                      labelText: localization.translate('currentPassword'),
                                       labelStyle: GoogleFonts.fredoka(
                                         textStyle: TextStyle(
                                           color: _primaryColor,
@@ -319,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        return 'Enter current password';
+                                        return localization.translate('enterCurrentPassword');
                                       }
                                       return null;
                                     },
@@ -370,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     decoration: InputDecoration(
-                                      labelText: 'New Password',
+                                      labelText: localization.translate('newPassword'),
                                       labelStyle: GoogleFonts.fredoka(
                                         textStyle: TextStyle(
                                           color: _primaryColor,
@@ -381,10 +381,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                     validator: (value) {
                                       if (value == null || value.isEmpty) {
-                                        return 'Enter new password';
+                                        return localization.translate('enterNewPassword');
                                       }
                                       if (value.length < 6) {
-                                        return 'Must be at least 6 characters';
+                                        return localization.translate('passwordMinChars');
                                       }
                                       return null;
                                     },
@@ -423,7 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Change Password',
+                                  localization.translate('changePassword'),
                                   style: GoogleFonts.fredoka(
                                     textStyle: TextStyle(
                                       color: _primaryColor,
@@ -492,6 +492,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
+                // Language Switcher
+                FadeInDown(
+                  delay: const Duration(milliseconds: 400),
+                  child: LanguageSwitcher(
+                    primaryColor: _primaryColor,
+                    accentColor: _accentColor,
+                  ),
+                ),
+                const SizedBox(height: 40),
                 // Delete account button
                 FadeInDown(
                   delay: const Duration(milliseconds: 500),
@@ -533,7 +542,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Delete My Account',
+                            localization.translate('delete'),
                             style: GoogleFonts.fredoka(
                               textStyle: const TextStyle(
                                 color: Colors.white,
@@ -638,6 +647,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showLogoutErrorDialog(BuildContext context, String errorMessage) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
+    
     showDialog(
       context: context,
       builder:
@@ -647,7 +658,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             backgroundColor: Colors.white,
             title: Text(
-              'Logout Error',
+              localization.translate('logoutError'),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.fredoka(
                 textStyle: TextStyle(
                   fontSize: 20,
@@ -657,7 +670,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             content: Text(
-              'Failed to log out. Error: $errorMessage',
+              '${localization.translate('failedToLogout')}: $errorMessage',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.fredoka(
                 textStyle: const TextStyle(fontSize: 16),
               ),
@@ -667,7 +682,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () => Navigator.of(context).pop(),
                 style: TextButton.styleFrom(foregroundColor: _primaryColor),
                 child: Text(
-                  'OK',
+                  localization.translate('ok'),
                   style: GoogleFonts.fredoka(
                     textStyle: const TextStyle(
                       fontSize: 16,
@@ -682,6 +697,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
+    
     showDialog(
       context: context,
       builder:
@@ -691,7 +708,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             backgroundColor: Colors.white,
             title: Text(
-              'Delete Account',
+              localization.translate('deleteAccount'),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.fredoka(
                 textStyle: TextStyle(
                   fontSize: 20,
@@ -701,7 +720,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             content: Text(
-              'Are you sure you want to delete your account? This action cannot be undone! 😱',
+              localization.translate('deleteAccountConfirm'),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.fredoka(
                 textStyle: const TextStyle(fontSize: 16),
               ),
@@ -711,7 +732,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () => Navigator.of(context).pop(false),
                 style: TextButton.styleFrom(foregroundColor: _primaryColor),
                 child: Text(
-                  'Cancel',
+                  localization.translate('cancel'),
                   style: GoogleFonts.fredoka(
                     textStyle: const TextStyle(
                       fontSize: 16,

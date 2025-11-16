@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
 
 class QuizQa extends StatefulWidget {
   final String storyId;
@@ -142,32 +144,36 @@ class _QuizQaState extends State<QuizQa> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
-        backgroundColor: mustardYellow,
-        appBar: AppBar(
-          title: const Text('Loading Quiz...'),
-          backgroundColor: Color(0xFFFFD93D),
+      return Consumer<LocalizationProvider>(
+        builder: (context, localization, _) => Scaffold(
+          backgroundColor: mustardYellow,
+          appBar: AppBar(
+            title: Text(localization.translate('loadingQuiz')),
+            backgroundColor: Color(0xFFFFD93D),
+          ),
+          body: const Center(child: CircularProgressIndicator()),
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (questions.isEmpty) {
-      return Scaffold(
-        backgroundColor: mustardYellow,
-        appBar: AppBar(
-          title: const Text('No Quiz Found'),
-          backgroundColor: Color(0xFFFFD93D),
-        ),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.warning, size: 60, color: Colors.black54),
-              SizedBox(height: 20),
-              Text('No quiz data available for this story.',
-                  style: TextStyle(fontSize: 16, color: Colors.black)),
-            ],
+      return Consumer<LocalizationProvider>(
+        builder: (context, localization, _) => Scaffold(
+          backgroundColor: mustardYellow,
+          appBar: AppBar(
+            title: Text(localization.translate('noQuizFound')),
+            backgroundColor: Color(0xFFFFD93D),
+          ),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.warning, size: 60, color: Colors.black54),
+                const SizedBox(height: 20),
+                Text(localization.translate('noQuizDataAvailable'),
+                    style: const TextStyle(fontSize: 16, color: Colors.black)),
+              ],
+            ),
           ),
         ),
       );
@@ -178,12 +184,13 @@ class _QuizQaState extends State<QuizQa> {
     final currentQuestion = questions[currentQuestionIndex];
     final options = currentQuestion.optionsEng;
 
-    return Scaffold(
-      backgroundColor: mustardYellow,
-      appBar: AppBar(
+    return Consumer<LocalizationProvider>(
+      builder: (context, localization, _) => Scaffold(
         backgroundColor: mustardYellow,
-        title: Text('Question ${currentQuestionIndex + 1} of ${questions.length}'),
-      ),
+        appBar: AppBar(
+          backgroundColor: mustardYellow,
+          title: Text('${localization.translate('question')} ${currentQuestionIndex + 1} ${localization.translate('of')} ${questions.length}'),
+        ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -242,7 +249,7 @@ class _QuizQaState extends State<QuizQa> {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black),
-                    child: const Text('Previous'),
+                    child: Text(localization.translate('previous')),
                   ),
                 ElevatedButton(
                   onPressed:
@@ -250,51 +257,54 @@ class _QuizQaState extends State<QuizQa> {
                   style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black, foregroundColor: Colors.white),
                   child: Text(currentQuestionIndex == questions.length - 1
-                      ? 'Finish'
-                      : 'Next'),
+                      ? localization.translate('finish')
+                      : localization.translate('next')),
                 ),
               ],
             ),
           ],
         ),
       ),
+        ),
     );
   }
 
   Widget _buildResultsScreen() {
     final percentage = (score / questions.length * 100).round();
-    return Scaffold(
-      backgroundColor: mustardYellow,
-      appBar: AppBar(
-        title: const Text('Quiz Complete!'),
+    return Consumer<LocalizationProvider>(
+      builder: (context, localization, _) => Scaffold(
         backgroundColor: mustardYellow,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Score: $score/${questions.length}', style: const TextStyle(fontSize: 24)),
-            Text('($percentage%)', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  currentQuestionIndex = 0;
-                  selectedAnswers = List.filled(questions.length, null);
-                  score = 0;
-                  quizCompleted = false;
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black, foregroundColor: Colors.white),
-              child: const Text('Try Again'),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Go Back'),
-            ),
-          ],
+        appBar: AppBar(
+          title: Text(localization.translate('quizComplete')),
+          backgroundColor: mustardYellow,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('${localization.translate('score')} $score/${questions.length}', style: const TextStyle(fontSize: 24)),
+              Text('($percentage%)', style: const TextStyle(fontSize: 18)),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    currentQuestionIndex = 0;
+                    selectedAnswers = List.filled(questions.length, null);
+                    score = 0;
+                    quizCompleted = false;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black, foregroundColor: Colors.white),
+                child: Text(localization.translate('tryAgain')),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(localization.translate('back')),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../../../providers/localization_provider.dart';
 
 class QuizQa extends StatefulWidget {
   final String storyId;
@@ -119,10 +121,11 @@ class _QuizQaState extends State<QuizQa> {
     }
 
     if (questions.isEmpty) {
+      final localization = Provider.of<LocalizationProvider>(context, listen: false);
       return Scaffold(
         backgroundColor: yellow,
         appBar: AppBar(
-          title: const Text('No Quiz Found'),
+          title: Text(localization.translate('noQuizFound')),
           backgroundColor: yellow,
         ),
         body: Center(
@@ -132,7 +135,7 @@ class _QuizQaState extends State<QuizQa> {
               const Icon(Icons.error_outline, size: 80, color: Colors.black54),
               const SizedBox(height: 16),
               Text(
-                'No quiz data available for this story.',
+                localization.translate('noQuizDataAvailable'),
                 style: GoogleFonts.fredoka(fontSize: 16, color: Colors.black87),
               ),
               const SizedBox(height: 20),
@@ -140,7 +143,7 @@ class _QuizQaState extends State<QuizQa> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black, foregroundColor: Colors.white),
-                child: const Text('Go Back'),
+                child: Text(localization.translate('back')),
               ),
             ],
           ),
@@ -149,18 +152,19 @@ class _QuizQaState extends State<QuizQa> {
     }
 
     if (quizCompleted) {
+      final localization = Provider.of<LocalizationProvider>(context, listen: false);
       final percent = ((score / questions.length) * 100).round();
       return Scaffold(
         backgroundColor: yellow,
         appBar: AppBar(
-          title: const Text('Quiz Complete!'),
+          title: Text(localization.translate('quizComplete')),
           backgroundColor: yellow,
         ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Score: $score / ${questions.length}',
+              Text('${localization.translate('score')} $score / ${questions.length}',
                   style: GoogleFonts.fredoka(fontSize: 24, fontWeight: FontWeight.bold)),
               Text('$percent%', style: GoogleFonts.fredoka(fontSize: 20, color: dark)),
               const SizedBox(height: 30),
@@ -175,12 +179,12 @@ class _QuizQaState extends State<QuizQa> {
                 },
                 style: ElevatedButton.styleFrom(
                     backgroundColor: dark, foregroundColor: Colors.white),
-                child: const Text("Try Again"),
+                child: Text(localization.translate('tryAgain')),
               ),
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Back to Quiz List", style: TextStyle(color: Colors.black)),
+                child: Text(localization.translate('back'), style: const TextStyle(color: Colors.black)),
               ),
             ],
           ),
@@ -190,15 +194,18 @@ class _QuizQaState extends State<QuizQa> {
 
     final q = questions[currentQuestionIndex];
 
-    return Scaffold(
-      backgroundColor: yellow,
-      appBar: AppBar(
+    return Consumer<LocalizationProvider>(
+      builder: (context, localization, _) => Scaffold(
         backgroundColor: yellow,
-        title: Text(
-          'Question ${currentQuestionIndex + 1}/${questions.length}',
-          style: GoogleFonts.sniglet(fontSize: 20),
+        appBar: AppBar(
+          backgroundColor: yellow,
+          title: Text(
+            '${localization.translate('question')} ${currentQuestionIndex + 1}/${questions.length}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.sniglet(fontSize: 20),
+          ),
         ),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -217,6 +224,8 @@ class _QuizQaState extends State<QuizQa> {
                 padding: const EdgeInsets.all(20.0),
                 child: Text(
                   q.questionEng,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.fredoka(fontSize: 18, color: dark),
                   textAlign: TextAlign.center,
                 ),
@@ -234,6 +243,8 @@ class _QuizQaState extends State<QuizQa> {
                     child: ListTile(
                       title: Text(
                         q.optionsEng[i],
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.fredoka(
                           color: isSelected ? Colors.white : Colors.black,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -253,7 +264,10 @@ class _QuizQaState extends State<QuizQa> {
                     onPressed: () => setState(() => currentQuestionIndex--),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white, foregroundColor: dark),
-                    child: const Text("Previous"),
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) =>
+                        Text(localization.translate('previous')),
+                    ),
                   ),
                 ElevatedButton(
                   onPressed:
@@ -261,13 +275,14 @@ class _QuizQaState extends State<QuizQa> {
                   style: ElevatedButton.styleFrom(
                       backgroundColor: dark, foregroundColor: Colors.white),
                   child: Text(
-                    currentQuestionIndex == questions.length - 1 ? "Finish" : "Next",
+                    currentQuestionIndex == questions.length - 1 ? localization.translate('finish') : localization.translate('next'),
                   ),
                 ),
               ],
             ),
           ],
         ),
+      ),
       ),
     );
   }

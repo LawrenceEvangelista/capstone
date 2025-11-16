@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:testapp/features/favorites/provider/favorites_provider.dart';
 import 'package:testapp/features/stories/presentation/screens/story_screen.dart';
+import 'package:testapp/providers/localization_provider.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -76,7 +77,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFD93D),
-        title: Text('Favorites', style: GoogleFonts.sniglet(fontSize: 20)),
+        title: Consumer<LocalizationProvider>(
+          builder: (context, localization, _) => Text(
+            localization.translate('favorites'),
+            style: GoogleFonts.sniglet(fontSize: 20),
+          ),
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +128,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
-                const Text('Filter by Category:'),
+                Consumer<LocalizationProvider>(
+                  builder: (context, localization, _) => Text(localization.translate('filterByCategory')),
+                ),
                 const SizedBox(width: 8),
                 DropdownButton<String>(
                   value: categories.contains(selectedCategory) ? selectedCategory : 'All Categories',
@@ -179,11 +187,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             const SizedBox(height: 16),
             Text(
               'No favorite stories found',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             Text(
               'Add stories to your favorites to see them here',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
           ],
@@ -322,19 +334,27 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              title,
-                              style: GoogleFonts.fredoka(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Text(
+                                title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              'Category: $category',
-                              style: GoogleFonts.fredoka(
-                                fontSize: 14,
-                                color: Colors.black54,
+                            Flexible(
+                              child: Text(
+                                'Category: $category',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),

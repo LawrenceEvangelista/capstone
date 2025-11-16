@@ -3,7 +3,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:testapp/features/stories/presentation/screens/story_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
+import '../../../../providers/localization_provider.dart';
 
 class StoriesScreen extends StatefulWidget {
   const StoriesScreen({super.key});
@@ -197,11 +199,15 @@ class _StoriesScreenState extends State<StoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFD93D),
-        title: const Text('Stories'),
+        title: Consumer<LocalizationProvider>(
+          builder: (context, localization, _) =>
+            Text(localization.translate('stories')),
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +238,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                   });
                 },
                 decoration: InputDecoration(
-                  hintText: 'Search a story...',
+                  hintText: localization.translate('searchStories'),
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon:
                   searchQuery.isNotEmpty
@@ -265,7 +271,10 @@ class _StoriesScreenState extends State<StoriesScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  const Text('Filter by Category: '),
+                  Consumer<LocalizationProvider>(
+                    builder: (context, localization, _) =>
+                      Text('${localization.translate('filterByCategory')} '),
+                  ),
                   const SizedBox(width: 8),
                   DropdownButton<String>(
                     value: selectedCategory,
@@ -274,18 +283,22 @@ class _StoriesScreenState extends State<StoriesScreen> {
                         selectedCategory = newCategory!;
                       });
                     },
-                    items:
-                    ['All Categories', ...allCategories]
-                        .map(
-                          (String value) => DropdownMenuItem<String>(
+                    items: ['All Categories', ...allCategories]
+                        .map((String value) => DropdownMenuItem<String>(
                         value: value,
-                        child: Text(value),
-                      ),
-                    )
+                        child: Text(
+                          _localizedLabel(value, localization),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ))
                         .toList(),
                   ),
                   const SizedBox(width: 16),
-                  const Text('Filter by Read Status: '),
+                  Consumer<LocalizationProvider>(
+                    builder: (context, localization, _) =>
+                      Text('${localization.translate('filterByReadStatus')} '),
+                  ),
                   const SizedBox(width: 8),
                   DropdownButton<String>(
                     value: selectedReadStatus,
@@ -294,14 +307,15 @@ class _StoriesScreenState extends State<StoriesScreen> {
                         selectedReadStatus = newStatus!;
                       });
                     },
-                    items:
-                    readStatuses
-                        .map(
-                          (String value) => DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
+                    items: readStatuses
+                        .map((String value) => DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(
+                        _localizedLabel(value, localization),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    )
+                    ))
                         .toList(),
                   ),
                 ],
@@ -320,7 +334,32 @@ class _StoriesScreenState extends State<StoriesScreen> {
     );
   }
 
+  String _localizedLabel(String value, LocalizationProvider localization) {
+    String mappedKey = value.toLowerCase();
+
+    if (value == 'All Categories' || value == 'All Status') {
+      mappedKey = 'allStories';
+    } else if (value == 'Fable' || value == 'Fables') {
+      mappedKey = 'fable';
+    } else if (value == 'Folktale') {
+      mappedKey = 'folktale';
+    } else if (value == 'Legend') {
+      mappedKey = 'legend';
+    } else if (value == 'Read') {
+      mappedKey = 'read';
+    } else if (value == 'Unread') {
+      mappedKey = 'unread';
+    } else {
+      mappedKey = value.replaceAll(' ', '').toLowerCase();
+    }
+
+    final translated = localization.translate(mappedKey);
+    if (translated == mappedKey) return value;
+    return translated;
+  }
+
   Widget _buildStoryList() {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     // Filter the stories by category, read status, and search query
     List<Map<String, dynamic>> filteredStories =
     allStories.where((story) {
@@ -339,9 +378,9 @@ class _StoriesScreenState extends State<StoriesScreen> {
     }).toList();
 
     if (filteredStories.isEmpty) {
-      return const Center(
-        child: Text('No stories match your filters',
-            style: TextStyle(fontSize: 16, color: Colors.grey)),
+      return Center(
+        child: Text(localization.translate('noStoriesMatching'),
+            style: const TextStyle(fontSize: 16, color: Colors.grey)),
       );
     }
 
@@ -458,7 +497,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            'Category: ${story['category']}',
+                            '${localization.translate('categories')}: ${_localizedLabel(story['category'], localization)}',
                             style: const TextStyle(fontSize: 14, color: Colors.black54),
                           ),
                           Row(
@@ -470,7 +509,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                story['isRead'] ? 'Read' : 'Unread',
+                                story['isRead'] ? localization.translate('read') : localization.translate('unread'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: story['isRead'] ? Colors.green : Colors.grey,

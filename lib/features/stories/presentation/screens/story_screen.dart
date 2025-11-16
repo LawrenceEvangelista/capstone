@@ -6,7 +6,8 @@ import 'package:testapp/features/favorites/provider/favorites_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:testapp/features/stories/provider/recently_viewed_provider.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
+import '../../../../providers/localization_provider.dart';
 
 class StoryScreen extends StatefulWidget {
   final String storyId;
@@ -231,6 +232,8 @@ class _StoryScreenState extends State<StoryScreen> {
   }
 
   void _showQuizDialog(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -243,7 +246,7 @@ class _StoryScreenState extends State<StoryScreen> {
             Icon(Icons.quiz, color: _primaryColor, size: 28),
             const SizedBox(width: 10),
             Text(
-              'Coming Soon!',
+              localization.translate('comingSoon'),
               style: GoogleFonts.fredoka(
                 textStyle: TextStyle(
                   fontSize: 22,
@@ -255,7 +258,7 @@ class _StoryScreenState extends State<StoryScreen> {
           ],
         ),
         content: Text(
-          'Quiz feature is coming soon for this story! Stay tuned.',
+          localization.translate('quizComingSoon'),
           style: GoogleFonts.fredoka(
             textStyle: const TextStyle(fontSize: 16),
           ),
@@ -274,7 +277,7 @@ class _StoryScreenState extends State<StoryScreen> {
               ),
             ),
             child: Text(
-              'OK',
+              localization.translate('ok'),
               style: GoogleFonts.fredoka(
                 textStyle: const TextStyle(
                   fontSize: 16,
@@ -291,6 +294,7 @@ class _StoryScreenState extends State<StoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     // Get the favorites provider
     final favoritesProvider = Provider.of<FavoritesProvider>(context);
     final bool isFavorite = favoritesProvider.isFavorite(widget.storyId);
@@ -307,7 +311,7 @@ class _StoryScreenState extends State<StoryScreen> {
                 CircularProgressIndicator(color: _primaryColor),
                 const SizedBox(height: 20),
                 Text(
-                  'Loading story...',
+                  localization.translate('loadingStory'),
                   style: GoogleFonts.fredoka(
                     fontSize: 18,
                     color: _primaryColor,
@@ -324,12 +328,22 @@ class _StoryScreenState extends State<StoryScreen> {
                 Icon(Icons.error_outline, color: _primaryColor, size: 60),
                 const SizedBox(height: 20),
                 Text(
-                  errorMessage,
+                  localization.translate('oopsError'),
                   style: GoogleFonts.fredoka(
                     fontSize: 18,
                     color: Colors.red,
                   ),
                 ),
+                if (errorMessage.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    errorMessage,
+                    style: GoogleFonts.fredoka(
+                      fontSize: 14,
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ],
               ],
             ),
           )
@@ -379,7 +393,7 @@ class _StoryScreenState extends State<StoryScreen> {
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Back to Stories',
+                        '${localization.translate('back')} ${localization.translate('stories')}',
                         style: GoogleFonts.fredoka(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -440,6 +454,8 @@ class _StoryScreenState extends State<StoryScreen> {
                         Text(
                           storyTitle,
                           textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.fredoka(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -453,6 +469,8 @@ class _StoryScreenState extends State<StoryScreen> {
                         Text(
                           storyTitle,
                           textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.fredoka(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -509,7 +527,7 @@ class _StoryScreenState extends State<StoryScreen> {
                               ),
                               const SizedBox(width: 5),
                               Text(
-                                isFavorite ? 'Favorited' : 'Favorite',
+                                isFavorite ? localization.translate('favorited') : localization.translate('favorite'),
                                 style: GoogleFonts.fredoka(
                                   fontSize: 14,
                                   color: Colors.black87,
@@ -545,7 +563,7 @@ class _StoryScreenState extends State<StoryScreen> {
                               ),
                               const SizedBox(width: 5),
                               Text(
-                                'Quiz',
+                                localization.translate('quiz'),
                                 style: GoogleFonts.fredoka(
                                   fontSize: 14,
                                   color: Colors.black87,
@@ -602,7 +620,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                 ),
                                 const SizedBox(height: 24),
                                 Text(
-                                  'Hooray! You finished the story',
+                                  localization.translate('storyComplete'),
                                   style: GoogleFonts.fredoka(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -635,7 +653,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                         color: Colors.white
                                     ),
                                     label: Text(
-                                      'Take Quiz',
+                                      localization.translate('startQuiz'),
                                       style: GoogleFonts.fredoka(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -660,7 +678,7 @@ class _StoryScreenState extends State<StoryScreen> {
                             ? [
                           Center(
                             child: Text(
-                              'No story content available',
+                              localization.translate('noStoryContentAvailable'),
                               style: GoogleFonts.fredoka(
                                 fontSize: 18,
                                 color: Colors.black54,
@@ -709,7 +727,7 @@ class _StoryScreenState extends State<StoryScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Swipe to turn page',
+                            localization.translate('swipeToTurnPage'),
                             style: GoogleFonts.fredoka(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -754,6 +772,7 @@ class StoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     // Calculate if text is long
     final bool isLongText = pageContent.length > 120;
 
@@ -816,7 +835,7 @@ class StoryPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  'Image not found',
+                                  localization.translate('imageNotFound'),
                                   style: GoogleFonts.fredoka(
                                     fontSize: 12,
                                     color: Colors.grey.shade600,

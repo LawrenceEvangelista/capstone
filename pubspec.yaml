@@ -32,6 +32,8 @@ dependencies:
   firebase_storage: 12.4.5
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   google_fonts: ^6.2.1
   flutter_svg: ^2.1.0
   animate_do: ^4.2.0
@@ -86,6 +88,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  
+  # Generate localization files from ARB (Application Resource Bundle)
+  generate: true
   assets:
     - assets/images/  # If images are in a subfolder
     - assets/ # If images are directly in assets folder
