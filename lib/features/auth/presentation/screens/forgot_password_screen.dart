@@ -116,9 +116,13 @@ class ForgotPasswordScreen extends StatelessWidget {
                             await authService.resetPassword(
                               email: _emailController.text.trim(),
                             );
-                            _showResetLinkSentDialog(context);
+                            if (context.mounted) {
+                              _showResetLinkSentDialog(context);
+                            }
                           } catch (e) {
-                            _showErrorDialog(context, e.toString());
+                            if (context.mounted) {
+                              _showErrorDialog(context, e.toString());
+                            }
                           }
                         }
                       },

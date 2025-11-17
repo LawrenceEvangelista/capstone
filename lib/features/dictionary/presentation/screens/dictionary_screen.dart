@@ -362,7 +362,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
+                  color: _primaryColor.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(20),
                     bottomRight: Radius.circular(20),
@@ -419,7 +419,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
-                                  color: _primaryColor.withOpacity(0.3),
+                                  color: _primaryColor.withValues(alpha: 0.3),
                                   blurRadius: 10,
                                   offset: const Offset(0, 5),
                                 ),
@@ -461,7 +461,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: _primaryColor.withOpacity(0.3),
+                                color: _primaryColor.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
@@ -517,7 +517,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                                   padding: const EdgeInsets.only(right: 8),
                                   child: ActionChip(
                                     backgroundColor: Colors.white,
-                                    shadowColor: _accentColor.withOpacity(0.2),
+                                    shadowColor: _accentColor.withValues(alpha: 0.2),
                                     elevation: 3,
                                     label: Text(
                                       _recentSearches[index],
@@ -586,7 +586,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       Icon(
                         Icons.search_off,
                         size: 64,
-                        color: _accentColor.withOpacity(0.7),
+                        color: _accentColor.withValues(alpha: 0.7),
                       ),
                       const SizedBox(height: 16),
                       Padding(
@@ -621,7 +621,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             Icon(
               Icons.menu_book,
               size: 120,
-              color: _primaryColor.withOpacity(0.5),
+              color: _primaryColor.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 20),
             Text(
@@ -668,7 +668,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               borderRadius: BorderRadius.circular(24),
             ),
             color: Colors.white,
-            shadowColor: _primaryColor.withOpacity(0.3),
+            shadowColor: _primaryColor.withValues(alpha: 0.3),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -679,7 +679,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: _accentColor.withOpacity(0.1),
+                          color: _accentColor.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -741,10 +741,10 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: _accentColor.withOpacity(0.1),
+            color: _accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: _accentColor.withOpacity(0.2),
+              color: _accentColor.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -784,7 +784,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: _primaryColor.withOpacity(0.3),
+                    color: _primaryColor.withValues(alpha: 0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -832,7 +832,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 children: [
                   Icon(
                     Icons.format_quote,
-                    color: _accentColor.withOpacity(0.7),
+                    color: _accentColor.withValues(alpha: 0.7),
                     size: 18,
                   ),
                   const SizedBox(width: 8),

@@ -154,20 +154,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       .getDownloadURL();
                 } catch (e) {
                   print('Error loading image for $key: $e');
-                  // Use a placeholder image URL or empty string
                   imageUrl = '';
                 }
               }
 
-              final title = value['titleEng'] ?? value['titleTag'] ?? 'No Title';
-              final text = value['textEng'] ?? value['textTag'] ?? '';
-              final type = value['typeEng'] ?? value['typeTag'] ?? 'Other';
+              // Store BOTH English and Tagalog titles for dynamic selection
+              final titleEng = value['titleEng'] ?? 'No Title';
+              final titleTag = value['titleTag'] ?? 'Walang Pamagat';
+              final typeEng = value['typeEng'] ?? 'Other';
+              final typeTag = value['typeTag'] ?? 'Iba';
 
               fetchedStories.add({
                 'id': key,
-                'title': title,
-                'text': text,
-                'type': type,
+                'titleEng': titleEng,
+                'titleTag': titleTag,
+                'typeEng': typeEng,
+                'typeTag': typeTag,
                 'imageUrl': imageUrl,
                 'progress': value['progress'] ?? 0.0,
               });
@@ -226,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: Theme.of(context).colorScheme.error.withOpacity(0.7),
+            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 16),
           Text(
@@ -375,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     width: 50,
                                     height: 50,
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                      color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Icon(Icons.book, color: Theme.of(context).primaryColor),
@@ -508,7 +510,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.15),
+                                          color: Colors.black.withValues(alpha: 0.15),
                                           blurRadius: 8,
                                         ),
                                       ],
@@ -522,7 +524,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           width: double.infinity,
                                           errorBuilder: (context, error, stackTrace) {
                                             return Container(
-                                              color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                              color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                                               child: Icon(
                                                 Icons.book,
                                                 color: Theme.of(context).primaryColor,
@@ -541,7 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 begin: Alignment.bottomCenter,
                                                 end: Alignment.topCenter,
                                                 colors: [
-                                                  Colors.black.withOpacity(0.7),
+                                                  Colors.black.withValues(alpha: 0.7),
                                                   Colors.transparent,
                                                 ],
                                               ),
@@ -702,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).primaryColor.withOpacity(0.4),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -713,7 +715,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -730,22 +732,22 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     localization.translate('dailyChallenge'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.fredoka(
-                      fontSize: 18,
+                      fontSize: 17,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
+                      height: 1.2,
+                      letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${localization.translate('storiesReadToday')}! 🎯',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.fredoka(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      height: 1.2,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ],
@@ -801,8 +803,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     boxShadow: [
                       BoxShadow(
                         color: challengeCompleted
-                            ? Theme.of(context).primaryColor.withOpacity(0.4)
-                            : Colors.grey.withOpacity(0.3),
+                            ? Theme.of(context).primaryColor.withValues(alpha: 0.4)
+                            : Colors.grey.withValues(alpha: 0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 5),
                       ),
@@ -962,7 +964,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1013,7 +1015,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1149,7 +1151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     width: 50,
                                     height: 50,
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                      color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Icon(Icons.book,
@@ -1162,7 +1164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               width: 50,
                               height: 50,
                               decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(Icons.book,
@@ -1205,7 +1207,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -1247,7 +1249,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.2),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -1258,15 +1260,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           Flexible(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.fredoka(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
+            child: SizedBox(
+              width: 70,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.fredoka(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  height: 1.3,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
           ),
@@ -1284,26 +1289,31 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.fredoka(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).textTheme.bodyLarge?.color,
+          Flexible(
+            child: Text(
+              title,
+              style: GoogleFonts.fredoka(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+                height: 1.3,
+              ),
             ),
           ),
+          const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.2),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   localization.translate('seeAll'),
                   style: GoogleFonts.fredoka(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
@@ -1311,7 +1321,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(width: 4),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
-                  size: 14,
+                  size: 13,
                   color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ],
@@ -1336,115 +1346,126 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return SizedBox(
       height: 210,
-      child: ListView.separated(
-        physics: const BouncingScrollPhysics(),
-        scrollDirection: Axis.horizontal,
-        itemCount: storyList.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 16),
-        itemBuilder: (context, index) {
-          final story = storyList[index];
-          final imageUrl = story['imageUrl'] ?? '';
-          final title = story['title'] ?? 'No Title';
-          final progress =
-          (story['progress'] is double) ? story['progress'] : 0.0;
+      child: Consumer<LocalizationProvider>(
+        builder: (context, localization, _) {
+          return ListView.separated(
+            physics: const BouncingScrollPhysics(),
+            scrollDirection: Axis.horizontal,
+            itemCount: storyList.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final story = storyList[index];
+              final imageUrl = story['imageUrl'] ?? '';
+              // Use localization to select the correct title
+              final title = localization.currentLanguage == 'fil'
+                  ? (story['titleTag'] ?? 'Walang Pamagat')
+                  : (story['titleEng'] ?? 'No Title');
+              final progress =
+              (story['progress'] is double) ? story['progress'] : 0.0;
 
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => StoryScreen(storyId: story['id']),
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StoryScreen(storyId: story['id']),
+                    ),
+                  );
+                },
+                child: SizedBox(
+                  width: 140,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 170,
+                        width: 140,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: double.infinity,
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: NetworkImage(imageUrl),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.7),
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: LinearProgressIndicator(
+                                        value: progress,
+                                        backgroundColor: Colors.white.withValues(alpha: 0.3),
+                                        color: Theme.of(context).primaryColor,
+                                        minHeight: 6,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${(progress * 100).toStringAsFixed(0)}% Completed',
+                                      style: GoogleFonts.fredoka(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 140,
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
-            child: SizedBox(
-              width: 140,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 170,
-                    width: 140,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    clipBehavior: Clip.hardEdge,
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: double.infinity,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: NetworkImage(imageUrl),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  Colors.black.withOpacity(0.7),
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: LinearProgressIndicator(
-                                    value: progress,
-                                    backgroundColor: Colors.white.withOpacity(0.3),
-                                    color: Theme.of(context).primaryColor,
-                                    minHeight: 6,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${(progress * 100).toStringAsFixed(0)}% Completed',
-                                  style: GoogleFonts.fredoka(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.fredoka(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           );
         },
       ),

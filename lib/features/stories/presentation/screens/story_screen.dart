@@ -363,7 +363,7 @@ class _StoryScreenState extends State<StoryScreen> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -380,7 +380,7 @@ class _StoryScreenState extends State<StoryScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Icon(
@@ -410,7 +410,7 @@ class _StoryScreenState extends State<StoryScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Icon(
@@ -437,11 +437,11 @@ class _StoryScreenState extends State<StoryScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: [
                         BoxShadow(
-                          color: _primaryColor.withOpacity(0.2),
+                          color: _primaryColor.withValues(alpha: 0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -451,30 +451,34 @@ class _StoryScreenState extends State<StoryScreen> {
                       alignment: Alignment.center,
                       children: [
                         // Text shadow effect
-                        Text(
-                          storyTitle,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.fredoka(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            foreground: Paint()
-                              ..style = PaintingStyle.stroke
-                              ..strokeWidth = 4
-                              ..color = Colors.white,
+                        Flexible(
+                          child: Text(
+                            storyTitle,
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            overflow: TextOverflow.visible,
+                            style: GoogleFonts.fredoka(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              foreground: Paint()
+                                ..style = PaintingStyle.stroke
+                                ..strokeWidth = 4
+                                ..color = Colors.white,
+                            ),
                           ),
                         ),
                         // Main text
-                        Text(
-                          storyTitle,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.fredoka(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: _primaryColor,
+                        Flexible(
+                          child: Text(
+                            storyTitle,
+                            textAlign: TextAlign.center,
+                            maxLines: 3,
+                            overflow: TextOverflow.visible,
+                            style: GoogleFonts.fredoka(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: _primaryColor,
+                            ),
                           ),
                         ),
                       ],
@@ -512,7 +516,7 @@ class _StoryScreenState extends State<StoryScreen> {
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.3),
+                                color: Colors.grey.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
@@ -548,7 +552,7 @@ class _StoryScreenState extends State<StoryScreen> {
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.3),
+                                color: Colors.grey.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 3),
                               ),
@@ -591,7 +595,7 @@ class _StoryScreenState extends State<StoryScreen> {
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: _primaryColor.withOpacity(0.2),
+                            color: _primaryColor.withValues(alpha: 0.2),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -641,7 +645,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                     borderRadius: BorderRadius.circular(25),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: _accentColor.withOpacity(0.3),
+                                        color: _accentColor.withValues(alpha: 0.3),
                                         blurRadius: 10,
                                         offset: const Offset(0, 5),
                                       ),
@@ -714,7 +718,7 @@ class _StoryScreenState extends State<StoryScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -796,7 +800,7 @@ class StoryPage extends StatelessWidget {
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 6,
                           offset: const Offset(0, 3),
                         ),
@@ -873,7 +877,7 @@ class StoryPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
@@ -899,9 +903,9 @@ class StoryPage extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    primaryColor.withOpacity(0.3),
+                    primaryColor.withValues(alpha: 0.3),
                     primaryColor,
-                    primaryColor.withOpacity(0.3),
+                    primaryColor.withValues(alpha: 0.3),
                   ],
                 ),
               ),
@@ -951,7 +955,7 @@ class StoryPage extends StatelessWidget {
                                   width: 40,
                                   height: 3,
                                   decoration: BoxDecoration(
-                                    color: primaryColor.withOpacity(0.3),
+                                    color: primaryColor.withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
@@ -963,8 +967,9 @@ class StoryPage extends StatelessWidget {
                                   fontSize: isLongText ? 15 : 17,
                                   color: Colors.black87,
                                   fontWeight: FontWeight.w500,
-                                  height: 1.35,
-                                  letterSpacing: 0.2,
+                                  height: 1.5,
+                                  letterSpacing: 0.3,
+                                  wordSpacing: 2,
                                 ),
                               ),
 
@@ -994,7 +999,7 @@ class CornerDecoration extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.1)
+      ..color = color.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     final path = Path()

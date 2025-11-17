@@ -73,35 +73,41 @@ class _SignupScreenState extends State<SignupScreen> {
         }
 
         // Use PageRouteBuilder for fade transition
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder:
-                (context, animation, secondaryAnimation) => const BottomNav(),
-            transitionsBuilder: (
-                context,
-                animation,
-                secondaryAnimation,
-                child,
-                ) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+        if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder:
+                  (context, animation, secondaryAnimation) => const BottomNav(),
+              transitionsBuilder: (
+                  context,
+                  animation,
+                  secondaryAnimation,
+                  child,
+              ) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 500),
+            ),
+          );
+        }
       } on FirebaseAuthException catch (e) {
         setState(() {
           errorMessage = e.message ?? 'An error occurred during registration';
           _isLoading = false;
         });
-        _showCartoonishErrorDialog(context, errorMessage);
+        if (context.mounted) {
+          _showCartoonishErrorDialog(context, errorMessage);
+        }
         print("Signup Error: ${e.message}");
       } catch (e) {
         setState(() {
           errorMessage = 'Failed to register. Please check your connection.';
           _isLoading = false;
         });
-        _showCartoonishErrorDialog(context, errorMessage);
+        if (context.mounted) {
+          _showCartoonishErrorDialog(context, errorMessage);
+        }
         print("Signup General Error: $e");
       } finally {
         if (mounted) {
@@ -307,7 +313,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             width: 110,
                             height: 110,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: Colors.white,
@@ -315,7 +321,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withValues(alpha: 0.2),
                                   blurRadius: 10,
                                   offset: const Offset(0, 5),
                                 ),
@@ -516,7 +522,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFFFFA07A).withOpacity(0.4),
+                            color: Color(0xFFFFA07A).withValues(alpha: 0.4),
                             blurRadius: 12,
                             offset: Offset(0, 6),
                           ),
@@ -575,7 +581,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             blurRadius: 12,
                             offset: Offset(0, 6),
                           ),
@@ -693,7 +699,7 @@ class _SignupScreenState extends State<SignupScreen> {
             borderRadius: BorderRadius.circular(25),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -752,7 +758,7 @@ class _SignupScreenState extends State<SignupScreen> {
             borderRadius: BorderRadius.circular(25),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -799,7 +805,7 @@ class _SignupScreenState extends State<SignupScreen> {
         Icon(Icons.star_rounded, color: Colors.white, size: 24),
         SizedBox(height: 8),
         Icon(Icons.star_rounded,
-            color: Colors.white.withOpacity(0.6), size: 16),
+            color: Colors.white.withValues(alpha: 0.6), size: 16),
       ],
     );
   }

@@ -44,7 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text.trim(),
         );
 
-        _navigateToHome(context);
+        if (context.mounted) {
+          _navigateToHome(context);
+        }
         print("Login successful!");
       } on FirebaseAuthException catch (e) {
         print("LoginScreen - FirebaseAuthException: ${e.message}");
@@ -52,7 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
           errorMessage = e.message ?? 'An error occurred during login.';
           _isLoading = false;
         });
-        _showCartoonishErrorDialog(context, errorMessage);
+        if (context.mounted) {
+          _showCartoonishErrorDialog(context, errorMessage);
+        }
       } catch (e) {
         print("LoginScreen - General Exception: $e");
         setState(() {
@@ -219,10 +223,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 160,
                           height: 160,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                               width: 3,
                             ),
                           ),
@@ -356,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Color(0xFFFFA07A).withOpacity(0.4),
+                              color: Color(0xFFFFA07A).withValues(alpha: 0.4),
                               blurRadius: 12,
                               offset: Offset(0, 6),
                             ),
@@ -418,7 +422,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               blurRadius: 12,
                               offset: Offset(0, 6),
                             ),
@@ -551,7 +555,7 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(25),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -610,7 +614,7 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(25),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -657,7 +661,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Icon(Icons.star_rounded, color: Colors.white, size: 24),
         SizedBox(height: 8),
         Icon(Icons.star_rounded,
-            color: Colors.white.withOpacity(0.6), size: 16),
+            color: Colors.white.withValues(alpha: 0.6), size: 16),
       ],
     );
   }

@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:testapp/features/stories/presentation/screens/story_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../../../../providers/localization_provider.dart';
 
@@ -33,6 +34,12 @@ class _StoriesScreenState extends State<StoriesScreen> {
   List<String> allCategories = ['Folktale', 'Legend', 'Fable'];
   List<Map<String, dynamic>> allStories = [];
   Map<String, String> imageUrlCache = {}; // Cache for image URLs
+
+  @override
+  void initState() {
+    super.initState();
+    fetchStories();
+  }
 
   @override
   void dispose() {
@@ -221,7 +228,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                 border: Border.all(color: Colors.black, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -286,10 +293,15 @@ class _StoriesScreenState extends State<StoriesScreen> {
                     items: ['All Categories', ...allCategories]
                         .map((String value) => DropdownMenuItem<String>(
                         value: value,
-                        child: Text(
-                          _localizedLabel(value, localization),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        child: SizedBox(
+                          width: 150,
+                          child: Text(
+                            _localizedLabel(value, localization),
+                            style: GoogleFonts.fredoka(
+                              fontSize: 13,
+                              height: 1.2,
+                            ),
+                          ),
                         ),
                       ))
                         .toList(),
@@ -429,7 +441,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 6,
                     offset: const Offset(0, 3),
                   ),
@@ -519,7 +531,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                               Expanded(
                                 child: LinearProgressIndicator(
                                   value: story['progress'] ?? 0.0,
-                                  backgroundColor: Colors.grey.withOpacity(0.3),
+                                  backgroundColor: Colors.grey.withValues(alpha: 0.3),
                                   color: Colors.blueAccent,
                                   minHeight: 5,
                                 ),
