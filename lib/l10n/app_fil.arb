@@ -4,6 +4,7 @@
   "welcomeBack": "Maligayang pagbabalik!",
   "weMissedYou": "Na-miss ka namin! 😊",
   "email": "Email",
+  "emailExample": "your.email@example.com",
   "password": "Password",
   "confirmPassword": "Kumpirmahin ang Password",
   "login": "Mag-Login",
@@ -181,5 +182,9 @@
   "greatJob": "Maganda! Nagbasa ka ng kuwento ngayong araw",
   "readStoriesToday": "Basahin ang 1 kuwento",
   "to": "sa",
-  "completeChallenge": "kumpletuhin ang hamon ng araw"
+  "completeChallenge": "kumpletuhin ang hamon ng araw",
+  "narrationAvailable": "May narration",
+  "narrator": "Narrator",
+  "play": "Laruin",
+  "pause": "Ihinto"
 }

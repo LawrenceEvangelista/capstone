@@ -4,6 +4,7 @@
   "welcomeBack": "Welcome Back!",
   "weMissedYou": "We missed you! 😊",
   "email": "Email",
+  "emailExample": "your.email@example.com",
   "password": "Password",
   "confirmPassword": "Confirm Password",
   "login": "Log In",
@@ -183,5 +184,9 @@
   "greatJob": "Great job! You read a story today",
   "readStoriesToday": "Read 1 story",
   "to": "to",
-  "completeChallenge": "complete today's challenge"
+  "completeChallenge": "complete today's challenge",
+  "narrationAvailable": "Narration available",
+  "narrator": "Narrator",
+  "play": "Play",
+  "pause": "Pause"
 }

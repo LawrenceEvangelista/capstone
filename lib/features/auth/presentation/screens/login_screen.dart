@@ -4,6 +4,9 @@ import 'package:testapp/core/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:testapp/features/layout/presentation/bottomnav.dart';
+import 'package:testapp/core/widgets/language_switcher.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -201,6 +204,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
+                    // Language Switcher at top right - Compact design
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: SizedBox(
+                        child: LanguageSwitcher(
+                          primaryColor: _primaryColor,
+                          accentColor: _accentColor,
+                          isCompact: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
                     // Top decorative elements
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
@@ -246,14 +262,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     FadeInDown(
                       delay: const Duration(milliseconds: 200),
                       duration: const Duration(milliseconds: 600),
-                      child: Text(
-                        'Welcome Back!',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                      child: Consumer<LocalizationProvider>(
+                        builder: (context, localization, _) => Text(
+                          localization.translate('welcomeBack'),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -262,12 +280,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     FadeInDown(
                       delay: const Duration(milliseconds: 300),
                       duration: const Duration(milliseconds: 600),
-                      child: Text(
-                        'We missed you! 😊',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.fredoka(
-                          fontSize: 16,
-                          color: Colors.white,
+                      child: Consumer<LocalizationProvider>(
+                        builder: (context, localization, _) => Text(
+                          localization.translate('weMissedYou'),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -277,23 +297,25 @@ class _LoginScreenState extends State<LoginScreen> {
                     FadeInDown(
                       delay: const Duration(milliseconds: 400),
                       duration: const Duration(milliseconds: 600),
-                      child: _buildTextField(
-                        controller: _emailController,
-                        label: 'Email',
-                        hint: 'your.email@example.com',
-                        icon: Icons.email_rounded,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          // Email format validation
-                          final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
-                          if (!emailRegex.hasMatch(value)) {
-                            return 'Please enter a valid email address';
-                          }
-                          return null;
-                        },
+                      child: Consumer<LocalizationProvider>(
+                        builder: (context, localization, _) => _buildTextField(
+                          controller: _emailController,
+                          label: localization.translate('email'),
+                          hint: localization.translate('emailExample'),
+                          icon: Icons.email_rounded,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return localization.translate('pleaseEnterEmail');
+                            }
+                            // Email format validation
+                            final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
+                            if (!emailRegex.hasMatch(value)) {
+                              return localization.translate('invalidEmailFormat');
+                            }
+                            return null;
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -302,22 +324,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     FadeInDown(
                       delay: const Duration(milliseconds: 500),
                       duration: const Duration(milliseconds: 600),
-                      child: _buildPasswordField(
-                        controller: _passwordController,
-                        label: 'Password',
-                        hint: '••••••••',
-                        isVisible: _isPasswordVisible,
-                        onVisibilityToggle: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          return null;
-                        },
+                      child: Consumer<LocalizationProvider>(
+                        builder: (context, localization, _) => _buildPasswordField(
+                          controller: _passwordController,
+                          label: localization.translate('password'),
+                          hint: '••••••••',
+                          isVisible: _isPasswordVisible,
+                          onVisibilityToggle: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return localization.translate('pleaseEnterPassword');
+                            }
+                            return null;
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -328,22 +352,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       duration: const Duration(milliseconds: 600),
                       child: Container(
                         alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/forgot_password');
-                          },
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 30),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: Text(
-                            'Forgot Password?',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                              decoration: TextDecoration.underline,
+                        child: Consumer<LocalizationProvider>(
+                          builder: (context, localization, _) => TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/forgot_password');
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 30),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              localization.translate('forgotPassword'),
+                              style: GoogleFonts.fredoka(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
                             ),
                           ),
                         ),
@@ -392,21 +418,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                     strokeWidth: 3,
                                   ),
                                 )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.login_rounded, size: 24),
-                                    SizedBox(width: 12),
-                                    Text(
-                                      'Log In',
-                                      style: GoogleFonts.fredoka(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                        letterSpacing: 0.5,
+                              : Consumer<LocalizationProvider>(
+                                  builder: (context, localization, _) => Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.login_rounded, size: 24),
+                                      SizedBox(width: 12),
+                                      Text(
+                                        localization.translate('login'),
+                                        style: GoogleFonts.fredoka(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                          letterSpacing: 0.5,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                         ),
                       ),
@@ -448,24 +476,26 @@ class _LoginScreenState extends State<LoginScreen> {
                                     strokeWidth: 3,
                                   ),
                                 )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.asset(
-                                      'assets/images/google_logo.png',
-                                      height: 22,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Continue with Google',
-                                      style: GoogleFonts.fredoka(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.black,
-                                        letterSpacing: 0.5,
+                              : Consumer<LocalizationProvider>(
+                                  builder: (context, localization, _) => Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Image.asset(
+                                        'assets/images/google_logo.png',
+                                        height: 22,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        localization.translate('continueWithGoogle'),
+                                        style: GoogleFonts.fredoka(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                         ),
                       ),
@@ -479,24 +509,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            "Don't have an account?",
-                            style: GoogleFonts.fredoka(
-                              fontSize: 15,
-                              color: Colors.white,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/signup');
-                            },
-                            child: Text(
-                              "Sign Up",
+                          Consumer<LocalizationProvider>(
+                            builder: (context, localization, _) => Text(
+                              localization.translate('dontHaveAccount'),
                               style: GoogleFonts.fredoka(
                                 fontSize: 15,
-                                fontWeight: FontWeight.bold,
                                 color: Colors.white,
-                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                          Consumer<LocalizationProvider>(
+                            builder: (context, localization, _) => TextButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/signup');
+                              },
+                              child: Text(
+                                localization.translate('signup'),
+                                style: GoogleFonts.fredoka(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ),

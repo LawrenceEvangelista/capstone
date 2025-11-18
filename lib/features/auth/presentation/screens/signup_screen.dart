@@ -7,6 +7,9 @@ import 'package:animate_do/animate_do.dart'; // Added for animations
 import 'package:testapp/core/services/auth_service.dart';
 import 'package:testapp/features/layout/presentation/bottomnav.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import FontAwesomeIcons
+import 'package:testapp/core/widgets/language_switcher.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -258,6 +261,19 @@ class _SignupScreenState extends State<SignupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
+                  // Language Switcher at top right - Compact design
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: SizedBox(
+                      child: LanguageSwitcher(
+                        primaryColor: _primaryColor,
+                        accentColor: _accentColor,
+                        isCompact: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
                   // Top decorative elements
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
@@ -275,14 +291,16 @@ class _SignupScreenState extends State<SignupScreen> {
                   // Title with animation
                   FadeInDown(
                     duration: const Duration(milliseconds: 600),
-                    child: Text(
-                      'Join The Fun!',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.fredoka(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) => Text(
+                        localization.translate('letsGetStarted'),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.fredoka(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
@@ -291,12 +309,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   FadeInDown(
                     delay: const Duration(milliseconds: 100),
                     duration: const Duration(milliseconds: 600),
-                    child: Text(
-                      'Create your awesome account 🎉',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.fredoka(
-                        fontSize: 16,
-                        color: Colors.white,
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) => Text(
+                        localization.translate('createAccount'),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.fredoka(
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -402,17 +422,19 @@ class _SignupScreenState extends State<SignupScreen> {
                   FadeInDown(
                     delay: const Duration(milliseconds: 400),
                     duration: const Duration(milliseconds: 600),
-                    child: _buildTextField(
-                      controller: _usernameController,
-                      label: 'Username',
-                      hint: 'Your awesome name',
-                      icon: Icons.person_rounded,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your username';
-                        }
-                        return null;
-                      },
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) => _buildTextField(
+                        controller: _usernameController,
+                        label: localization.translate('username'),
+                        hint: localization.translate('yourAwesomeName'),
+                        icon: Icons.person_rounded,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return localization.translate('pleaseEnterUsername');
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -421,23 +443,25 @@ class _SignupScreenState extends State<SignupScreen> {
                   FadeInDown(
                     delay: const Duration(milliseconds: 500),
                     duration: const Duration(milliseconds: 600),
-                    child: _buildTextField(
-                      controller: _emailController,
-                      label: 'Email',
-                      hint: 'your.email@example.com',
-                      icon: Icons.email_rounded,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!RegExp(
-                          r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$',
-                        ).hasMatch(value)) {
-                          return 'Invalid email format';
-                        }
-                        return null;
-                      },
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) => _buildTextField(
+                        controller: _emailController,
+                        label: localization.translate('email'),
+                        hint: localization.translate('emailExample'),
+                        icon: Icons.email_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return localization.translate('pleaseEnterEmail');
+                          }
+                          if (!RegExp(
+                            r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$',
+                          ).hasMatch(value)) {
+                            return localization.translate('invalidEmailFormat');
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -446,25 +470,27 @@ class _SignupScreenState extends State<SignupScreen> {
                   FadeInDown(
                     delay: const Duration(milliseconds: 600),
                     duration: const Duration(milliseconds: 600),
-                    child: _buildPasswordField(
-                      controller: _passwordController,
-                      label: 'Password',
-                      hint: '••••••••',
-                      isVisible: _isPasswordVisible,
-                      onVisibilityToggle: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) => _buildPasswordField(
+                        controller: _passwordController,
+                        label: localization.translate('password'),
+                        hint: '••••••••',
+                        isVisible: _isPasswordVisible,
+                        onVisibilityToggle: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return localization.translate('pleaseEnterPassword');
+                          }
+                          if (value.length < 6) {
+                            return localization.translate('passwordMinChars');
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -473,26 +499,28 @@ class _SignupScreenState extends State<SignupScreen> {
                   FadeInDown(
                     delay: const Duration(milliseconds: 700),
                     duration: const Duration(milliseconds: 600),
-                    child: _buildPasswordField(
-                      controller: _confirmPasswordController,
-                      label: 'Confirm Password',
-                      hint: '••••••••',
-                      isVisible: _isConfirmPasswordVisible,
-                      onVisibilityToggle: () {
-                        setState(() {
-                          _isConfirmPasswordVisible =
-                              !_isConfirmPasswordVisible;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please confirm your password';
-                        }
-                        if (value != _passwordController.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) => _buildPasswordField(
+                        controller: _confirmPasswordController,
+                        label: localization.translate('confirmPassword'),
+                        hint: '••••••••',
+                        isVisible: _isConfirmPasswordVisible,
+                        onVisibilityToggle: () {
+                          setState(() {
+                            _isConfirmPasswordVisible =
+                                !_isConfirmPasswordVisible;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return localization.translate('pleaseEnterPassword');
+                          }
+                          if (value != _passwordController.text) {
+                            return localization.translate('passwordsDontMatch');
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                   ),
 
@@ -556,13 +584,15 @@ class _SignupScreenState extends State<SignupScreen> {
                                   Icon(Icons.how_to_reg_rounded,
                                       size: 24),
                                   SizedBox(width: 12),
-                                  Text(
-                                    'Create Account',
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                      letterSpacing: 0.5,
+                                  Consumer<LocalizationProvider>(
+                                    builder: (context, localization, _) => Text(
+                                      localization.translate('signupButton'),
+                                      style: GoogleFonts.fredoka(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                        letterSpacing: 0.5,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -603,13 +633,15 @@ class _SignupScreenState extends State<SignupScreen> {
                           color: Colors.redAccent,
                           size: 20,
                         ),
-                        label: Text(
-                          'Sign Up with Google',
-                          style: GoogleFonts.fredoka(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
-                            letterSpacing: 0.5,
+                        label: Consumer<LocalizationProvider>(
+                          builder: (context, localization, _) => Text(
+                            localization.translate('continueWithGoogle'),
+                            style: GoogleFonts.fredoka(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ),
@@ -624,24 +656,28 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          "Already have an account?",
-                          style: GoogleFonts.fredoka(
-                            fontSize: 15,
-                            color: Colors.white,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/login');
-                          },
-                          child: Text(
-                            "Log In",
+                        Consumer<LocalizationProvider>(
+                          builder: (context, localization, _) => Text(
+                            localization.translate('haveAccount'),
                             style: GoogleFonts.fredoka(
                               fontSize: 15,
-                              fontWeight: FontWeight.bold,
                               color: Colors.white,
-                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                        Consumer<LocalizationProvider>(
+                          builder: (context, localization, _) => TextButton(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/login');
+                            },
+                            child: Text(
+                              localization.translate('login'),
+                              style: GoogleFonts.fredoka(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                decoration: TextDecoration.underline,
+                              ),
                             ),
                           ),
                         ),
