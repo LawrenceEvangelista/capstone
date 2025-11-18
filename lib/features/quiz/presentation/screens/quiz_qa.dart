@@ -1,281 +1,219 @@
+// testapp/lib/features/quiz/presentation/screens/quiz_qa.dart
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import '../../../../providers/localization_provider.dart';
+import 'package:testapp/features/quiz/data/models/question_model.dart';
 
 class QuizQa extends StatefulWidget {
   final String storyId;
-  const QuizQa({super.key, required this.storyId});
+  final String storyTitle;
+  final List<QuestionModel> questions;
+
+  QuizQa({
+    super.key,
+    required this.storyId,
+    required this.storyTitle,
+    required this.questions,
+  });
 
   @override
   State<QuizQa> createState() => _QuizQaState();
 }
 
 class _QuizQaState extends State<QuizQa> {
-  List<QuizQuestion> questions = [];
-  int currentQuestionIndex = 0;
-  List<int?> selectedAnswers = [];
-  bool isLoading = true;
-  bool quizCompleted = false;
-  int score = 0;
+  int _current = 0;
+  int _score = 0;
+  List<int> _selected = [];
 
-  final Color yellow = const Color(0xFFFFD93D);
-  final Color dark = Colors.black87;
+  final DatabaseReference _db = FirebaseDatabase.instance.ref();
+  final User? _user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
-    _loadQuizData();
+    _selected = List.filled(widget.questions.length, -1);
   }
 
-  /// ✅ Automatically detects where your quiz questions are located
-  Future<void> _loadQuizData() async {
-    try {
-      final db = FirebaseDatabase.instance.ref();
+  void _submitAnswer(int selectedIndex) {
+    setState(() {
+      _selected[_current] = selectedIndex;
+      final q = widget.questions[_current];
 
-      // Try both possible Firebase paths
-      final path1 = 'stories/${widget.storyId}/quiz/questions';
-      final path2 = 'stories/${widget.storyId}/quiz/owl_legend/questions';
+      // prefer shuffledCorrectIndex if provided
+      final int correctIndex = q.shuffledCorrectIndex ?? q.correctAnswer ?? 0;
 
-      DataSnapshot snapshot = await db.child(path1).get();
-
-      if (!snapshot.exists) {
-        snapshot = await db.child(path2).get();
+      if (selectedIndex == correctIndex) {
+        _score++;
       }
+    });
+  }
 
-      if (snapshot.exists) {
-        final data = snapshot.value as Map<dynamic, dynamic>;
-        _processQuestionsData(data);
-      } else {
-        setState(() {
-          isLoading = false;
-          questions = [];
+  Future<void> _finishQuiz() async {
+    final int total = widget.questions.length;
+    final double percent = total > 0 ? (_score / total) : 0.0;
+
+    // Save attempt to user_progress/{uid}/{storyId}/attempts/{pushId}
+    if (_user != null) {
+      try {
+        final attemptRef =
+            _db
+                .child('user_progress')
+                .child(_user!.uid)
+                .child(widget.storyId)
+                .child('attempts')
+                .push();
+        await attemptRef.set({
+          'score': _score,
+          'total': total,
+          'percent': percent,
+          'timestamp': DateTime.now().toIso8601String(),
         });
-        debugPrint('❌ No quiz found for story: ${widget.storyId}');
+
+        // Optionally: update aggregate best score or lastScore
+        final lastRef = _db
+            .child('user_progress')
+            .child(_user!.uid)
+            .child(widget.storyId)
+            .child('lastScore');
+        await lastRef.set({
+          'score': _score,
+          'total': total,
+          'percent': percent,
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+      } catch (e) {
+        print('Error saving attempt: $e');
       }
-    } catch (e) {
-      debugPrint('❌ Error loading quiz: $e');
-      setState(() {
-        isLoading = false;
-        questions = [];
-      });
     }
+
+    // Navigate to results screen or show dialog
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: Text('Quiz Completed', style: GoogleFonts.fredoka()),
+            content: Text(
+              'You scored $_score / $total (${(percent * 100).toStringAsFixed(0)}%)',
+              style: GoogleFonts.fredoka(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(
+                    context,
+                  ).pop(); // return to story quiz start screen
+                },
+                child: Text('OK'),
+              ),
+            ],
+          ),
+    );
   }
 
-  void _processQuestionsData(Map<dynamic, dynamic> data) {
-    final loaded = <QuizQuestion>[];
-    data.forEach((id, value) {
-      final map = Map<String, dynamic>.from(value);
-      loaded.add(
-        QuizQuestion(
-          id: id.toString(),
-          questionEng: map['questionEng'] ?? 'No question',
-          optionsEng: List<String>.from(map['optionsEng'] ?? []),
-          correctAnswer: int.tryParse(map['correctAnswer'].toString()) ?? 0,
+  Widget _buildQuestionCard(QuestionModel q, int index) {
+    final String questionText = q.questionEng ?? q.questionTag ?? '';
+
+    final List<String> options = q.shuffledOptionsEng ?? q.optionsEng ?? [];
+
+    final int selected = _selected[index];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Q${index + 1}.',
+          style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-      );
-    });
+        const SizedBox(height: 8),
 
-    setState(() {
-      questions = loaded;
-      selectedAnswers = List.filled(loaded.length, null);
-      isLoading = false;
-    });
-  }
+        Text(questionText, style: GoogleFonts.fredoka(fontSize: 16)),
+        const SizedBox(height: 12),
 
-  void _selectAnswer(int index) {
-    setState(() {
-      selectedAnswers[currentQuestionIndex] = index;
-    });
-  }
-
-  void _nextQuestion() {
-    if (currentQuestionIndex < questions.length - 1) {
-      setState(() => currentQuestionIndex++);
-    } else {
-      _calculateScore();
-    }
-  }
-
-  void _calculateScore() {
-    int correct = 0;
-    for (int i = 0; i < questions.length; i++) {
-      if (selectedAnswers[i] == questions[i].correctAnswer) correct++;
-    }
-    setState(() {
-      score = correct;
-      quizCompleted = true;
-    });
+        ...List.generate(options.length, (i) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
+            child: InkWell(
+              onTap: () {
+                if (_selected[_current] == -1) {
+                  _submitAnswer(i);
+                } else {
+                  setState(() {
+                    _selected[_current] = i;
+                  });
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color:
+                      selected == i
+                          ? Colors.orange.shade100
+                          : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: selected == i ? Colors.orange : Colors.black12,
+                  ),
+                ),
+                child: Text(options[i], style: GoogleFonts.fredoka()),
+              ),
+            ),
+          );
+        }),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Scaffold(
-        backgroundColor: yellow,
-        body: const Center(
-          child: CircularProgressIndicator(color: Colors.black),
-        ),
-      );
-    }
-
-    if (questions.isEmpty) {
-      final localization = Provider.of<LocalizationProvider>(context, listen: false);
-      return Scaffold(
-        backgroundColor: yellow,
-        appBar: AppBar(
-          title: Text(localization.translate('noQuizFound')),
-          backgroundColor: yellow,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 80, color: Colors.black54),
-              const SizedBox(height: 16),
-              Text(
-                localization.translate('noQuizDataAvailable'),
-                style: GoogleFonts.fredoka(fontSize: 16, color: Colors.black87),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black, foregroundColor: Colors.white),
-                child: Text(localization.translate('back')),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (quizCompleted) {
-      final localization = Provider.of<LocalizationProvider>(context, listen: false);
-      final percent = ((score / questions.length) * 100).round();
-      return Scaffold(
-        backgroundColor: yellow,
-        appBar: AppBar(
-          title: Text(localization.translate('quizComplete')),
-          backgroundColor: yellow,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('${localization.translate('score')} $score / ${questions.length}',
-                  style: GoogleFonts.fredoka(fontSize: 24, fontWeight: FontWeight.bold)),
-              Text('$percent%', style: GoogleFonts.fredoka(fontSize: 20, color: dark)),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    currentQuestionIndex = 0;
-                    quizCompleted = false;
-                    score = 0;
-                    selectedAnswers = List.filled(questions.length, null);
-                  });
-                },
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: dark, foregroundColor: Colors.white),
-                child: Text(localization.translate('tryAgain')),
-              ),
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(localization.translate('back'), style: const TextStyle(color: Colors.black)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final q = questions[currentQuestionIndex];
-
-    return Consumer<LocalizationProvider>(
-      builder: (context, localization, _) => Scaffold(
-        backgroundColor: yellow,
-        appBar: AppBar(
-          backgroundColor: yellow,
-          title: Text(
-            '${localization.translate('question')} ${currentQuestionIndex + 1}/${questions.length}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.sniglet(fontSize: 20),
-          ),
-        ),
+    final total = widget.questions.length;
+    final q = widget.questions[_current];
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.storyTitle),
+        backgroundColor: const Color(0xFFFFD93D),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             LinearProgressIndicator(
-              value: (currentQuestionIndex + 1) / questions.length,
-              backgroundColor: Colors.white,
-              color: dark,
-              minHeight: 8,
+              value: (_current + 1) / total,
+              backgroundColor: Colors.grey.shade200,
+              color: Colors.orange,
+              minHeight: 6,
             ),
-            const SizedBox(height: 16),
-            Card(
-              elevation: 3,
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  q.questionEng,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.fredoka(fontSize: 18, color: dark),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             Expanded(
-              child: ListView.builder(
-                itemCount: q.optionsEng.length,
-                itemBuilder: (context, i) {
-                  final isSelected = selectedAnswers[currentQuestionIndex] == i;
-                  return Card(
-                    color: isSelected ? dark : Colors.white,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      title: Text(
-                        q.optionsEng[i],
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.fredoka(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      onTap: () => _selectAnswer(i),
-                    ),
-                  );
-                },
+              child: SingleChildScrollView(
+                child: _buildQuestionCard(q, _current),
               ),
             ),
+            const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (currentQuestionIndex > 0)
-                  ElevatedButton(
-                    onPressed: () => setState(() => currentQuestionIndex--),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white, foregroundColor: dark),
-                    child: Consumer<LocalizationProvider>(
-                      builder: (context, localization, _) =>
-                        Text(localization.translate('previous')),
+                if (_current > 0)
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => setState(() => _current--),
+                      child: const Text('Previous'),
                     ),
                   ),
-                ElevatedButton(
-                  onPressed:
-                  selectedAnswers[currentQuestionIndex] != null ? _nextQuestion : null,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: dark, foregroundColor: Colors.white),
-                  child: Text(
-                    currentQuestionIndex == questions.length - 1 ? localization.translate('finish') : localization.translate('next'),
+                if (_current > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_current < total - 1) {
+                        setState(() => _current++);
+                      } else {
+                        _finishQuiz();
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6D00),
+                    ),
+                    child: Text(_current < total - 1 ? 'Next' : 'Finish'),
                   ),
                 ),
               ],
@@ -283,21 +221,6 @@ class _QuizQaState extends State<QuizQa> {
           ],
         ),
       ),
-      ),
     );
   }
-}
-
-class QuizQuestion {
-  final String id;
-  final String questionEng;
-  final List<String> optionsEng;
-  final int correctAnswer;
-
-  QuizQuestion({
-    required this.id,
-    required this.questionEng,
-    required this.optionsEng,
-    required this.correctAnswer,
-  });
 }
