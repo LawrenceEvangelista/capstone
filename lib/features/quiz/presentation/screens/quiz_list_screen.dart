@@ -1,9 +1,18 @@
+// testapp/lib/features/quiz/presentation/screens/quiz_list_screen.dart
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:testapp/features/stories/data/models/story_model.dart';
-import 'package:testapp/features/quiz/presentation/screens/quiz_qa.dart'; // ✅ Correct import path
+import 'package:google_fonts/google_fonts.dart';
+import 'package:testapp/features/quiz/data/models/question_model.dart';
+import 'package:testapp/features/stories/presentation/widgets/story_card.dart';
+
 import '../../../../providers/localization_provider.dart';
+import '../screens/quiz_qa.dart';
 
 class QuizListScreen extends StatefulWidget {
   const QuizListScreen({super.key});
@@ -13,55 +22,174 @@ class QuizListScreen extends StatefulWidget {
 }
 
 class _QuizListScreenState extends State<QuizListScreen> {
+  final DatabaseReference _storiesRef = FirebaseDatabase.instance.ref().child(
+    'stories',
+  );
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  bool _isLoading = true;
+  Timer? _searchTimer;
+
   String searchQuery = '';
   String selectedCategory = 'All Categories';
   String selectedQuizStatus = 'All';
 
-  List<String> allCategories = ['Folktale', 'Legend', 'Fables', 'Fiction'];
+  List<String> allCategories = ['Folktale', 'Legend', 'Fable', 'Fiction'];
   List<String> quizStatuses = ['All', 'Completed', 'Incomplete'];
 
-  // ✅ Corrected story IDs to match Firebase
-  List<StoryModel> allStories = [
-    StoryModel(
-      id: 'story1', // 👈 matches your Firebase story node
-      title: 'The Owl Legend',
-      category: 'Legend',
-      progress: 0.8,
-    ),
-    StoryModel(
-      id: 'story2',
-      title: 'The Monkey and the Turtle',
-      category: 'Fables',
-      progress: 1.0,
-    ),
-    StoryModel(
-      id: 'story3',
-      title: 'The Origin of the Pineapple',
-      category: 'Folktale',
-      progress: 0.5,
-    ),
-    StoryModel(
-      id: 'story4',
-      title: 'The Secret Mountain',
-      category: 'Fiction',
-      progress: 0.0,
-    ),
-  ];
+  List<Map<String, dynamic>> _storiesWithQuiz = [];
+  Map<String, String> _imageUrlCache = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoriesWithQuiz();
+  }
+
+  @override
+  void dispose() {
+    _searchTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<String> _getImageUrl(String storyId) async {
+    if (_imageUrlCache.containsKey(storyId)) return _imageUrlCache[storyId]!;
+    String url = '';
+    try {
+      url = await _storage.ref('images/$storyId.png').getDownloadURL();
+    } catch (e) {
+      try {
+        url = await _storage.ref('images/$storyId.jpg').getDownloadURL();
+      } catch (e) {
+        url = ''; // fallback to placeholder
+      }
+    }
+    _imageUrlCache[storyId] = url;
+    return url;
+  }
+
+  /// Loads all stories but keeps only those that have a `quiz` child.
+  Future<void> _loadStoriesWithQuiz() async {
+    setState(() => _isLoading = true);
+    try {
+      DatabaseEvent event = await _storiesRef.once();
+      final snapshot = event.snapshot;
+      if (snapshot.value != null && snapshot.value is Map) {
+        final Map<dynamic, dynamic> data = snapshot.value as Map;
+        final List<Map<String, dynamic>> fetched = [];
+
+        // concurrently fetch image URLs for stories that contain 'quiz'
+        await Future.wait(
+          data.keys.map((key) async {
+            final value = data[key];
+            if (value is Map && value.containsKey('quiz')) {
+              final title =
+                  value['titleEng'] ?? value['titleTag'] ?? 'No Title';
+              final category =
+                  (value['typeEng'] ?? value['typeTag'] ?? 'Uncategorized')
+                      .toString();
+              final progress =
+                  (value['progress'] ?? 0.0) is double
+                      ? value['progress'] ?? 0.0
+                      : double.tryParse(
+                            (value['progress'] ?? '0.0').toString(),
+                          ) ??
+                          0.0;
+              final isRead = value['isRead'] ?? false;
+
+              final imageUrl = await _getImageUrl(key);
+
+              fetched.add({
+                'id': key,
+                'title': title,
+                'category': category,
+                'progress': progress,
+                'isRead': isRead,
+                'imageUrl': imageUrl,
+              });
+            }
+          }).toList(),
+        );
+
+        // compute categories dynamically (merge defaults)
+        final Set<String> categoriesSet = {...allCategories};
+        for (var s in fetched) {
+          final c = s['category']?.toString() ?? '';
+          if (c.isNotEmpty) categoriesSet.add(_normalizeCategory(c));
+        }
+        allCategories = categoriesSet.toList()..sort();
+
+        setState(() {
+          _storiesWithQuiz = fetched;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _storiesWithQuiz = [];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading quizzes: $e');
+      setState(() {
+        _storiesWithQuiz = [];
+        _isLoading = false;
+      });
+    }
+  }
+
+  // normalize simple categories to your UI names
+  String _normalizeCategory(String raw) {
+    final s = raw.toLowerCase();
+    if (s.contains('folk')) return 'Folktale';
+    if (s.contains('legend')) return 'Legend';
+    if (s.contains('fable')) return 'Fable';
+    if (s.contains('fiction')) return 'Fiction';
+    return raw;
+  }
+
+  String _localizedLabel(String value, LocalizationProvider localization) {
+    String mappedKey = value.toLowerCase();
+
+    if (value == 'All Categories' || value == 'All') {
+      mappedKey = 'allStories';
+    } else if (value == 'Fables') {
+      mappedKey = 'fable';
+    } else if (value == 'Folktale') {
+      mappedKey = 'folktale';
+    } else if (value == 'Legend') {
+      mappedKey = 'legend';
+    } else if (value == 'Fiction') {
+      mappedKey = 'fiction';
+    } else {
+      mappedKey = value.replaceAll(' ', '').toLowerCase();
+    }
+
+    final translated = localization.translate(mappedKey);
+    if (translated == mappedKey) return value;
+    return translated;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final localization = Provider.of<LocalizationProvider>(context, listen: false);
+    final localization = Provider.of<LocalizationProvider>(
+      context,
+      listen: false,
+    );
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFFFFD93D),
-        title: Text(localization.translate('storyQuizzes'), style: GoogleFonts.sniglet(fontSize: 20)),
+        title: Text(
+          localization.translate('storyQuizzes'),
+          style: GoogleFonts.sniglet(fontSize: 20),
+        ),
         centerTitle: true,
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔍 Search Bar
+          // Search bar
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Container(
@@ -70,7 +198,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                 border: Border.all(color: Colors.black, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withOpacity(0.5),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -78,9 +206,11 @@ class _QuizListScreenState extends State<QuizListScreen> {
               ),
               child: TextField(
                 onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                  });
+                  _searchTimer?.cancel();
+                  _searchTimer = Timer(
+                    const Duration(milliseconds: 350),
+                    () => setState(() => searchQuery = value),
+                  );
                 },
                 decoration: InputDecoration(
                   hintText: localization.translate('searchStories'),
@@ -97,51 +227,99 @@ class _QuizListScreenState extends State<QuizListScreen> {
             ),
           ),
 
-          // 🧩 Filters
+          // Filters
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${localization.translate('filterByCategory')}: '),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: selectedCategory,
-                  onChanged: (newCategory) {
-                    setState(() {
-                      selectedCategory = newCategory!;
-                    });
-                  },
-                  items: ['All Categories', ...allCategories]
-                      .map((value) => DropdownMenuItem(
-                    value: value,
-                    child: Text(
-                      _localizedLabel(value, localization),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ))
-                      .toList(),
+                // CATEGORY FILTER
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${localization.translate('filterByCategory')}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black54),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.black87,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        items:
+                            ['All Categories', ...allCategories].map((value) {
+                              return DropdownMenuItem(
+                                value: value,
+                                child: Text(
+                                  _localizedLabel(value, localization),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                        onChanged:
+                            (v) => setState(
+                              () => selectedCategory = v ?? 'All Categories',
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                Text('${localization.translate('status')}: '),
-                const SizedBox(width: 8),
-                DropdownButton<String>(
-                  value: selectedQuizStatus,
-                  onChanged: (newStatus) {
-                    setState(() {
-                      selectedQuizStatus = newStatus!;
-                    });
-                  },
-                  items: quizStatuses
-                      .map((value) => DropdownMenuItem(
-                    value: value,
-                    child: Text(
-                      _localizedLabel(value, localization),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ))
-                      .toList(),
+
+                const SizedBox(width: 16),
+
+                // STATUS FILTER
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${localization.translate('status')}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      DropdownButtonFormField<String>(
+                        value: selectedQuizStatus,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black54),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.black87,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        items:
+                            quizStatuses.map((value) {
+                              return DropdownMenuItem(
+                                value: value,
+                                child: Text(
+                                  _localizedLabel(value, localization),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                        onChanged:
+                            (v) =>
+                                setState(() => selectedQuizStatus = v ?? 'All'),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -149,134 +327,129 @@ class _QuizListScreenState extends State<QuizListScreen> {
 
           const SizedBox(height: 12),
 
-          // 🗂️ Filtered Story List
-          Expanded(child: _buildStoryList()),
+          // Content
+          Expanded(
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _buildListView(localization),
+          ),
         ],
       ),
     );
   }
 
-  String _localizedLabel(String value, LocalizationProvider localization) {
-    // Map some UI values to localization keys where they differ
-    String mappedKey = value.toLowerCase();
+  Widget _buildListView(LocalizationProvider localization) {
+    final filtered =
+        _storiesWithQuiz.where((s) {
+          final title = (s['title'] ?? '').toString().toLowerCase();
+          final category = (s['category'] ?? 'Uncategorized').toString();
+          final progress = (s['progress'] ?? 0.0) as double;
 
-    if (value == 'All Categories' || value == 'All') {
-      mappedKey = 'allStories';
-    } else if (value == 'Fables') {
-      mappedKey = 'fable';
-    } else if (value == 'Fable') {
-      mappedKey = 'fable';
-    } else if (value == 'Folktale') {
-      mappedKey = 'folktale';
-    } else if (value == 'Legend') {
-      mappedKey = 'legend';
-    } else if (value == 'Fiction') {
-      mappedKey = 'fiction';
-    } else {
-      mappedKey = value.replaceAll(' ', '').toLowerCase();
+          final matchesSearch = title.contains(searchQuery.toLowerCase());
+          final matchesCategory =
+              selectedCategory == 'All Categories' ||
+              category == selectedCategory;
+          final matchesStatus =
+              selectedQuizStatus == 'All' ||
+              (selectedQuizStatus == 'Completed' && progress >= 1.0) ||
+              (selectedQuizStatus == 'Incomplete' && progress < 1.0);
+
+          return matchesSearch && matchesCategory && matchesStatus;
+        }).toList();
+
+    if (filtered.isEmpty) {
+      return Center(
+        child: Text(
+          localization.translate('noStoriesMatching'),
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
     }
-
-    final translated = localization.translate(mappedKey);
-    // If translation isn't present, localization returns the key itself.
-    if (translated == mappedKey) return value;
-    return translated;
-  }
-
-  Widget _buildStoryList() {
-    final localization = Provider.of<LocalizationProvider>(context, listen: false);
-    // 🧠 Filtering logic
-    List<StoryModel> filteredStories = allStories.where((story) {
-      final matchesCategory = selectedCategory == 'All Categories' ||
-          story.category == selectedCategory;
-      final matchesSearch =
-      story.title.toLowerCase().contains(searchQuery.toLowerCase());
-      final matchesStatus = selectedQuizStatus == 'All' ||
-          (selectedQuizStatus == 'Completed' && story.progress == 1.0) ||
-          (selectedQuizStatus == 'Incomplete' && story.progress < 1.0);
-      return matchesCategory && matchesSearch && matchesStatus;
-    }).toList();
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: filteredStories.length,
+      itemCount: filtered.length,
       separatorBuilder: (_, __) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        var story = filteredStories[index];
+        final story = filtered[index];
 
-        return GestureDetector(
-          onTap: () {
-            // ✅ Opens the actual quiz screen for this story
+        return StoryCard(
+          storyId: story['id'] ?? '',
+          title: story['title'] ?? 'No Title',
+
+          // prevent null or weird category
+          category: _localizedLabel(
+            (story['category'] ?? 'Uncategorized').toString(),
+            localization,
+          ),
+
+          // Safe image
+          imageUrl: story['imageUrl'] ?? '',
+
+          // prevent crash if progress is string/null/not-double
+          progress:
+              (story['progress'] is double)
+                  ? story['progress']
+                  : double.tryParse(story['progress']?.toString() ?? '0') ??
+                      0.0,
+
+          isRead: story['isRead'] ?? false,
+
+          onTap: () async {
+            final quizRoot = FirebaseDatabase.instance.ref(
+              "stories/${story['id']}/quiz",
+            );
+
+            // 🔥 Step 1: detect the quiz node name (owl_legend, doc1, etc.)
+            final quizNodeSnap = await quizRoot.get();
+
+            if (quizNodeSnap.value == null || quizNodeSnap.value is! Map) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("No quiz available for this story"),
+                ),
+              );
+              return;
+            }
+
+            // The first child under "quiz" is the quiz root
+            final firstQuizKey = (quizNodeSnap.value as Map).keys.first;
+
+            // 🔥 Step 2: load questions
+            final questionsSnap =
+                await quizRoot.child("$firstQuizKey/questions").get();
+
+            if (questionsSnap.value == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("No questions found.")),
+              );
+              return;
+            }
+
+            final raw = questionsSnap.value as Map;
+
+            // 🔥 Step 3: convert map to QuestionModel list
+            List<QuestionModel> allQuestions =
+                raw.values.map((q) => QuestionModel.fromMap(q)).toList();
+
+            allQuestions.shuffle();
+
+            final selectedQuestions = allQuestions.take(10).toList();
+
+            // 🔥 Step 4: navigate to quiz screen
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => QuizQa(storyId: story.id),
+                builder:
+                    (_) => QuizQa(
+                      storyId: story['id'],
+                      storyTitle: story['title'],
+                      questions: selectedQuestions,
+                    ),
               ),
             );
           },
-          child: Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.yellow.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child:
-                    const Icon(Icons.menu_book, color: Colors.black, size: 40),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          story.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.fredoka(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _localizedLabel(story.category, localization),
-                          style: GoogleFonts.fredoka(
-                              fontSize: 14, color: Colors.black54),
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: story.progress,
-                            backgroundColor: Colors.grey.shade200,
-                            color: const Color(0xFFFFD93D),
-                            minHeight: 6,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         );
       },
     );
