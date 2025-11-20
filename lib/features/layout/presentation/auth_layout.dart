@@ -1,0 +1,38 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:testapp/features/layout/presentation/bottomnav.dart';
+import 'package:testapp/features/auth/presentation/screens/login_screen.dart';
+
+class AuthLayout extends StatelessWidget {
+  const AuthLayout({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream:
+          FirebaseAuth.instance.authStateChanges(), // Listen to auth changes
+      builder: (context, snapshot) {
+        print('🔍 AuthLayout - StreamBuilder state: ${snapshot.connectionState}');
+        print('🔍 AuthLayout - Has data: ${snapshot.hasData}');
+        if (snapshot.hasData) {
+          print('🔍 AuthLayout - User authenticated: ${snapshot.data?.email}');
+        } else {
+          print('🔍 AuthLayout - No user authenticated');
+        }
+        
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasData) {
+          // User is logged in, show HomeScreen directly
+          return const BottomNav(); // Return HomeScreen directly instead of navigation
+        } else {
+          // If not logged in, show LoginScreen
+          return const LoginScreen();
+        }
+      },
+    );
+  }
+}
