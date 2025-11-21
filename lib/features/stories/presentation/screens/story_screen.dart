@@ -6,6 +6,8 @@ import 'package:testapp/features/favorites/provider/favorites_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:testapp/features/quiz/data/models/question_model.dart';
+import 'package:testapp/features/quiz/presentation/screens/quiz_qa.dart';
 import 'package:testapp/providers/recently_viewed_provider.dart';
 import '../../../../providers/localization_provider.dart';
 import '../../../../core/widgets/narration_player.dart';
@@ -262,69 +264,73 @@ class _StoryScreenState extends State<StoryScreen> {
     });
   }
 
-  void _showQuizDialog(BuildContext context) {
-    final localization = Provider.of<LocalizationProvider>(
-      context,
-      listen: false,
-    );
+  Future<void> _openQuiz() async {
+    try {
+      final quizRoot = FirebaseDatabase.instance.ref(
+        "stories/${widget.storyId}/quiz",
+      );
 
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            backgroundColor: Colors.white,
-            title: Row(
-              children: [
-                Icon(Icons.quiz, color: _primaryColor, size: 28),
-                const SizedBox(width: 10),
-                Text(
-                  localization.translate('comingSoon'),
-                  style: GoogleFonts.fredoka(
-                    textStyle: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: _primaryColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              localization.translate('quizComingSoon'),
-              style: GoogleFonts.fredoka(
-                textStyle: const TextStyle(fontSize: 16),
+      // 🔥 Step 1: detect any quiz folder name
+      final quizNodeSnap = await quizRoot.get();
+
+      if (quizNodeSnap.value == null || quizNodeSnap.value is! Map) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No quiz available for this story")),
+        );
+        return;
+      }
+
+      // first child under "quiz" → your quiz folder name
+      final firstQuizKey = (quizNodeSnap.value as Map).keys.first;
+
+      // 🔥 Step 2: load questions
+      final questionsSnap =
+          await quizRoot.child("$firstQuizKey/questions").get();
+
+      if (!questionsSnap.exists) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("No questions found.")));
+        return;
+      }
+
+      final rawMap = questionsSnap.value as Map<dynamic, dynamic>;
+
+      // 🔥 Step 3: Convert Firebase question maps → QuestionModel objects
+      List<QuestionModel> allQuestions =
+          rawMap.entries.map((entry) {
+            // Ensure the entry value is converted to a Map<String, dynamic>
+            final Map<String, dynamic> dataMap = Map<String, dynamic>.from(
+              entry.value as Map,
+            );
+            // Inject the question id into the map so the model can access it if needed
+            dataMap['id'] = entry.key.toString();
+            // QuestionModel.fromMap expects a Map, so pass the prepared map
+            return QuestionModel.fromMap(dataMap);
+          }).toList();
+
+      // 🔥 Shuffle and pick 10 (or fewer if story has less)
+      allQuestions.shuffle();
+      final selectedQuestions = allQuestions.take(10).toList();
+
+      // 🔥 Step 4: Navigate to QuizQa
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => QuizQa(
+                storyId: widget.storyId,
+                storyTitle: storyTitle,
+                questions: selectedQuestions,
               ),
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _accentColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                ),
-                child: Text(
-                  localization.translate('ok'),
-                  style: GoogleFonts.fredoka(
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-    );
+        ),
+      );
+    } catch (e) {
+      print("❌ Error opening quiz: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Error loading quiz")));
+    }
   }
 
   @override
@@ -544,8 +550,8 @@ class _StoryScreenState extends State<StoryScreen> {
 
                       // Action buttons row
                       FadeInDown(
-                        delay: const Duration(milliseconds: 300),
-                        duration: const Duration(milliseconds: 500),
+                        delay: Duration(milliseconds: 300),
+                        duration: Duration(milliseconds: 500),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Row(
@@ -554,7 +560,6 @@ class _StoryScreenState extends State<StoryScreen> {
                               // Favorite button
                               GestureDetector(
                                 onTap: () {
-                                  // Toggle favorite status
                                   favoritesProvider
                                       .toggleFavorite(widget.storyId, {
                                         'id': widget.storyId,
@@ -575,7 +580,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                           alpha: 0.3,
                                         ),
                                         blurRadius: 8,
-                                        offset: const Offset(0, 3),
+                                        offset: Offset(0, 3),
                                       ),
                                     ],
                                   ),
@@ -606,10 +611,11 @@ class _StoryScreenState extends State<StoryScreen> {
                                   ),
                                 ),
                               ),
+
                               const SizedBox(width: 12),
                               // Quiz button
                               GestureDetector(
-                                onTap: () => _showQuizDialog(context),
+                                onTap: _openQuiz,
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
@@ -751,8 +757,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                                 color: Colors.white,
                                               ),
                                             ),
-                                            onPressed:
-                                                () => _showQuizDialog(context),
+                                            onPressed: _openQuiz,
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor:
                                                   Colors.transparent,
