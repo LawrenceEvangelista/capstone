@@ -7,9 +7,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:testapp/core/services/voice_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:testapp/features/quiz/data/models/question_model.dart';
 import 'package:testapp/features/stories/presentation/widgets/story_card.dart';
+import 'package:testapp/features/quiz/presentation/widgets/quiz_filters_bottom_sheet.dart';
 
 import '../../../../providers/localization_provider.dart';
 import '../screens/quiz_qa.dart';
@@ -26,6 +28,8 @@ class _QuizListScreenState extends State<QuizListScreen> {
     'stories',
   );
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final TextEditingController searchController = TextEditingController();
+  final VoiceService voice = VoiceService();
 
   bool _isLoading = true;
   Timer? _searchTimer;
@@ -38,7 +42,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
   List<String> quizStatuses = ['All', 'Completed', 'Incomplete'];
 
   List<Map<String, dynamic>> _storiesWithQuiz = [];
-  Map<String, String> _imageUrlCache = {};
+  final Map<String, String> _imageUrlCache = {};
 
   @override
   void initState() {
@@ -205,6 +209,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                 ],
               ),
               child: TextField(
+                controller: searchController,
                 onChanged: (value) {
                   _searchTimer?.cancel();
                   _searchTimer = Timer(
@@ -214,7 +219,48 @@ class _QuizListScreenState extends State<QuizListScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: localization.translate('searchStories'),
-                  prefixIcon: const Icon(Icons.search),
+
+                  // 🔥 Move mic to the LEFT
+                  prefixIcon: IconButton(
+                    icon: Icon(
+                      voice.isListening ? Icons.mic : Icons.mic_none,
+                      color: voice.isListening ? Colors.red : Colors.black,
+                    ),
+                    onPressed: () async {
+                      if (voice.isListening) {
+                        await voice.stopListening();
+                        setState(() {});
+                      } else {
+                        await voice.startListening((text) {
+                          setState(() {
+                            searchController.text = text;
+                            searchQuery = text;
+                          });
+                        });
+                        setState(() {});
+                      }
+                    },
+                  ),
+
+                  // wigets/quiz_filters_bottom_sheet.dart
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () {
+                      QuizFiltersBottomSheet.show(
+                        context: context,
+                        localization: localization,
+                        selectedCategory: selectedCategory,
+                        selectedQuizStatus: selectedQuizStatus,
+                        allCategories: allCategories,
+                        quizStatuses: quizStatuses,
+                        onCategoryChanged:
+                            (v) => setState(() => selectedCategory = v),
+                        onStatusChanged:
+                            (v) => setState(() => selectedQuizStatus = v),
+                      );
+                    },
+                  ),
+
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -226,106 +272,6 @@ class _QuizListScreenState extends State<QuizListScreen> {
               ),
             ),
           ),
-
-          // Filters
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // CATEGORY FILTER
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${localization.translate('filterByCategory')}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(height: 4),
-                      DropdownButtonFormField<String>(
-                        value: selectedCategory,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black54),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.black87,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        items:
-                            ['All Categories', ...allCategories].map((value) {
-                              return DropdownMenuItem(
-                                value: value,
-                                child: Text(
-                                  _localizedLabel(value, localization),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (v) => setState(
-                              () => selectedCategory = v ?? 'All Categories',
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 16),
-
-                // STATUS FILTER
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${localization.translate('status')}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      const SizedBox(height: 4),
-                      DropdownButtonFormField<String>(
-                        value: selectedQuizStatus,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black54),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Colors.black87,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        items:
-                            quizStatuses.map((value) {
-                              return DropdownMenuItem(
-                                value: value,
-                                child: Text(
-                                  _localizedLabel(value, localization),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                        onChanged:
-                            (v) =>
-                                setState(() => selectedQuizStatus = v ?? 'All'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
 
           // Content
           Expanded(

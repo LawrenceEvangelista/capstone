@@ -15,11 +15,11 @@ class StoryQuizStartScreen extends StatefulWidget {
   final String storyImage;
 
   const StoryQuizStartScreen({
-    Key? key,
+    super.key,
     required this.storyId,
     required this.storyTitle,
     required this.storyImage,
-  }) : super(key: key);
+  });
 
   @override
   State<StoryQuizStartScreen> createState() => _StoryQuizStartScreenState();
@@ -65,7 +65,7 @@ class _StoryQuizStartScreenState extends State<StoryQuizStartScreen> {
             }
           } else {
             // Case B: multiple quizzes under quiz/
-            for (var quizKey in (quizNode as Map).keys) {
+            for (var quizKey in (quizNode).keys) {
               final qChild = quizNode[quizKey];
               if (qChild is Map &&
                   qChild.containsKey('questions') &&

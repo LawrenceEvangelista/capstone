@@ -1,4 +1,4 @@
-// testapp/lib/features/quiz/presentation/screens/quiz_qa.dart
+// Features/quiz/presentation/screens/quiz_qa.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -10,7 +10,7 @@ class QuizQa extends StatefulWidget {
   final String storyTitle;
   final List<QuestionModel> questions;
 
-  QuizQa({
+  const QuizQa({
     super.key,
     required this.storyId,
     required this.storyTitle,
@@ -24,7 +24,7 @@ class QuizQa extends StatefulWidget {
 class _QuizQaState extends State<QuizQa> {
   int _current = 0;
   int _score = 0;
-  List<int> _selected = [];
+  late List<int> _selected;
 
   final DatabaseReference _db = FirebaseDatabase.instance.ref();
   final User? _user = FirebaseAuth.instance.currentUser;
@@ -59,7 +59,7 @@ class _QuizQaState extends State<QuizQa> {
         final attemptRef =
             _db
                 .child('user_progress')
-                .child(_user!.uid)
+                .child(_user.uid)
                 .child(widget.storyId)
                 .child('attempts')
                 .push();
@@ -70,10 +70,10 @@ class _QuizQaState extends State<QuizQa> {
           'timestamp': DateTime.now().toIso8601String(),
         });
 
-        // Optionally: update aggregate best score or lastScore
+        // update lastScore
         final lastRef = _db
             .child('user_progress')
-            .child(_user!.uid)
+            .child(_user.uid)
             .child(widget.storyId)
             .child('lastScore');
         await lastRef.set({
@@ -83,11 +83,13 @@ class _QuizQaState extends State<QuizQa> {
           'timestamp': DateTime.now().toIso8601String(),
         });
       } catch (e) {
-        print('Error saving attempt: $e');
+        // ignore save errors but log
+        debugPrint('Error saving attempt: $e');
       }
     }
 
-    // Navigate to results screen or show dialog
+    // Show results dialog
+    if (!mounted) return;
     showDialog(
       context: context,
       builder:
@@ -100,10 +102,8 @@ class _QuizQaState extends State<QuizQa> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(
-                    context,
-                  ).pop(); // return to story quiz start screen
+                  Navigator.of(context).pop(); // close dialog
+                  Navigator.of(context).pop(); // go back to story screen
                 },
                 child: Text('OK'),
               ),
@@ -114,9 +114,7 @@ class _QuizQaState extends State<QuizQa> {
 
   Widget _buildQuestionCard(QuestionModel q, int index) {
     final String questionText = q.questionEng ?? q.questionTag ?? '';
-
     final List<String> options = q.shuffledOptionsEng ?? q.optionsEng ?? [];
-
     final int selected = _selected[index];
 
     return Column(
@@ -127,11 +125,10 @@ class _QuizQaState extends State<QuizQa> {
           style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-
         Text(questionText, style: GoogleFonts.fredoka(fontSize: 16)),
         const SizedBox(height: 12),
-
         ...List.generate(options.length, (i) {
+          final bool isSelected = selected == i;
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.0),
             child: InkWell(
@@ -148,12 +145,12 @@ class _QuizQaState extends State<QuizQa> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color:
-                      selected == i
+                      isSelected
                           ? Colors.orange.shade100
                           : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: selected == i ? Colors.orange : Colors.black12,
+                    color: isSelected ? Colors.orange : Colors.black12,
                   ),
                 ),
                 child: Text(options[i], style: GoogleFonts.fredoka()),

@@ -58,8 +58,9 @@ class _StoriesScreenState extends State<StoriesScreen> {
   }
 
   void _onScroll() {
-    if (!_scrollController.hasClients || _isLoadingMore || !_hasMoreStories)
+    if (!_scrollController.hasClients || _isLoadingMore || !_hasMoreStories) {
       return;
+    }
 
     final thresholdPixels =
         200.0; // when there's 200px left to bottom -> load more
@@ -163,9 +164,9 @@ class _StoriesScreenState extends State<StoriesScreen> {
             String normalizedCategory = 'Uncategorized';
             if (rawCategory.isNotEmpty) {
               final lc = rawCategory.toLowerCase();
-              if (lc.contains('folktale') || lc.contains('folktales'))
+              if (lc.contains('folktale') || lc.contains('folktales')) {
                 normalizedCategory = 'Folktale';
-              else if (lc.contains('legend') || lc.contains('legends'))
+              } else if (lc.contains('legend') || lc.contains('legends'))
                 normalizedCategory = 'Legend';
               else if (lc.contains('fable') || lc.contains('fables'))
                 normalizedCategory = 'Fable';
@@ -174,8 +175,9 @@ class _StoriesScreenState extends State<StoriesScreen> {
                 normalizedCategory = rawCategory;
             }
 
-            if (normalizedCategory != 'Uncategorized')
+            if (normalizedCategory != 'Uncategorized') {
               categoriesFound.add(normalizedCategory);
+            }
 
             final bool isRead = value['isRead'] == true;
             final double progress =
