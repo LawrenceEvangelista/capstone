@@ -55,18 +55,26 @@ class RecentlyViewedProvider with ChangeNotifier {
     return 'recently_viewed_${_currentUserId ?? 'guest'}';
   }
 
-  Future<void>loadRecentlyViewed() async {
+  Future<void> loadRecentlyViewed() async {
     final String prefsKey = _getPrefsKey();
     final prefs = await SharedPreferences.getInstance();
     final String? recentlyViewedJson = prefs.getString(prefsKey);
 
-    _recentlyViewed = [];
+    // Load data FIRST, then assign to prevent race condition
+    final List<Map<String, dynamic>> loadedList = [];
 
     if (recentlyViewedJson != null) {
-      final List<dynamic> decoded = json.decode(recentlyViewedJson);
-      _recentlyViewed = decoded.map((item) => Map<String, dynamic>.from(item)).toList();
-      notifyListeners();
+      try {
+        final List<dynamic> decoded = json.decode(recentlyViewedJson);
+        loadedList.addAll(decoded.map((item) => Map<String, dynamic>.from(item)));
+      } catch (e) {
+        print('⚠️ Error decoding recently viewed data: $e');
+        // If decode fails, start fresh
+      }
     }
+
+    _recentlyViewed = loadedList;
+    notifyListeners();
   }
 
   Future<void> addRecentlyViewed(Map<String, dynamic> story) async {
@@ -77,6 +85,8 @@ class RecentlyViewedProvider with ChangeNotifier {
     _recentlyViewed.insert(0, {
       'id': story['id'],
       'title': story['title'],
+      'titleTag': story['titleTag'],
+      'titleEng': story['titleEng'],
       'imageUrl': story['imageUrl'],
       'progress': story['progress'] ?? 0.0,
       'viewedAt': DateTime.now().toIso8601String(),

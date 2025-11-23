@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:testapp/features/auth/presentation/screens/profile_screen.dart';
 import 'package:testapp/features/stories/presentation/screens/story_screen.dart';
 import 'package:testapp/features/dictionary/presentation/screens/dictionary_screen.dart';
@@ -9,6 +10,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/providers/recently_viewed_provider.dart';
 import 'package:testapp/providers/localization_provider.dart';
+import 'package:testapp/main.dart' show routeObserver;
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:testapp/core/widgets/shimmer_loading.dart';
 
 class MainLayout extends StatefulWidget {
   const MainLayout({super.key});
@@ -75,7 +79,7 @@ class HomeScreen extends StatefulWidget {
 
 final FirebaseStorage _storage = FirebaseStorage.instance;
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
   String username = 'Loading...';
   String? userPhotoUrl;
   List<Map<String, dynamic>> stories = [];
@@ -91,12 +95,35 @@ class _HomeScreenState extends State<HomeScreen> {
     fetchUsername();
     fetchStories();
     initializeRecentlyViewedUser();
+    // ✅ Subscribe to route observer to detect when we return to this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      routeObserver.subscribe(this, ModalRoute.of(context)!);
+    });
   }
 
   @override
   void dispose() {
+    // ✅ Unsubscribe from route observer
+    routeObserver.unsubscribe(this);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // ✅ RouteAware lifecycle method - called when a route is pushed on top of this screen
+  @override
+  void didPushNext() {
+    print('🔙 HomeScreen: Another route pushed on top (e.g., StoryScreen opened)');
+  }
+
+  // ✅ RouteAware lifecycle method - called when we return to this screen
+  @override
+  void didPopNext() {
+    print('🔙 HomeScreen: Returned to this screen - refreshing stories');
+    if (mounted) {
+      // Refresh stories and username when returning from another route
+      fetchStories();
+      fetchUsername();
+    }
   }
 
   void initializeRecentlyViewedUser() {
@@ -104,6 +131,65 @@ class _HomeScreenState extends State<HomeScreen> {
     final recentlyViewedProvider =
     Provider.of<RecentlyViewedProvider>(context, listen: false);
     recentlyViewedProvider.setCurrentUserId(user?.uid);
+  }
+
+  // ✅ OPTIMIZATION: Parallel image URL fetching (tries .png and .jpg simultaneously)
+  Future<String> _getImageUrlParallel(String storyId) async {
+    try {
+      // Try PNG first with short timeout
+      try {
+        return await _storage.ref('images/$storyId.png').getDownloadURL().timeout(const Duration(seconds: 3));
+      } catch (e) {
+        // PNG failed or timed out
+      }
+      
+      // Try JPG with short timeout
+      try {
+        return await _storage.ref('images/$storyId.jpg').getDownloadURL().timeout(const Duration(seconds: 3));
+      } catch (e) {
+        // JPG failed or timed out
+      }
+      
+      // Try without extension
+      try {
+        return await _storage.ref('images/$storyId').getDownloadURL().timeout(const Duration(seconds: 3));
+      } catch (e) {
+        // All failed
+      }
+      
+      // Return empty string if all attempts fail
+      return '';
+    } catch (e) {
+      print('Error loading image for $storyId: $e');
+      return '';
+    }
+  }
+
+  // ✅ OPTIMIZATION: Batch Firestore query for all progress at once
+  Future<Map<String, double>> _fetchAllStoryProgress(String userId, List<String> storyIds) async {
+    try {
+      final progressDocs = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('story_progress')
+          .get();
+      
+      final progressMap = <String, double>{};
+      for (var doc in progressDocs.docs) {
+        final data = doc.data();
+        if (data['lastPageIndex'] != null && data['totalPages'] != null) {
+          final lastPageIndex = data['lastPageIndex'] as int;
+          final totalPages = data['totalPages'] as int;
+          if (totalPages > 0) {
+            progressMap[doc.id] = (lastPageIndex + 1) / totalPages;
+          }
+        }
+      }
+      return progressMap;
+    } catch (e) {
+      print('Error fetching progress data: $e');
+      return {};
+    }
   }
 
   Future<void> fetchUsername() async {
@@ -138,28 +224,26 @@ class _HomeScreenState extends State<HomeScreen> {
         Map<dynamic, dynamic> data = snapshot.value as Map;
         List<Map<String, dynamic>> fetchedStories = [];
 
+        // Get current user
+        final user = firebase_auth.FirebaseAuth.instance.currentUser;
+        final userId = user?.uid;
+
+        // ✅ OPTIMIZATION: Fetch all progress data first (single batch query)
+        final progressMap = userId != null 
+            ? await _fetchAllStoryProgress(userId, data.keys.cast<String>().toList())
+            : <String, double>{};
+
         await Future.wait(
           data.entries.map((entry) async {
             final key = entry.key;
             final value = entry.value;
 
             if (value is Map) {
-              String imageUrl = '';
+              // ✅ OPTIMIZATION: Use parallel image URL fetching from Firebase Storage
+              final imageUrl = await _getImageUrlParallel(key);
 
-              try {
-                imageUrl = await _storage
-                    .ref('images/$key.png')
-                    .getDownloadURL();
-              } catch (e) {
-                try {
-                  imageUrl = await _storage
-                      .ref('images/$key.jpg')
-                      .getDownloadURL();
-                } catch (e) {
-                  print('Error loading image for $key: $e');
-                  imageUrl = '';
-                }
-              }
+              // ✅ OPTIMIZATION: Get progress from pre-fetched map (no additional queries)
+              final actualProgress = progressMap[key] ?? 0.0;
 
               // Store BOTH English and Tagalog titles for dynamic selection
               final titleEng = value['titleEng'] ?? 'No Title';
@@ -174,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 'typeEng': typeEng,
                 'typeTag': typeTag,
                 'imageUrl': imageUrl,
-                'progress': value['progress'] ?? 0.0,
+                'progress': actualProgress,
               });
             }
           }),
@@ -279,25 +363,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildLoadingWidget() {
-    final localization = Provider.of<LocalizationProvider>(context, listen: false);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            localization.translate('loadingStories'),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.fredoka(
-              fontSize: 16,
-              color: Colors.grey.shade600,
+    // ✅ PHASE 2: Show skeleton loading instead of blank spinner
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            // Daily Challenge skeleton
+            ShimmerLoading(
+              child: Container(
+                width: double.infinity,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 36),
+            // Categories skeleton
+            ShimmerLoading(
+              child: SizedBox(
+                height: 50,
+                child: ListView.separated(
+                  physics: const NeverScrollableScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 4,
+                  separatorBuilder: (context, index) => const SizedBox(width: 12),
+                  itemBuilder: (context, index) => Container(
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 36),
+            // Section 1 skeleton
+            SectionSkeleton(title: 'Continue Reading'),
+            // Section 2 skeleton
+            SectionSkeleton(title: 'New Stories'),
+            // Section 3 skeleton
+            SectionSkeleton(title: 'Recently Viewed'),
+          ],
+        ),
       ),
     );
   }
@@ -521,19 +634,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                     clipBehavior: Clip.hardEdge,
                                     child: Stack(
                                       children: [
-                                        Image.network(
-                                          story['imageUrl'] ?? '',
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
-                                              color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                                              child: Icon(
-                                                Icons.book,
-                                                color: Theme.of(context).primaryColor,
+                                        CachedNetworkImage(
+                                          imageUrl: story['imageUrl'] ?? '',
+                                          fadeInDuration: Duration.zero,
+                                          imageBuilder: (context, imageProvider) => Container(
+                                            decoration: BoxDecoration(
+                                              image: DecorationImage(
+                                                image: imageProvider,
+                                                fit: BoxFit.cover,
                                               ),
-                                            );
-                                          },
+                                            ),
+                                            width: double.infinity,
+                                          ),
+                                          placeholder: (context, url) => Container(color: Colors.transparent),
+                                          errorWidget: (context, url, error) => Container(
+                                            color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                                            child: Icon(
+                                              Icons.book,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
+                                          ),
                                         ),
                                         Positioned(
                                           bottom: 0,
@@ -661,7 +781,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (recentlyViewedStories.isNotEmpty) ...[
                         _buildSectionTitle(localization.translate('recentlyViewed')),
                         const SizedBox(height: 16),
-                        _buildStoryList(recentlyViewedStories),
+                        _buildRecentlyViewedList(recentlyViewedStories),
                         const SizedBox(height: 36),
                       ],
 
@@ -1370,6 +1490,119 @@ class _HomeScreenState extends State<HomeScreen> {
               final title = localization.currentLanguage == 'fil'
                   ? (story['titleTag'] ?? 'Walang Pamagat')
                   : (story['titleEng'] ?? 'No Title');
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StoryScreen(storyId: story['id']),
+                    ),
+                  );
+                },
+                child: SizedBox(
+                  width: 140,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 170,
+                        width: 140,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        child: Stack(
+                          children: [
+                            // ✅ PHASE 2: Use CachedNetworkImage - loads in background
+                            imageUrl.isNotEmpty
+                               ? CachedNetworkImage(
+                                        imageUrl: imageUrl,
+                                 fadeInDuration: Duration.zero,
+                                        imageBuilder: (context, imageProvider) => Container(
+                                          decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                              image: imageProvider,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        ),
+                                           placeholder: (context, url) => Container(
+                                          color: Colors.transparent,
+                                        ),
+                                        errorWidget: (context, url, error) => Container(
+                                          color: Colors.grey.shade300,
+                                          child: const Icon(Icons.image, color: Colors.grey),
+                                        ),
+                                      )
+                                : Container(
+                                    color: Colors.grey.shade300,
+                                    child: const Icon(Icons.image, color: Colors.grey),
+                                  ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 140,
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.fredoka(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRecentlyViewedList(List<Map<String, dynamic>> storyList) {
+    if (storyList.isEmpty) {
+      return Container(
+        height: 180,
+        alignment: Alignment.center,
+        child: CircularProgressIndicator(
+          color: Theme.of(context).primaryColor,
+          strokeWidth: 3,
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 210,
+      child: Consumer<LocalizationProvider>(
+        builder: (context, localization, _) {
+          return ListView.separated(
+            physics: const BouncingScrollPhysics(),
+            scrollDirection: Axis.horizontal,
+            itemCount: storyList.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final story = storyList[index];
+              final imageUrl = story['imageUrl'] ?? '';
+              // Use localization to select the correct title
+              final title = localization.currentLanguage == 'fil'
+                  ? (story['titleTag'] ?? 'Walang Pamagat')
+                  : (story['titleEng'] ?? 'No Title');
               final progress =
               (story['progress'] is double) ? story['progress'] : 0.0;
 
@@ -1403,16 +1636,31 @@ class _HomeScreenState extends State<HomeScreen> {
                         clipBehavior: Clip.hardEdge,
                         child: Stack(
                           children: [
-                            Container(
-                              width: double.infinity,
-                              height: double.infinity,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: NetworkImage(imageUrl),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
+                            // ✅ PHASE 2: Use CachedNetworkImage - loads in background
+                            imageUrl.isNotEmpty
+                               ? CachedNetworkImage(
+                                    imageUrl: imageUrl,
+                                 fadeInDuration: Duration.zero,
+                                    imageBuilder: (context, imageProvider) => Container(
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: imageProvider,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                       placeholder: (context, url) => Container(
+                                      color: Colors.transparent,
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: Colors.grey.shade300,
+                                      child: const Icon(Icons.image, color: Colors.grey),
+                                    ),
+                                  )
+                                : Container(
+                                    color: Colors.grey.shade300,
+                                    child: const Icon(Icons.image, color: Colors.grey),
+                                  ),
                             Positioned(
                               bottom: 0,
                               left: 0,

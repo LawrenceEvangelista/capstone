@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 
 class AuthService {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   User? get currentUser => firebaseAuth.currentUser;
 
@@ -24,6 +26,58 @@ class AuthService {
     } catch (e) {
       print("AuthService signIn error: $e");
       rethrow; // Rethrow to handle in UI
+    }
+  }
+
+  // Email & Password Sign In (use this for login)
+  Future<UserCredential> signInWithUsernameOrEmail({
+    required String usernameOrEmail,
+    required String password,
+  }) async {
+    try {
+      // Just use email directly (no username lookup)
+      return await firebaseAuth.signInWithEmailAndPassword(
+        email: usernameOrEmail,
+        password: password,
+      );
+    } catch (e) {
+      print("AuthService signInWithUsernameOrEmail error: $e");
+      rethrow;
+    }
+  }
+
+  // Store username -> email mapping when user signs up
+  Future<void> registerUsername({
+    required String username,
+    required String email,
+    required String uid,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(uid).set({
+        'username': username.toLowerCase(), // Store lowercase for case-insensitive search
+        'email': email,
+        'displayName': username,
+        'createdAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      print("✅ Username registered: $username");
+    } catch (e) {
+      print("AuthService registerUsername error: $e");
+      rethrow;
+    }
+  }
+
+  // Check if username is available
+  Future<bool> isUsernameAvailable(String username) async {
+    try {
+      final QuerySnapshot result = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username.toLowerCase())
+          .limit(1)
+          .get();
+      return result.docs.isEmpty;
+    } catch (e) {
+      print("AuthService isUsernameAvailable error: $e");
+      rethrow;
     }
   }
 

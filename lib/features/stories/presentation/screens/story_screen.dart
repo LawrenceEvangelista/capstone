@@ -13,6 +13,7 @@ import '../../../../providers/localization_provider.dart';
 import '../../../../core/widgets/narration_player.dart';
 import '../../../../core/widgets/fullscreen_image_viewer.dart';
 import '../../../../core/services/text_sync_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class StoryScreen extends StatefulWidget {
   final String storyId;
@@ -82,6 +83,8 @@ class _StoryScreenState extends State<StoryScreen> {
         final storyData = {
           'id': widget.storyId,
           'title': data['titleEng'] ?? data['titleTag'] ?? 'No Title',
+          'titleTag': data['titleTag'],
+          'titleEng': data['titleEng'],
           'imageUrl': imageUrl,
           'progress': data['progress'] ?? 0.0,
         };
@@ -213,7 +216,7 @@ class _StoryScreenState extends State<StoryScreen> {
           }
         }
 
-        // Store story data for favorites
+        // Store story data for favorites and recently viewed
         storyData = {
           'id': widget.storyId,
           'titleEng': titleEng,
@@ -227,7 +230,9 @@ class _StoryScreenState extends State<StoryScreen> {
               coverImageUrl.isNotEmpty
                   ? coverImageUrl
                   : (combinedPages.isNotEmpty ? combinedPages[0]['image'] : ''),
-          'progress': 0.5,
+          // NOTE: 'progress' is initially set in _trackStoryView or fetched in the main list.
+          // We default it here but the tracking logic will update it.
+          'progress': data['progress'] ?? 0.0,
         };
 
         setState(() {
@@ -252,6 +257,49 @@ class _StoryScreenState extends State<StoryScreen> {
     }
   }
 
+  // 🔥 FIX: Function to calculate and save story progress
+  Future<void> _updateStoryProgress(int newPageIndex) async {
+    // Only update if pages exist and index is valid
+    if (storyPages.isEmpty) return;
+
+    if (newPageIndex >= 0 && newPageIndex < storyPages.length) {
+      final double totalPages = storyPages.length.toDouble();
+      // Progress calculation: (Current Page Index + 1) / Total Pages
+      // Clamp to ensure it doesn't exceed 1.0
+      final double newProgress =
+          ((newPageIndex + 1).toDouble() / totalPages).clamp(0.0, 1.0);
+
+      try {
+        // 1. Persist the new progress to Firebase Realtime Database
+        await FirebaseDatabase.instance.ref()
+          .child('stories/${widget.storyId}')
+          .update({'progress': newProgress});
+
+        // 2. Update the Recently Viewed provider (for immediate display on other screens)
+        final storyDataToUpdate = {
+          'id': widget.storyId,
+          // Use current title, as it might be localized
+          'title': storyTitle,
+          'titleTag': storyData['titleTag'],
+          'titleEng': storyData['titleEng'],
+          'imageUrl': storyData['image'],
+          'progress': newProgress, // Use the new progress
+        };
+
+        if (mounted) {
+          Provider.of<RecentlyViewedProvider>(
+            context,
+            listen: false,
+          ).addRecentlyViewed(storyDataToUpdate);
+        }
+
+        print('✅ Progress updated for ${widget.storyId}: $newProgress');
+      } catch (e) {
+        print('❌ Error saving story progress: $e');
+      }
+    }
+  }
+
   void _toggleLanguage() {
     setState(() {
       _isEnglish = !_isEnglish;
@@ -259,9 +307,50 @@ class _StoryScreenState extends State<StoryScreen> {
       if (storyData['titleEng'] != null && storyData['titleTag'] != null) {
         storyTitle = _isEnglish ? storyData['titleEng'] : storyData['titleTag'];
       }
-      // Reset page to 1 when language changes so narration reloads from page 1
-      _currentPageIndex = 0;
+      // Preserve the current page index when language changes
+      // The narration will restart from the new page when player reloads
     });
+  }
+
+  /// Builds the list of story page widgets with the current language
+  List<Widget> _buildStoryPages() {
+    if (storyPages.isEmpty) {
+      final localization = Provider.of<LocalizationProvider>(context, listen: false);
+      return [
+        Center(
+          child: Text(
+            localization.translate('noStoryContentAvailable'),
+            style: GoogleFonts.fredoka(
+              fontSize: 18,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return List.generate(
+      storyPages.length,
+      (index) => StoryPage(
+        pageContent:
+            _isEnglish
+                ? storyPages[index]['textEng']!
+                : storyPages[index]['textTag']!,
+        imageUrl: storyPages[index]['image']!,
+        pageNumber: index + 1,
+        totalPages: storyPages.length,
+        primaryColor: _primaryColor,
+        onPageViewed: (pageNum) {
+          setState(() {
+            _currentPageIndex = pageNum - 1;
+          });
+          // 🔥 FIX APPLIED HERE
+          _updateStoryProgress(pageNum - 1);
+        },
+        narrationPosition: _narrationPosition,
+        narrationDuration: _narrationDuration,
+      ),
+    );
   }
 
   Future<void> _openQuiz() async {
@@ -456,25 +545,56 @@ class _StoryScreenState extends State<StoryScreen> {
                               ),
                               const Spacer(),
                               // Language toggle
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: _toggleLanguage,
-                                  borderRadius: BorderRadius.circular(30),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                      borderRadius: BorderRadius.circular(30),
+                              Tooltip(
+                                message: _isEnglish
+                                    ? 'Switch to Tagalog'
+                                    : 'Switch to English',
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: _toggleLanguage,
+                                    borderRadius: BorderRadius.circular(30),
+                                    splashColor: _primaryColor.withValues(
+                                      alpha: 0.2,
                                     ),
-                                    child: Icon(
-                                      _isEnglish
-                                          ? Icons.translate
-                                          : Icons.g_translate,
-                                      color: _primaryColor,
-                                      size: 22,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                        borderRadius: BorderRadius.circular(30),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            _isEnglish
+                                                ? Icons.translate
+                                                : Icons.g_translate,
+                                            color: _primaryColor,
+                                            size: 28,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            _isEnglish ? 'ENG' : 'FIL',
+                                            style: GoogleFonts.fredoka(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: _primaryColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -679,7 +799,7 @@ class _StoryScreenState extends State<StoryScreen> {
                               ),
                               clipBehavior: Clip.hardEdge,
                               child: PageFlipWidget(
-                                key: ValueKey(_isEnglish),
+                                key: ValueKey('${widget.storyId}_$_isEnglish'),
                                 backgroundColor: Colors.white,
                                 lastPage: Center(
                                   child: Container(
@@ -773,44 +893,7 @@ class _StoryScreenState extends State<StoryScreen> {
                                     ),
                                   ),
                                 ),
-                                children:
-                                    storyPages.isEmpty
-                                        ? [
-                                          Center(
-                                            child: Text(
-                                              localization.translate(
-                                                'noStoryContentAvailable',
-                                              ),
-                                              style: GoogleFonts.fredoka(
-                                                fontSize: 18,
-                                                color: Colors.black54,
-                                              ),
-                                            ),
-                                          ),
-                                        ]
-                                        : List.generate(
-                                          storyPages.length,
-                                          (index) => StoryPage(
-                                            pageContent:
-                                                _isEnglish
-                                                    ? storyPages[index]['textEng']!
-                                                    : storyPages[index]['textTag']!,
-                                            imageUrl:
-                                                storyPages[index]['image']!,
-                                            pageNumber: index + 1,
-                                            totalPages: storyPages.length,
-                                            primaryColor: _primaryColor,
-                                            onPageViewed: (pageNum) {
-                                              setState(() {
-                                                _currentPageIndex = pageNum - 1;
-                                              });
-                                            },
-                                            narrationPosition:
-                                                _narrationPosition,
-                                            narrationDuration:
-                                                _narrationDuration,
-                                          ),
-                                        ),
+                                children: _buildStoryPages(),
                               ),
                             ),
                           ),
@@ -930,9 +1013,10 @@ class _StoryPageState extends State<StoryPage> {
   @override
   void didUpdateWidget(StoryPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Rebuild when narration position or duration changes
+    // Rebuild when narration position or duration changes, or when page content changes (language switch)
     if (oldWidget.narrationPosition != widget.narrationPosition ||
-        oldWidget.narrationDuration != widget.narrationDuration) {
+        oldWidget.narrationDuration != widget.narrationDuration ||
+        oldWidget.pageContent != widget.pageContent) {
       setState(() {});
     }
   }
@@ -1043,34 +1127,18 @@ class _StoryPageState extends State<StoryPage> {
                       ),
                       child:
                           widget.imageUrl.isNotEmpty
-                              ? Image.network(
-                                widget.imageUrl,
+                              ? CachedNetworkImage(
+                                imageUrl: widget.imageUrl,
                                 fit: BoxFit.cover,
-                                loadingBuilder: (
-                                  context,
-                                  child,
-                                  loadingProgress,
-                                ) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    color: Colors.grey.shade200,
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: widget.primaryColor,
-                                        value:
-                                            loadingProgress
-                                                        .expectedTotalBytes !=
-                                                    null
-                                                ? loadingProgress
-                                                        .cumulativeBytesLoaded /
-                                                    loadingProgress
-                                                        .expectedTotalBytes!
-                                                : null,
-                                      ),
+                                placeholder: (context, url) => Container(
+                                  color: Colors.grey.shade200,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: widget.primaryColor,
                                     ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stackTrace) {
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) {
                                   return Container(
                                     color: Colors.grey.shade300,
                                     child: Center(
