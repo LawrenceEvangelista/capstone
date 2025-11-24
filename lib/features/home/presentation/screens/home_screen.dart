@@ -714,7 +714,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Widget build(BuildContext context) {
     final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context);
     final localization = Provider.of<LocalizationProvider>(context, listen: false);
-    final recentlyViewedStories = recentlyViewedProvider.getRecentlyViewedByDate(days: 7); // Show stories from last 7 days
+    
+    // Only show recently viewed stories after data has been loaded from preferences
+    final List<Map<String, dynamic>> recentlyViewedStories = recentlyViewedProvider.isLoaded 
+        ? recentlyViewedProvider.getRecentlyViewedByDate(days: 7)
+        : []; // Show stories from last 7 days
     
     // Show loading state
     if (_isLoading) {
@@ -1636,11 +1640,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                         clipBehavior: Clip.hardEdge,
                         child: Stack(
                           children: [
-                            // ✅ PHASE 2: Use CachedNetworkImage - loads in background
+                            // Use provided URL when available. If missing, fetch latest URL
+                            // from Storage and update provider without changing order.
                             imageUrl.isNotEmpty
-                               ? CachedNetworkImage(
+                                ? CachedNetworkImage(
                                     imageUrl: imageUrl,
-                                 fadeInDuration: Duration.zero,
+                                    fadeInDuration: Duration.zero,
                                     imageBuilder: (context, imageProvider) => Container(
                                       decoration: BoxDecoration(
                                         image: DecorationImage(
@@ -1649,7 +1654,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                         ),
                                       ),
                                     ),
-                                       placeholder: (context, url) => Container(
+                                    placeholder: (context, url) => Container(
                                       color: Colors.transparent,
                                     ),
                                     errorWidget: (context, url, error) => Container(
@@ -1657,9 +1662,43 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                       child: const Icon(Icons.image, color: Colors.grey),
                                     ),
                                   )
-                                : Container(
-                                    color: Colors.grey.shade300,
-                                    child: const Icon(Icons.image, color: Colors.grey),
+                                : FutureBuilder<String>(
+                                    future: _getImageUrlParallel(story['id']),
+                                    builder: (context, snapshot) {
+                                      final fetched = snapshot.data ?? '';
+                                      if (snapshot.connectionState == ConnectionState.done && fetched.isNotEmpty) {
+                                        // Update provider entry if still missing an image
+                                        try {
+                                          final provider = Provider.of<RecentlyViewedProvider>(context, listen: false);
+                                          if ((story['imageUrl'] ?? '').toString().isEmpty) {
+                                            provider.updateEntry(story['id'], {'imageUrl': fetched});
+                                          }
+                                        } catch (_) {}
+                                        return CachedNetworkImage(
+                                          imageUrl: fetched,
+                                          fadeInDuration: Duration.zero,
+                                          imageBuilder: (context, imageProvider) => Container(
+                                            decoration: BoxDecoration(
+                                              image: DecorationImage(
+                                                image: imageProvider,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                          ),
+                                          placeholder: (context, url) => Container(color: Colors.transparent),
+                                          errorWidget: (context, url, error) => Container(
+                                            color: Colors.grey.shade300,
+                                            child: const Icon(Icons.image, color: Colors.grey),
+                                          ),
+                                        );
+                                      }
+
+                                      // Loading or no image found
+                                      return Container(
+                                        color: Colors.grey.shade300,
+                                        child: const Icon(Icons.image, color: Colors.grey),
+                                      );
+                                    },
                                   ),
                             Positioned(
                               bottom: 0,

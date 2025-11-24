@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 class RecentlyViewedProvider with ChangeNotifier {
   List<Map<String, dynamic>> _recentlyViewed = [];
   String? _currentUserId;
+  bool _isLoaded = false; // Track if data has been loaded from preferences
 
   List<Map<String, dynamic>> get recentlyViewed => _recentlyViewed;
+  bool get isLoaded => _isLoaded; // Expose load status
 
   // Get recently viewed stories filtered by date (e.g., last 7 days, last 30 days)
   List<Map<String, dynamic>> getRecentlyViewedByDate({int days = 7}) {
@@ -43,7 +48,24 @@ class RecentlyViewedProvider with ChangeNotifier {
   void setCurrentUserId(String? userId) {
     if (_currentUserId != userId) {
       _currentUserId = userId;
-      // When the user changes, reload the list for the new user (or clear if logged out)
+      // When the user changes, clear in-memory list first to avoid showing stale data
+      _recentlyViewed = [];
+      _isLoaded = false; // Reset load flag
+      notifyListeners();
+      // If switching to a logged-in user, proactively remove guest data to
+      // prevent carrying over guest entries into the new account during races.
+      if (_currentUserId != null && _currentUserId != 'guest') {
+        SharedPreferences.getInstance().then((prefs) async {
+          try {
+            await prefs.remove('recently_viewed_guest');
+            print('✅ Cleared guest recently viewed data immediately for new user: $_currentUserId');
+          } catch (e) {
+            print('⚠️ Error clearing guest data on user switch: $e');
+          }
+        });
+      }
+
+      // Then reload from preferences for the new user
       loadRecentlyViewed();
     }
   }
@@ -73,12 +95,111 @@ class RecentlyViewedProvider with ChangeNotifier {
       }
     }
 
+    // Always clear old guest data when loading for a new user
+    // This prevents carryover from previous sessions
+    if (_currentUserId != null && _currentUserId != 'guest') {
+      try {
+        // Clear the guest key if we're switching to a logged-in user
+        await prefs.remove('recently_viewed_guest');
+        print('✅ Cleared guest recently viewed data for new user: $_currentUserId');
+      } catch (e) {
+        print('⚠️ Error clearing guest data: $e');
+      }
+    }
+
     _recentlyViewed = loadedList;
+    _isLoaded = true; // Mark as loaded
     notifyListeners();
+    // Validate and refresh loaded entries in background to avoid displaying
+    // stale or deleted stories and to refresh image URLs.
+    _validateAndRefreshEntries();
+  }
+
+  /// Validate each locally stored recently-viewed entry against the
+  /// authoritative Realtime Database and Storage. Removes entries for
+  /// deleted stories and updates titles/image URLs when possible.
+  Future<void> _validateAndRefreshEntries() async {
+    if (_recentlyViewed.isEmpty) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final String prefsKey = _getPrefsKey();
+
+    bool changed = false;
+
+    final storage = FirebaseStorage.instance;
+    final db = FirebaseDatabase.instance;
+
+    // Iterate backwards so removals don't affect indices
+    for (int i = _recentlyViewed.length - 1; i >= 0; i--) {
+      final item = _recentlyViewed[i];
+      final id = item['id']?.toString();
+      if (id == null || id.isEmpty) {
+        _recentlyViewed.removeAt(i);
+        changed = true;
+        continue;
+      }
+
+      try {
+        final snap = await db.ref('stories/$id').get();
+        if (!snap.exists || snap.value == null) {
+          // Story was removed from DB — drop it
+          _recentlyViewed.removeAt(i);
+          changed = true;
+          continue;
+        }
+
+        final Map<dynamic, dynamic>? data = snap.value as Map<dynamic, dynamic>?;
+        if (data != null) {
+          // Update titles if available
+          final titleEng = data['titleEng'];
+          final titleTag = data['titleTag'];
+          if (titleEng != null) item['titleEng'] = titleEng;
+          if (titleTag != null) item['titleTag'] = titleTag;
+
+          // Update progress if present
+          if (data['progress'] != null) {
+            try {
+              item['progress'] = (data['progress'] is double)
+                  ? data['progress']
+                  : (double.tryParse(data['progress'].toString()) ?? item['progress'] ?? 0.0);
+            } catch (_) {}
+          }
+        }
+
+        // If imageUrl is empty/missing try to fetch a current one from Storage
+        String? currentImage = item['imageUrl']?.toString();
+        if (currentImage == null || currentImage.isEmpty) {
+          String newUrl = '';
+          try {
+            newUrl = await storage.ref('images/$id.png').getDownloadURL();
+          } catch (_) {
+            try {
+              newUrl = await storage.ref('images/$id.jpg').getDownloadURL();
+            } catch (_) {}
+          }
+
+          if (newUrl.isNotEmpty) {
+            item['imageUrl'] = newUrl;
+            changed = true;
+          }
+        }
+      } catch (e) {
+        print('⚠️ Error validating recently viewed entry $id: $e');
+        // Skip problematic entries but continue validating others
+      }
+    }
+
+    if (changed) {
+      await prefs.setString(prefsKey, json.encode(_recentlyViewed));
+      notifyListeners();
+    }
   }
 
   Future<void> addRecentlyViewed(Map<String, dynamic> story) async {
-    final String prefsKey = _getPrefsKey();
+    // Use provider's user id if available; otherwise fall back to FirebaseAuth
+    // currentUser to avoid writing into the 'guest' key after an auth change.
+    final effectiveUserId = _currentUserId ?? fb_auth.FirebaseAuth.instance.currentUser?.uid;
+    final String prefsKey = 'recently_viewed_${effectiveUserId ?? 'guest'}';
 
     _recentlyViewed.removeWhere((item) => item['id'] == story['id']);
 
@@ -104,8 +225,24 @@ class RecentlyViewedProvider with ChangeNotifier {
 
   Future<void> clearRecentlyViewed() async {
     _recentlyViewed.clear();
+    _isLoaded = true; // Mark as cleared (empty state is loaded)
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_getPrefsKey());
+    notifyListeners();
+  }
+
+  /// Update fields for an existing recently-viewed entry without changing its position.
+  Future<void> updateEntry(String id, Map<String, dynamic> updates) async {
+    final int index = _recentlyViewed.indexWhere((item) => item['id'] == id);
+    if (index == -1) return;
+
+    final item = _recentlyViewed[index];
+    updates.forEach((key, value) {
+      item[key] = value;
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_getPrefsKey(), json.encode(_recentlyViewed));
     notifyListeners();
   }
 }

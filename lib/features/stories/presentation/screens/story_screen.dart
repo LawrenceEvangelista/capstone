@@ -364,7 +364,12 @@ class _StoryScreenState extends State<StoryScreen> {
 
       if (quizNodeSnap.value == null || quizNodeSnap.value is! Map) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("No quiz available for this story")),
+          SnackBar(
+            content: Text(
+              "No quiz available for this story",
+              style: GoogleFonts.fredoka(),
+            ),
+          ),
         );
         return;
       }
@@ -379,7 +384,14 @@ class _StoryScreenState extends State<StoryScreen> {
       if (!questionsSnap.exists) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("No questions found.")));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(
+              "No questions found.",
+              style: GoogleFonts.fredoka(),
+            ),
+          ),
+        );
         return;
       }
 
@@ -418,7 +430,14 @@ class _StoryScreenState extends State<StoryScreen> {
       print("❌ Error opening quiz: $e");
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Error loading quiz")));
+      ).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Error loading quiz",
+            style: GoogleFonts.fredoka(),
+          ),
+        ),
+      );
     }
   }
 

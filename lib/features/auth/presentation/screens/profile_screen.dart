@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:testapp/core/widgets/language_switcher.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/providers/localization_provider.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:async';
@@ -1254,6 +1255,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _handleLogout(BuildContext context) async {
     try {
       await _authService.signOut();
+      // Clear recently viewed data on logout
+      if (context.mounted) {
+        Provider.of<RecentlyViewedProvider>(context, listen: false).clearRecentlyViewed();
+      }
       Navigator.pushReplacementNamed(context, '/');
     } catch (error) {
       _showLogoutErrorDialog(context, error.toString());
