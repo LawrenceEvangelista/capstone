@@ -1,0 +1,1213 @@
+// lib/features/stories/presentation/screens/story_screen.dart
+
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:page_flip/page_flip.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animate_do/animate_do.dart';
+
+import 'package:testapp/features/favorites/provider/favorites_provider.dart';
+import 'package:testapp/features/quiz/data/models/question_model.dart';
+import 'package:testapp/features/quiz/presentation/screens/age_picker_screen.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
+import 'package:testapp/core/widgets/google_narration_player.dart';
+import 'package:testapp/core/widgets/fullscreen_image_viewer.dart';
+import 'package:testapp/core/services/text_sync_service.dart';
+
+class StoryScreen extends StatefulWidget {
+  final String storyId;
+
+  const StoryScreen({super.key, required this.storyId});
+
+  @override
+  State<StoryScreen> createState() => _StoryScreenState();
+}
+
+class _StoryScreenState extends State<StoryScreen> {
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+  bool isLoading = true;
+  bool _isEnglish = true;
+  String storyTitle = '';
+  List<Map<String, String>> storyPages = [];
+  String errorMessage = '';
+  Map<String, dynamic> storyData = {};
+  int _currentPageIndex = 0;
+  double _narrationPosition = 0;
+  double _narrationDuration = 0;
+
+  // Colors
+  final Color _backgroundColor = const Color(0xFFFFF176);
+  final Color _primaryColor = const Color(0xFFFF6D00);
+  final Color _accentColor = const Color(0xFF8E24AA);
+  final Color _buttonColor = const Color(0xFFFF9800);
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStoryData();
+    _trackStoryView();
+  }
+
+  // Add this story to recently viewed (non-critical)
+  Future<void> _trackStoryView() async {
+    try {
+      final snapshot =
+          await FirebaseDatabase.instance
+              .ref()
+              .child('stories/${widget.storyId}')
+              .once();
+
+      if (snapshot.snapshot.value != null && snapshot.snapshot.value is Map) {
+        final data = snapshot.snapshot.value as Map;
+        String imageUrl = '';
+
+        try {
+          imageUrl =
+              await _storage
+                  .ref('images/${widget.storyId}.png')
+                  .getDownloadURL();
+        } catch (_) {
+          try {
+            imageUrl =
+                await _storage
+                    .ref('images/${widget.storyId}.jpg')
+                    .getDownloadURL();
+          } catch (_) {
+            // ignore
+          }
+        }
+
+        final storyMeta = {
+          'id': widget.storyId,
+          'title': data['titleEng'] ?? data['titleTag'] ?? 'No Title',
+          'imageUrl': imageUrl,
+          'progress': data['progress'] ?? 0.0,
+        };
+
+        if (mounted) {
+          await Provider.of<RecentlyViewedProvider>(
+            context,
+            listen: false,
+          ).addRecentlyViewed(storyMeta);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error tracking story view: $e');
+    }
+  }
+
+  // Load single page image from several candidate paths in Storage
+  Future<String> _loadPageImage(int pageNumber) async {
+    final candidates = [
+      'storypages/${widget.storyId}/PAGE $pageNumber.png',
+      'storypages/${widget.storyId}/page$pageNumber.png',
+      'storypages/${widget.storyId}/PAGE $pageNumber.jpg',
+      'storypages/${widget.storyId}/page$pageNumber.jpg',
+    ];
+
+    for (final path in candidates) {
+      try {
+        final url = await _storage.ref(path).getDownloadURL();
+        debugPrint('Loaded: $path');
+        return url;
+      } catch (_) {
+        // try next
+      }
+    }
+
+    debugPrint('No image found for page $pageNumber');
+    return '';
+  }
+
+  Future<void> _fetchStoryData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
+
+    try {
+      final storyRef = FirebaseDatabase.instance
+          .ref()
+          .child('stories')
+          .child(widget.storyId);
+
+      final event = await storyRef.once();
+      final snapshot = event.snapshot;
+
+      if (snapshot.value != null && snapshot.value is Map) {
+        final Map<dynamic, dynamic> data = snapshot.value as Map;
+
+        final String? titleEng = data['titleEng'];
+        final String? titleTag = data['titleTag'];
+        final String category = data['category'] ?? 'Uncategorized';
+
+        List<Map<String, String>> combinedPages = [];
+
+        if (data['pages'] != null && data['pages'] is Map) {
+          final pagesData = Map<dynamic, dynamic>.from(data['pages'] as Map);
+
+          // sort page keys like 'page1', 'page2'
+          final sortedKeys =
+              pagesData.keys.map((k) => k.toString()).toList()..sort((a, b) {
+                final aNum =
+                    int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                final bNum =
+                    int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                return aNum.compareTo(bNum);
+              });
+
+          for (int i = 0; i < sortedKeys.length; i++) {
+            final key = sortedKeys[i];
+            final page = pagesData[key];
+            if (page is Map) {
+              final imageUrl = await _loadPageImage(i + 1);
+              combinedPages.add({
+                'textEng': (page['textEng'] ?? '') as String,
+                'textTag': (page['textTag'] ?? '') as String,
+                'image': imageUrl,
+              });
+            }
+          }
+        }
+
+        // cover fallback
+        String coverImage = '';
+        try {
+          coverImage =
+              await _storage
+                  .ref('images/${widget.storyId}.png')
+                  .getDownloadURL();
+        } catch (_) {
+          try {
+            coverImage =
+                await _storage
+                    .ref('images/${widget.storyId}.jpg')
+                    .getDownloadURL();
+          } catch (_) {
+            // ignore
+          }
+        }
+
+        storyData = {
+          'id': widget.storyId,
+          'titleEng': titleEng,
+          'titleTag': titleTag,
+          'category': category,
+          'title':
+              _isEnglish
+                  ? (titleEng ?? 'No Title')
+                  : (titleTag ?? 'Walang Pamagat'),
+          'image':
+              coverImage.isNotEmpty
+                  ? coverImage
+                  : (combinedPages.isNotEmpty ? combinedPages[0]['image'] : ''),
+          'progress': 0.0,
+        };
+
+        setState(() {
+          storyTitle =
+              _isEnglish
+                  ? (titleEng ?? 'No Title')
+                  : (titleTag ?? 'Walang Pamagat');
+          storyPages = combinedPages;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Story not found or invalid format';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error loading story: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  void _toggleLanguage() {
+    setState(() {
+      _isEnglish = !_isEnglish;
+      storyTitle =
+          _isEnglish
+              ? (storyData['titleEng'] ?? storyTitle)
+              : (storyData['titleTag'] ?? storyTitle);
+      _currentPageIndex = 0;
+    });
+  }
+
+  Future<void> _openQuiz() async {
+    try {
+      final quizRoot = FirebaseDatabase.instance.ref(
+        "stories/${widget.storyId}/quiz",
+      );
+
+      final quizNodeSnap = await quizRoot.get();
+      if (!quizNodeSnap.exists || quizNodeSnap.value is! Map) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("No quiz available for this story")),
+          );
+        }
+        return;
+      }
+
+      final firstQuizKey = (quizNodeSnap.value as Map).keys.first;
+      final baseRef = quizRoot.child(firstQuizKey);
+
+      final List<QuestionModel> allQuestions = [];
+
+      for (final dif in ['easy', 'medium', 'hard']) {
+        final difSnap = await baseRef.child(dif).get();
+        if (!difSnap.exists || difSnap.value is! Map) continue;
+        final difMap = Map<dynamic, dynamic>.from(difSnap.value as Map);
+
+        difMap.forEach((questionId, rawData) {
+          if (rawData is Map) {
+            final dataMap = Map<String, dynamic>.from(rawData);
+            dataMap['id'] = questionId.toString();
+            dataMap['difficulty'] = dif;
+            try {
+              allQuestions.add(QuestionModel.fromJson(dataMap));
+            } catch (e) {
+              debugPrint('Question parse error for $questionId: $e');
+            }
+          }
+        });
+      }
+
+      if (allQuestions.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("No questions found.")));
+        }
+        return;
+      }
+
+      // Navigate to age picker (it will decide question selection)
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => AgePickerScreen(
+                  storyId: widget.storyId,
+                  storyTitle: storyTitle,
+                ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error opening quiz: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Error loading quiz")));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(
+      context,
+      listen: false,
+    );
+    final favoritesProvider = Provider.of<FavoritesProvider>(context);
+    final bool isFavorite = favoritesProvider.isFavorite(widget.storyId);
+
+    return Scaffold(
+      backgroundColor: _backgroundColor,
+      body: SafeArea(
+        child:
+            isLoading
+                ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: _primaryColor),
+                      const SizedBox(height: 20),
+                      Text(
+                        localization.translate('loadingStory'),
+                        style: GoogleFonts.fredoka(
+                          fontSize: 18,
+                          color: _primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                : (errorMessage.isNotEmpty
+                    ? _buildError(localization)
+                    : _buildContent(
+                      localization,
+                      isFavorite,
+                      favoritesProvider,
+                    )),
+      ),
+    );
+  }
+
+  Widget _buildError(LocalizationProvider localization) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: _primaryColor, size: 60),
+          const SizedBox(height: 20),
+          Text(
+            localization.translate('oopsError'),
+            style: GoogleFonts.fredoka(fontSize: 18, color: Colors.red),
+          ),
+          if (errorMessage.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              errorMessage,
+              style: GoogleFonts.fredoka(fontSize: 14, color: Colors.redAccent),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    LocalizationProvider localization,
+    bool isFavorite,
+    FavoritesProvider favoritesProvider,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // top custom appbar
+        FadeInDown(
+          duration: const Duration(milliseconds: 400),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFD93D),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                _buildBackButton(),
+                const SizedBox(width: 12),
+                Text(
+                  '${localization.translate('back')} ${localization.translate('stories')}',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                  ),
+                ),
+                const Spacer(),
+                _buildLanguageToggle(),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildTitleCard(),
+        const SizedBox(height: 12),
+        _buildActionButtons(localization, isFavorite, favoritesProvider),
+        Expanded(child: _buildFlipBook()),
+        // narration player
+        _buildNarrationPlayer(),
+        const SizedBox(height: 12),
+        _buildPageFlipHint(localization),
+      ],
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => Navigator.pop(context),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: _primaryColor,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageToggle() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _toggleLanguage,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Icon(
+            _isEnglish ? Icons.translate : Icons.g_translate,
+            color: _primaryColor,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleCard() {
+    return FadeInDown(
+      delay: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 500),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryColor.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // stroke text (shadow)
+              Text(
+                storyTitle,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.visible,
+                style: GoogleFonts.fredoka(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  foreground:
+                      Paint()
+                        ..style = PaintingStyle.stroke
+                        ..strokeWidth = 4
+                        ..color = Colors.white,
+                ),
+              ),
+              // main text
+              Text(
+                storyTitle,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.visible,
+                style: GoogleFonts.fredoka(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(
+    LocalizationProvider localization,
+    bool isFavorite,
+    FavoritesProvider favoritesProvider,
+  ) {
+    return FadeInDown(
+      delay: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            GestureDetector(
+              onTap: () {
+                favoritesProvider.toggleFavorite(widget.storyId, {
+                  'id': widget.storyId,
+                  'title': storyTitle,
+                  'category': storyData['category'],
+                  'image': storyData['image'],
+                  'progress': 0.5,
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: Colors.red,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      isFavorite
+                          ? localization.translate('favorited')
+                          : localization.translate('favorite'),
+                      style: GoogleFonts.fredoka(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: _openQuiz,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.quiz, color: _accentColor, size: 22),
+                    const SizedBox(width: 5),
+                    Text(
+                      localization.translate('quiz'),
+                      style: GoogleFonts.fredoka(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFlipBook() {
+    return FadeInUp(
+      delay: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: _primaryColor, width: 2.5),
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryColor.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.hardEdge,
+          child: PageFlipWidget(
+            key: ValueKey(_isEnglish),
+            backgroundColor: Colors.white,
+            lastPage: Center(child: _buildLastPage()),
+            children:
+                storyPages.isEmpty
+                    ? [
+                      Center(
+                        child: Text(
+                          Provider.of<LocalizationProvider>(
+                            context,
+                            listen: false,
+                          ).translate('noStoryContentAvailable'),
+                          style: GoogleFonts.fredoka(
+                            fontSize: 18,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ]
+                    : List.generate(storyPages.length, (index) {
+                      final page = storyPages[index];
+                      final text =
+                          _isEnglish
+                              ? (page['textEng'] ?? '')
+                              : (page['textTag'] ?? '');
+                      final image = page['image'] ?? '';
+                      return StoryPageWidget(
+                        pageContent: text,
+                        imageUrl: image,
+                        pageNumber: index + 1,
+                        totalPages: storyPages.length,
+                        primaryColor: _primaryColor,
+                        onPageViewed: (pageNum) {
+                          setState(() => _currentPageIndex = pageNum - 1);
+                        },
+                        narrationPosition: _narrationPosition,
+                        narrationDuration: _narrationDuration,
+                      );
+                    }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLastPage() {
+    final localization = Provider.of<LocalizationProvider>(
+      context,
+      listen: false,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/story_complete.png',
+            height: 120,
+            width: 120,
+            errorBuilder:
+                (c, _, __) =>
+                    Icon(Icons.check_circle, size: 100, color: _accentColor),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            localization.translate('storyComplete'),
+            style: GoogleFonts.fredoka(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: _primaryColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            height: 50,
+            width: 180,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_buttonColor, _accentColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: _accentColor.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.quiz, color: Colors.white),
+              label: Text(
+                Provider.of<LocalizationProvider>(
+                  context,
+                  listen: false,
+                ).translate('startQuiz'),
+                style: GoogleFonts.fredoka(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              onPressed: _openQuiz,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNarrationPlayer() {
+    final currentPageText =
+        (storyPages.isNotEmpty &&
+                _currentPageIndex >= 0 &&
+                _currentPageIndex < storyPages.length)
+            ? (_isEnglish
+                ? storyPages[_currentPageIndex]['textEng'] ?? ''
+                : storyPages[_currentPageIndex]['textTag'] ?? '')
+            : '';
+
+    final languageCode = _isEnglish ? 'en-US' : 'fil-PH';
+
+    return GoogleNarrationPlayer(
+      text: currentPageText,
+      language: languageCode,
+      primaryColor: _primaryColor,
+      accentColor: _accentColor,
+      onPositionChanged: (position, duration) {
+        setState(() {
+          _narrationPosition = position.toDouble();
+          _narrationDuration = duration.toDouble();
+        });
+      },
+    );
+  }
+
+  Widget _buildPageFlipHint(LocalizationProvider localization) {
+    return FadeInUp(
+      delay: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.swipe_left, color: _accentColor, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  localization.translate('swipeToTurnPage'),
+                  style: GoogleFonts.fredoka(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.swipe_right, color: _accentColor, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Smaller reusable page widget (modular, easier to unit-test)
+class StoryPageWidget extends StatefulWidget {
+  final String pageContent;
+  final String imageUrl;
+  final int pageNumber;
+  final int totalPages;
+  final Color primaryColor;
+  final Function(int)? onPageViewed;
+  final double narrationPosition;
+  final double narrationDuration;
+
+  const StoryPageWidget({
+    super.key,
+    required this.pageContent,
+    required this.imageUrl,
+    required this.pageNumber,
+    required this.totalPages,
+    required this.primaryColor,
+    this.onPageViewed,
+    this.narrationPosition = 0,
+    this.narrationDuration = 0,
+  });
+
+  @override
+  State<StoryPageWidget> createState() => _StoryPageWidgetState();
+}
+
+class _StoryPageWidgetState extends State<StoryPageWidget> {
+  @override
+  void initState() {
+    super.initState();
+    // Notify parent that this page is now visible
+    Future.microtask(() => widget.onPageViewed?.call(widget.pageNumber));
+  }
+
+  @override
+  void didUpdateWidget(covariant StoryPageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.narrationPosition != widget.narrationPosition ||
+        oldWidget.narrationDuration != widget.narrationDuration) {
+      setState(() {});
+    }
+  }
+
+  Widget _buildHighlightedText({
+    required bool isLongText,
+    required Color primaryColor,
+  }) {
+    final progress =
+        (widget.narrationDuration > 0)
+            ? ((widget.narrationPosition / widget.narrationDuration)
+                .clamp(0, 1)
+                .toDouble())
+            : 0.0;
+
+    final highlightIndex = TextSyncService.getHighlightCharIndex(
+      widget.pageContent,
+      progress,
+    ).clamp(0, widget.pageContent.length);
+
+    final textStyle = GoogleFonts.fredoka(
+      fontSize: isLongText ? 15 : 17,
+      fontWeight: FontWeight.w500,
+      height: 1.5,
+      letterSpacing: 0.3,
+      wordSpacing: 2,
+    );
+
+    final highlighted = widget.pageContent.substring(0, highlightIndex);
+    final remaining = widget.pageContent.substring(highlightIndex);
+
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            if (highlighted.isNotEmpty)
+              TextSpan(
+                text: highlighted,
+                style: textStyle.copyWith(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            if (remaining.isNotEmpty)
+              TextSpan(
+                text: remaining,
+                style: textStyle.copyWith(color: Colors.black87),
+              ),
+          ],
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final localization = Provider.of<LocalizationProvider>(
+      context,
+      listen: false,
+    );
+    final isLongText = widget.pageContent.length > 120;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(23),
+        color: Colors.white,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(23),
+        child: Column(
+          children: [
+            Expanded(
+              flex: isLongText ? 52 : 62,
+              child: Stack(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      if (widget.imageUrl.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (c) => FullscreenImageViewer(
+                                  imageUrl: widget.imageUrl,
+                                  heroTag: 'story-image-${widget.pageNumber}',
+                                ),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child:
+                          widget.imageUrl.isNotEmpty
+                              ? Image.network(
+                                widget.imageUrl,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (c, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: Colors.grey.shade200,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: widget.primaryColor,
+                                        value:
+                                            loadingProgress
+                                                        .expectedTotalBytes !=
+                                                    null
+                                                ? loadingProgress
+                                                        .cumulativeBytesLoaded /
+                                                    loadingProgress
+                                                        .expectedTotalBytes!
+                                                : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (c, e, st) {
+                                  return Container(
+                                    color: Colors.grey.shade300,
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.broken_image,
+                                            size: 48,
+                                            color: Colors.grey.shade500,
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            localization.translate(
+                                              'imageNotFound',
+                                            ),
+                                            style: GoogleFonts.fredoka(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                              : Container(
+                                color: Colors.grey.shade300,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    size: 48,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ),
+                    ),
+                  ),
+                  // hint
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: _buildTapToExpandHint(),
+                  ),
+                  // page count badge
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: widget.primaryColor,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '${widget.pageNumber}/${widget.totalPages}',
+                        style: GoogleFonts.fredoka(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    widget.primaryColor.withOpacity(0.3),
+                    widget.primaryColor,
+                    widget.primaryColor.withOpacity(0.3),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              flex: isLongText ? 52 : 45,
+              child: Container(
+                width: double.infinity,
+                color: Colors.white,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: CustomPaint(
+                        size: const Size(40, 40),
+                        painter: CornerDecoration(widget.primaryColor),
+                      ),
+                    ),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: Transform.scale(
+                        scaleX: -1,
+                        child: CustomPaint(
+                          size: const Size(40, 40),
+                          painter: CornerDecoration(widget.primaryColor),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isLongText)
+                                Container(
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  width: 40,
+                                  height: 3,
+                                  decoration: BoxDecoration(
+                                    color: widget.primaryColor.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                              _buildHighlightedText(
+                                isLongText: isLongText,
+                                primaryColor: widget.primaryColor,
+                              ),
+                              if (isLongText) const SizedBox(height: 8),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTapToExpandHint() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.fullscreen, color: Colors.white, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            'Tap to expand',
+            style: GoogleFonts.fredoka(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CornerDecoration extends CustomPainter {
+  final Color color;
+
+  CornerDecoration(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = color.withOpacity(0.1)
+          ..style = PaintingStyle.fill;
+    final path =
+        Path()
+          ..moveTo(0, 0)
+          ..lineTo(size.width, 0)
+          ..quadraticBezierTo(0, 0, 0, size.height)
+          ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
