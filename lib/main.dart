@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:testapp/core/firebase/firebase_options.dart';
 import 'package:provider/provider.dart';
 
 import 'package:testapp/features/narration/provider/audio_provider.dart';
@@ -19,10 +20,16 @@ import 'package:testapp/features/favorites/presentation/screens/favorites_screen
 // 🧭 Layout
 import 'package:testapp/features/layout/presentation/bottomnav.dart';
 import 'package:testapp/core/services/auth_service.dart';
+import 'package:testapp/features/splash/presentation/screens/splash_screen.dart';
+
+// ✅ Global RouteObserver for detecting route changes
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(
     MultiProvider(
@@ -70,13 +77,15 @@ class MyApp extends StatelessWidget {
             ),
             textTheme: const TextTheme(),
           ),
-          home: const AuthLayout(),
+          home: const SplashScreen(),
+          navigatorObservers: [routeObserver],
           routes: {
             '/auth': (context) => const AuthLayout(),
             '/login': (context) => const LoginScreen(),
             '/signup': (context) => const SignupScreen(),
-            '/forgot_password':
-                (context) => ForgotPasswordScreen(authService: AuthService()),
+            '/login_signup': (context) => const LoginScreen(),
+            '/forgot_password': (context) =>
+                ForgotPasswordScreen(authService: AuthService()),
             '/home': (context) => const BottomNav(),
             '/favorites': (context) => const FavoritesScreen(),
           },

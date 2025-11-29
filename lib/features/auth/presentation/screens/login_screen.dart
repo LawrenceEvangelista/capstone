@@ -42,8 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        await _authService.signIn(
-          email: _emailController.text.trim(),
+        // Use the new method that supports both username and email
+        await _authService.signInWithUsernameOrEmail(
+          usernameOrEmail: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
@@ -123,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Icon(Icons.error_outline, color: _primaryColor, size: 28),
             const SizedBox(width: 10),
-            Flexible(
+            Expanded(
               child: Text(
                 'Oops! Login Error',
                 maxLines: 2,
@@ -139,14 +140,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
-        content: Flexible(
-          child: Text(
-            errorMessage,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.fredoka(
-              textStyle: const TextStyle(fontSize: 16),
-            ),
+        content: Text(
+          errorMessage,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.fredoka(
+            textStyle: const TextStyle(fontSize: 16),
           ),
         ),
         actions: [
@@ -300,18 +299,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Consumer<LocalizationProvider>(
                         builder: (context, localization, _) => _buildTextField(
                           controller: _emailController,
-                          label: localization.translate('email'),
-                          hint: localization.translate('emailExample'),
+                          label: 'Email',
+                          hint: 'Enter your email address',
                           icon: Icons.email_rounded,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return localization.translate('pleaseEnterEmail');
-                            }
-                            // Email format validation
-                            final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
-                            if (!emailRegex.hasMatch(value)) {
-                              return localization.translate('invalidEmailFormat');
+                              return 'Please enter your email';
                             }
                             return null;
                           },

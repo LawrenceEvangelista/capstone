@@ -24,29 +24,29 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  void _checkAuthState() async {
-    // Wait for Firebase to initialize and check auth state
-    await Future.delayed(const Duration(seconds: 2)); // Minimum splash time
-    
-    // Check if user is already logged in
-    User? user = FirebaseAuth.instance.currentUser;
-    
-    // Debug logging
-    print('🔍 SplashScreen - Checking auth state...');
-    print('🔍 Current user: ${user?.email ?? "No user logged in"}');
-    print('🔍 User UID: ${user?.uid ?? "No UID"}');
-    
-    if (mounted) {
+  void _checkAuthState() {
+    // Avoid async void anti-pattern - use Future.delayed with .then()
+    Future.delayed(const Duration(seconds: 2)).then((_) {
+      if (!mounted) return;
+      
+      // Check if user is already logged in
+      User? user = FirebaseAuth.instance.currentUser;
+      
+      // Debug logging
+      print('🔍 SplashScreen - Checking auth state...');
+      print('🔍 Current user: ${user?.email ?? "No user logged in"}');
+      print('🔍 User UID: ${user?.uid ?? "No UID"}');
+      
       if (user != null) {
-        // User is logged in, go to auth layout which will handle the routing
-        print('🔍 User is authenticated, navigating to /auth');
-        Navigator.pushReplacementNamed(context, '/auth');
+        // User is logged in, go to home
+        print('🔍 User is authenticated, navigating to /home');
+        Navigator.pushReplacementNamed(context, '/home');
       } else {
         // User is not logged in, go to login/signup screen
-        print('🔍 User is not authenticated, navigating to /login_signup');
-        Navigator.pushReplacementNamed(context, '/login_signup');
+        print('🔍 User is not authenticated, navigating to /login');
+        Navigator.pushReplacementNamed(context, '/login');
       }
-    }
+    });
   }
 
   @override

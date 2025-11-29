@@ -262,7 +262,13 @@ class _StoriesScreenState extends State<StoriesScreen> {
         title: Consumer<LocalizationProvider>(
           builder:
               (context, localization, _) =>
-                  Text(localization.translate('stories')),
+                  Text(
+                    localization.translate('stories'),
+                    style: GoogleFonts.fredoka(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
         ),
       ),
       body: Column(
@@ -339,6 +345,10 @@ class _StoriesScreenState extends State<StoriesScreen> {
                     builder:
                         (context, localization, _) => Text(
                           '${localization.translate('filterByCategory')} ',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                   ),
                   const SizedBox(width: 8),
@@ -377,6 +387,10 @@ class _StoriesScreenState extends State<StoriesScreen> {
                     builder:
                         (context, localization, _) => Text(
                           '${localization.translate('filterByReadStatus')} ',
+                          style: GoogleFonts.fredoka(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                   ),
                   const SizedBox(width: 8),
@@ -449,7 +463,10 @@ class _StoriesScreenState extends State<StoriesScreen> {
       return Center(
         child: Text(
           localization.translate('noStoriesMatching'),
-          style: const TextStyle(fontSize: 16, color: Colors.grey),
+          style: GoogleFonts.fredoka(
+            fontSize: 16,
+            color: Colors.grey,
+          ),
         ),
       );
     }
@@ -558,7 +575,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                         children: [
                           Text(
                             story['title'] ?? 'No Title',
-                            style: const TextStyle(
+                            style: GoogleFonts.fredoka(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -567,7 +584,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                           ),
                           Text(
                             '${localization.translate('categories')}: ${_localizedLabel(story['category'], localization)}',
-                            style: const TextStyle(
+                            style: GoogleFonts.fredoka(
                               fontSize: 14,
                               color: Colors.black54,
                             ),
@@ -589,7 +606,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                                 story['isRead']
                                     ? localization.translate('read')
                                     : localization.translate('unread'),
-                                style: TextStyle(
+                                style: GoogleFonts.fredoka(
                                   fontSize: 14,
                                   color:
                                       story['isRead']
@@ -609,7 +626,7 @@ class _StoriesScreenState extends State<StoriesScreen> {
                               const SizedBox(width: 8),
                               Text(
                                 '${((story['progress'] ?? 0.0) * 100).toStringAsFixed(0)}%',
-                                style: const TextStyle(
+                                style: GoogleFonts.fredoka(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),

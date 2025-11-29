@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:testapp/features/layout/presentation/bottomnav.dart';
 import 'package:testapp/features/auth/presentation/screens/login_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
 
 class AuthLayout extends StatelessWidget {
   const AuthLayout({super.key});
@@ -16,8 +18,24 @@ class AuthLayout extends StatelessWidget {
         print('🔍 AuthLayout - Has data: ${snapshot.hasData}');
         if (snapshot.hasData) {
           print('🔍 AuthLayout - User authenticated: ${snapshot.data?.email}');
+          
+          // ✅ Initialize recently viewed provider with current user
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context, listen: false);
+              recentlyViewedProvider.setCurrentUserId(snapshot.data?.uid);
+            }
+          });
         } else {
           print('🔍 AuthLayout - No user authenticated');
+          
+          // ✅ Clear user ID for logged out state
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              final recentlyViewedProvider = Provider.of<RecentlyViewedProvider>(context, listen: false);
+              recentlyViewedProvider.setCurrentUserId(null);
+            }
+          });
         }
         
         if (snapshot.connectionState == ConnectionState.waiting) {

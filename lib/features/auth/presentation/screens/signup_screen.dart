@@ -46,7 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> register() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState != null && _formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
         errorMessage = '';
@@ -60,7 +60,23 @@ class _SignupScreenState extends State<SignupScreen> {
         // After successful account creation, update the username/displayName
         User? user = userCredential.user;
         if (user != null) {
-          await user.updateDisplayName(_usernameController.text.trim());
+          final username = _usernameController.text.trim();
+          
+          // Update Firebase Auth display name
+          await user.updateDisplayName(username);
+          
+          // Register username in Firestore for login lookup
+          try {
+            await _authService.registerUsername(
+              username: username,
+              email: _emailController.text.trim(),
+              uid: user.uid,
+            );
+          } catch (usernameError) {
+            print("Warning: Failed to register username in Firestore: $usernameError");
+            // Continue with signup even if username registration fails
+          }
+          
           // Upload profile image if selected
           if (_profileImage != null) {
             try {
@@ -258,9 +274,11 @@ class _SignupScreenState extends State<SignupScreen> {
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
                   // Language Switcher at top right - Compact design
                   Align(
                     alignment: Alignment.topRight,
@@ -700,6 +718,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),

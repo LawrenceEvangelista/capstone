@@ -41,9 +41,14 @@ class _QuizQaState extends State<QuizQa> {
     setState(() {
       _selected[_current] = selectedIndex;
 
-      final q = widget.questions[_current];
-      final int correctIndex = q.shuffledCorrectIndex;
-
+      // Validate that a correct answer exists
+      final int? correctIndex = q.shuffledCorrectIndex ?? q.correctAnswer;
+      
+      if (correctIndex == null) {
+        debugPrint('⚠️ Warning: Question ${_current} has no correct answer defined');
+        return; // Skip scoring if no correct answer
+      }
+      
       if (selectedIndex == correctIndex) {
         _score++;
       }

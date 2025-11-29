@@ -50,6 +50,7 @@ dependencies:
   just_audio: ^0.10.5
   audio_session: any
   speech_to_text: ^7.3.0
+  visibility_detector: ^0.3.0
 
   # Utility / Networking
   http: ^1.4.0

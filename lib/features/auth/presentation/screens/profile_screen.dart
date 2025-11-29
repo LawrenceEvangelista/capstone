@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:testapp/core/widgets/language_switcher.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/providers/localization_provider.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:async';
@@ -340,7 +341,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     decoration: InputDecoration(
-                                      labelText: 'Current Email',
+                                      labelText: localization.translate('currentEmail'),
                                       labelStyle: GoogleFonts.fredoka(
                                         textStyle: TextStyle(
                                           color: _primaryColor,
@@ -396,31 +397,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     decoration: InputDecoration(
-                                      labelText: 'New Email',
+                                      labelText: localization.translate('newEmail'),
                                       labelStyle: GoogleFonts.fredoka(
                                         textStyle: TextStyle(
                                           color: _primaryColor,
                                           fontSize: 16,
                                         ),
                                       ),
-                                      hintText: 'Enter new email',
+                                      hintText: localization.translate('enterNewEmail'),
                                       border: InputBorder.none,
                                     ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter new email';
-                                      }
-                                      // Basic email validation
-                                      if (!RegExp(
-                                        r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$',
-                                      ).hasMatch(value)) {
-                                        return 'Please enter a valid email';
-                                      }
-                                      if (value == FirebaseAuth.instance.currentUser?.email) {
-                                        return 'New email must be different from current email';
-                                      }
-                                      return null;
-                                    },
                                   ),
                                 ),
                               ],
@@ -469,14 +455,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                     decoration: InputDecoration(
-                                      labelText: 'Password',
+                                      labelText: localization.translate('passwordLabel'),
                                       labelStyle: GoogleFonts.fredoka(
                                         textStyle: TextStyle(
                                           color: _primaryColor,
                                           fontSize: 16,
                                         ),
                                       ),
-                                      hintText: 'Enter password to verify',
+                                      hintText: localization.translate('enterPasswordToVerify'),
                                       border: InputBorder.none,
                                       suffixIcon: IconButton(
                                         icon: Icon(
@@ -488,27 +474,121 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         },
                                       ),
                                     ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your password';
-                                      }
-                                      return null;
-                                    },
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        // Confirm Email Change Button
+                        if (_isEditingEmail)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: _isLoadingEmail
+                                      ? null
+                                      : () {
+                                          setState(() => _isEditingEmail = false);
+                                          _newEmailController.clear();
+                                          _emailPasswordController.clear();
+                                          _isEmailPasswordVisible = false;
+                                        },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.grey.withValues(alpha: 0.3),
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withValues(alpha: 0.2),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    child: Center(
+                                      child: Text(
+                                        localization.translate('cancelButton'),
+                                        style: GoogleFonts.fredoka(
+                                          textStyle: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.withValues(alpha: 0.7),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: _isLoadingEmail
+                                      ? null
+                                      : () async {
+                                          final emailError = _validateEmailChange();
+                                          if (emailError != null) {
+                                            _showErrorPopup(emailError);
+                                          } else {
+                                            await _handleEmailChange();
+                                          }
+                                        },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.blue.withValues(alpha: 0.4),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    child: Center(
+                                      child: _isLoadingEmail
+                                          ? SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                strokeWidth: 2.5,
+                                              ),
+                                            )
+                                          : Text(
+                                              localization.translate('confirmButton'),
+                                              style: GoogleFonts.fredoka(
+                                                textStyle: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                       const SizedBox(height: 16),
                       // Change Email Button - Large Kid-Friendly Version
-                      GestureDetector(
-                        onTap: _isLoadingEmail
-                            ? null
-                            : () {
-                                setState(() => _isEditingEmail = !_isEditingEmail);
-                              },
+                      if (!_isEditingEmail)
+                        GestureDetector(
+                          onTap: _isLoadingEmail
+                              ? null
+                              : () {
+                                  setState(() => _isEditingEmail = !_isEditingEmail);
+                                },
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -829,15 +909,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        // Confirm Password Change Button
+                        if (_isEditingPassword)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: _isLoadingPassword
+                                      ? null
+                                      : () {
+                                          setState(() => _isEditingPassword = false);
+                                          _currentPasswordController.clear();
+                                          _newPasswordController.clear();
+                                          _confirmPasswordController.clear();
+                                          _isPasswordVisible = false;
+                                          _isNewPasswordVisible = false;
+                                        },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.grey.withValues(alpha: 0.3),
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withValues(alpha: 0.2),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    child: Center(
+                                      child: Text(
+                                        localization.translate('cancelButton'),
+                                        style: GoogleFonts.fredoka(
+                                          textStyle: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.withValues(alpha: 0.7),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: _isLoadingPassword
+                                      ? null
+                                      : () async {
+                                          if (_formKey.currentState!.validate()) {
+                                            await _handlePasswordChange();
+                                          }
+                                        },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.orange.withValues(alpha: 0.4),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    child: Center(
+                                      child: _isLoadingPassword
+                                          ? SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                strokeWidth: 2.5,
+                                              ),
+                                            )
+                                          : Text(
+                                              localization.translate('confirmButton'),
+                                              style: GoogleFonts.fredoka(
+                                                textStyle: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                       const SizedBox(height: 16),
                       // Change Password Button - Large Kid-Friendly Version
-                      GestureDetector(
-                        onTap: _isLoadingPassword
-                            ? null
-                            : () {
-                                setState(() => _isEditingPassword = !_isEditingPassword);
-                              },
+                      if (!_isEditingPassword)
+                        GestureDetector(
+                          onTap: _isLoadingPassword
+                              ? null
+                              : () {
+                                  setState(() => _isEditingPassword = !_isEditingPassword);
+                                },
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -1076,6 +1255,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _handleLogout(BuildContext context) async {
     try {
       await _authService.signOut();
+      // Clear recently viewed data on logout
+      if (context.mounted) {
+        Provider.of<RecentlyViewedProvider>(context, listen: false).clearRecentlyViewed();
+      }
       Navigator.pushReplacementNamed(context, '/');
     } catch (error) {
       _showLogoutErrorDialog(context, error.toString());
@@ -1407,6 +1590,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Pick profile image from gallery or camera
   Future<void> _pickProfileImage() async {
+    final localization = Provider.of<LocalizationProvider>(context, listen: false);
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -1416,7 +1600,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
+                title: Text(localization.translate('gallery')),
                 onTap: () async {
                   Navigator.pop(context);
                   await _uploadProfileImage(ImageSource.gallery);
@@ -1424,7 +1608,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
+                title: Text(localization.translate('camera')),
                 onTap: () async {
                   Navigator.pop(context);
                   await _uploadProfileImage(ImageSource.camera);
@@ -1533,6 +1717,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Handle email change with verification
+  // Validate email change fields and return error message if any
+  String? _validateEmailChange() {
+    final newEmail = _newEmailController.text.trim();
+    final password = _emailPasswordController.text.trim();
+    
+    if (newEmail.isEmpty) {
+      return '📧 Oops! Please enter a new email';
+    }
+    
+    if (!RegExp(r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$').hasMatch(newEmail)) {
+      return '❌ That doesn\'t look like a real email!';
+    }
+    
+    if (newEmail == FirebaseAuth.instance.currentUser?.email) {
+      return '✨ Use a different email, not the old one!';
+    }
+    
+    if (password.isEmpty) {
+      return '🔐 Don\'t forget your password!';
+    }
+    
+    return null;
+  }
+
+  // Show error message as a popup dialog
+  void _showErrorPopup(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        backgroundColor: Colors.white,
+        title: Row(
+          children: [
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Oops!',
+                style: GoogleFonts.fredoka(
+                  textStyle: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE53935),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            message,
+            style: GoogleFonts.fredoka(
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: Text(
+                'Got it! 👍',
+                style: GoogleFonts.fredoka(
+                  textStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _handleEmailChange() async {
     try {
       setState(() => _isLoadingEmail = true);
