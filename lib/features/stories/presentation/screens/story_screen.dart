@@ -1,11 +1,16 @@
+// lib/features/stories/presentation/screens/story_screen.dart
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:page_flip/page_flip.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
-import 'package:testapp/features/favorites/provider/favorites_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+
+import 'package:testapp/features/stories/presentation/widgets/story_flipbook_container.dart';
+import 'package:testapp/features/favorites/provider/favorites_provider.dart';
+import 'package:testapp/providers/recently_viewed_provider.dart';
+import 'package:testapp/providers/localization_provider.dart';
 import 'package:testapp/features/quiz/data/models/question_model.dart';
 import 'package:testapp/features/quiz/presentation/screens/quiz_qa.dart';
 import 'package:testapp/providers/recently_viewed_provider.dart';
@@ -26,22 +31,37 @@ class StoryScreen extends StatefulWidget {
 
 class _StoryScreenState extends State<StoryScreen> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
   bool isLoading = true;
   bool _isEnglish = true;
   String storyTitle = '';
-  List<Map<String, String>> storyPages = [];
+  List<Map<String, dynamic>> storyPages = [];
   String errorMessage = '';
   Map<String, dynamic> storyData = {};
-  int _currentPageIndex = 0; // Track current page for narration
-  double _narrationPosition =
-      0; // Track narration playback position for text sync
-  double _narrationDuration = 0; // Track narration duration
+  int _currentPageIndex = 0;
 
-  // Cartoonish colors - matching signup screen
-  final Color _backgroundColor = const Color(0xFFFFF176); // Light yellow
-  final Color _primaryColor = const Color(0xFFFF6D00); // Orange
-  final Color _accentColor = const Color(0xFF8E24AA); // Purple
-  final Color _buttonColor = const Color(0xFFFF9800); // Orange
+  // Theme colors
+  final Color _backgroundColor = const Color(0xFFFFF176);
+  final Color _primaryColor = const Color(0xFFFF6D00);
+  final Color _accentColor = const Color(0xFF8E24AA);
+  final Color _buttonColor = const Color(0xFFFF9800);
+
+  // Narration defaults
+  double _speakingRate = 0.9;
+  double _pitch = 1.0;
+  String _voiceEn = 'en-US-Studio-O';
+  String _voiceTag = 'fil-PH-Wavenet-C';
+
+  final List<String> _enVoices = [
+    'en-US-Studio-O',
+    'en-US-Neural2-D',
+    'en-US-Neural2-F',
+  ];
+  final List<String> _tagVoices = [
+    'fil-PH-Wavenet-C',
+    'fil-PH-Wavenet-A',
+    'fil-PH-Wavenet-B',
+  ];
 
   @override
   void initState() {
@@ -50,37 +70,35 @@ class _StoryScreenState extends State<StoryScreen> {
     _trackStoryView();
   }
 
+  // --------------------------
+  // RECENTLY VIEWED
+  // --------------------------
   Future<void> _trackStoryView() async {
     try {
-      // Fetch story data from Firebase
       final snapshot =
           await FirebaseDatabase.instance
-              .ref()
-              .child('stories/${widget.storyId}')
+              .ref('stories/${widget.storyId}')
               .once();
 
       if (snapshot.snapshot.value != null && snapshot.snapshot.value is Map) {
         final data = snapshot.snapshot.value as Map;
 
-        // Get image URL from Firebase Storage
         String imageUrl = '';
         try {
           imageUrl =
               await _storage
                   .ref('images/${widget.storyId}.png')
                   .getDownloadURL();
-        } catch (e) {
+        } catch (_) {
           try {
             imageUrl =
                 await _storage
                     .ref('images/${widget.storyId}.jpg')
                     .getDownloadURL();
-          } catch (e) {
-            print('Error loading image: $e');
-          }
+          } catch (_) {}
         }
 
-        final storyData = {
+        final viewData = {
           'id': widget.storyId,
           'title': data['titleEng'] ?? data['titleTag'] ?? 'No Title',
           'titleTag': data['titleTag'],
@@ -89,132 +107,37 @@ class _StoryScreenState extends State<StoryScreen> {
           'progress': data['progress'] ?? 0.0,
         };
 
-        // Add to recently viewed
         if (mounted) {
-          await Provider.of<RecentlyViewedProvider>(
+          Provider.of<RecentlyViewedProvider>(
             context,
             listen: false,
-          ).addRecentlyViewed(storyData);
+          ).addRecentlyViewed(viewData);
         }
       }
-    } catch (e) {
-      print('Error tracking story view: $e');
-    }
+    } catch (_) {}
   }
 
+  // --------------------------
+  // LOAD STORY DATA
+  // --------------------------
   Future<String> _loadPageImage(int pageNumber) async {
-    try {
-      // Try with space format first: "PAGE 1.png"
-      String imageUrl =
-          await _storage
-              .ref('storypages/${widget.storyId}/PAGE $pageNumber.png')
-              .getDownloadURL();
-      print(
-        'Successfully loaded: storypages/${widget.storyId}/PAGE $pageNumber.png',
-      );
-      return imageUrl;
-    } catch (e) {
-      print('Error loading PAGE $pageNumber.png: $e');
+    final tryPaths = [
+      'storypages/${widget.storyId}/PAGE $pageNumber.png',
+      'storypages/${widget.storyId}/page$pageNumber.png',
+      'storypages/${widget.storyId}/PAGE $pageNumber.jpg',
+      'storypages/${widget.storyId}/page$pageNumber.jpg',
+    ];
 
-      // Try alternative format: "page1.png"
+    for (final path in tryPaths) {
       try {
-        String imageUrl =
-            await _storage
-                .ref('storypages/${widget.storyId}/page$pageNumber.png')
-                .getDownloadURL();
-        print(
-          'Successfully loaded: storypages/${widget.storyId}/page$pageNumber.png',
-        );
-        return imageUrl;
-      } catch (e) {
-        print('Error loading page$pageNumber.png: $e');
-
-        // Try JPG format
-        try {
-          String imageUrl =
-              await _storage
-                  .ref('storypages/${widget.storyId}/PAGE $pageNumber.jpg')
-                  .getDownloadURL();
-          print(
-            'Successfully loaded: storypages/${widget.storyId}/PAGE $pageNumber.jpg',
-          );
-          return imageUrl;
-        } catch (e) {
-          print('Error loading PAGE $pageNumber.jpg: $e');
-          return ''; // Return empty if all attempts fail
-        }
-      }
+        return await _storage.ref(path).getDownloadURL();
+      } catch (_) {}
     }
+    return '';
   }
 
   Future<void> _fetchStoryData() async {
-    try {
-      final DatabaseReference storyRef = FirebaseDatabase.instance
-          .ref()
-          .child('stories')
-          .child(widget.storyId);
-
-      DatabaseEvent event = await storyRef.once();
-      DataSnapshot snapshot = event.snapshot;
-
-      if (snapshot.value != null && snapshot.value is Map) {
-        Map<dynamic, dynamic> data = snapshot.value as Map;
-
-        final String? titleEng = data['titleEng'];
-        final String? titleTag = data['titleTag'];
-        final String? category = data['category'] ?? 'Uncategorized';
-
-        List<Map<String, String>> combinedPages = [];
-
-        // Access the 'pages' node
-        if (data['pages'] != null && data['pages'] is Map) {
-          Map<dynamic, dynamic> pagesData = data['pages'] as Map;
-
-          // Sort pages by their keys (page1, page2, etc.) to maintain order
-          List<String> sortedPageKeys =
-              pagesData.keys.map((key) => key.toString()).toList();
-          sortedPageKeys.sort((a, b) {
-            // Extract numbers from "pageX" and compare
-            int numA = int.tryParse(a.replaceAll('page', '')) ?? 0;
-            int numB = int.tryParse(b.replaceAll('page', '')) ?? 0;
-            return numA.compareTo(numB);
-          });
-
-          // Load images from Firebase Storage for each page
-          for (int i = 0; i < sortedPageKeys.length; i++) {
-            String pageKey = sortedPageKeys[i];
-            if (pagesData[pageKey] is Map) {
-              Map<dynamic, dynamic> pageContent = pagesData[pageKey] as Map;
-
-              // Load the image URL from Firebase Storage
-              String imageUrl = await _loadPageImage(i + 1);
-
-              combinedPages.add({
-                'textEng': pageContent['textEng'] ?? '',
-                'textTag': pageContent['textTag'] ?? '',
-                'image': imageUrl, // Use Firebase Storage URL instead of asset
-              });
-            }
-          }
-        }
-
-        // Get cover image for favorites
-        String coverImageUrl = '';
-        try {
-          coverImageUrl =
-              await _storage
-                  .ref('images/${widget.storyId}.png')
-                  .getDownloadURL();
-        } catch (e) {
-          try {
-            coverImageUrl =
-                await _storage
-                    .ref('images/${widget.storyId}.jpg')
-                    .getDownloadURL();
-          } catch (e) {
-            print('Error loading cover image: $e');
-          }
-        }
+    setState(() => isLoading = true);
 
         // Store story data for favorites and recently viewed
         storyData = {
@@ -235,24 +158,75 @@ class _StoryScreenState extends State<StoryScreen> {
           'progress': data['progress'] ?? 0.0,
         };
 
+      if (snap.snapshot.value == null || snap.snapshot.value is! Map) {
         setState(() {
-          storyTitle =
-              _isEnglish
-                  ? (titleEng ?? 'No Title')
-                  : (titleTag ?? 'Walang Pamagat');
-          storyPages = combinedPages;
           isLoading = false;
+          errorMessage = 'Story not found';
         });
-      } else {
-        setState(() {
-          errorMessage = 'Story not found or invalid format';
-          isLoading = false;
-        });
+        return;
       }
-    } catch (error) {
+
+      final data = snap.snapshot.value as Map;
+      final titleEng = data['titleEng'] ?? '';
+      final titleTag = data['titleTag'] ?? '';
+
+      final List<Map<String, dynamic>> pages = [];
+
+      if (data['pages'] is Map) {
+        final pageMap = data['pages'] as Map;
+
+        final keys = pageMap.keys.map((e) => e.toString()).toList();
+        keys.sort((a, b) {
+          final ai = int.tryParse(a.replaceAll(RegExp(r'\D'), '')) ?? 0;
+          final bi = int.tryParse(b.replaceAll(RegExp(r'\D'), '')) ?? 0;
+          return ai.compareTo(bi);
+        });
+
+        for (int i = 0; i < keys.length; i++) {
+          final pageObj = pageMap[keys[i]];
+          if (pageObj is Map) {
+            final imageUrl = await _loadPageImage(i + 1);
+
+            List<Map<String, String>>? segments;
+            final rawSeg = pageObj['segments'];
+            if (rawSeg is List) {
+              try {
+                segments =
+                    rawSeg
+                        .where((e) => e != null)
+                        .map<Map<String, String>>(
+                          (e) => Map<String, String>.from(e as Map),
+                        )
+                        .toList();
+              } catch (_) {}
+            }
+
+            pages.add({
+              'textEng': pageObj['textEng'] ?? '',
+              'textTag': pageObj['textTag'] ?? '',
+              'image': imageUrl,
+              'segments': segments,
+            });
+          }
+        }
+      }
+
+      storyData = {
+        'titleEng': titleEng,
+        'titleTag': titleTag,
+        'category': data['category'] ?? '',
+        'image': '',
+      };
+
       setState(() {
-        errorMessage = 'Error loading story: $error';
+        storyTitle = _isEnglish ? titleEng : titleTag;
+        storyPages = pages;
         isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Error loading story: $e';
       });
     }
   }
@@ -358,6 +332,7 @@ class _StoryScreenState extends State<StoryScreen> {
       final quizRoot = FirebaseDatabase.instance.ref(
         "stories/${widget.storyId}/quiz",
       );
+      final quizSnap = await quizRoot.get();
 
       // 🔥 Step 1: detect any quiz folder name
       final quizNodeSnap = await quizRoot.get();
@@ -374,14 +349,10 @@ class _StoryScreenState extends State<StoryScreen> {
         return;
       }
 
-      // first child under "quiz" → your quiz folder name
-      final firstQuizKey = (quizNodeSnap.value as Map).keys.first;
+      final firstKey = (quizSnap.value as Map).keys.first;
+      final qsSnap = await quizRoot.child("$firstKey/questions").get();
 
-      // 🔥 Step 2: load questions
-      final questionsSnap =
-          await quizRoot.child("$firstQuizKey/questions").get();
-
-      if (!questionsSnap.exists) {
+      if (qsSnap.value == null || qsSnap.value is! Map) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(
@@ -395,26 +366,17 @@ class _StoryScreenState extends State<StoryScreen> {
         return;
       }
 
-      final rawMap = questionsSnap.value as Map<dynamic, dynamic>;
-
-      // 🔥 Step 3: Convert Firebase question maps → QuestionModel objects
-      List<QuestionModel> allQuestions =
-          rawMap.entries.map((entry) {
-            // Ensure the entry value is converted to a Map<String, dynamic>
-            final Map<String, dynamic> dataMap = Map<String, dynamic>.from(
-              entry.value as Map,
-            );
-            // Inject the question id into the map so the model can access it if needed
-            dataMap['id'] = entry.key.toString();
-            // QuestionModel.fromMap expects a Map, so pass the prepared map
-            return QuestionModel.fromMap(dataMap);
+      final rawMap = qsSnap.value as Map;
+      final allQuestions =
+          rawMap.entries.map((e) {
+            final m = Map<String, dynamic>.from(e.value);
+            m['id'] = e.key;
+            return QuestionModel.fromMap(m);
           }).toList();
 
-      // 🔥 Shuffle and pick 10 (or fewer if story has less)
       allQuestions.shuffle();
-      final selectedQuestions = allQuestions.take(10).toList();
+      final selected = allQuestions.take(10).toList();
 
-      // 🔥 Step 4: Navigate to QuizQa
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -422,7 +384,8 @@ class _StoryScreenState extends State<StoryScreen> {
               (_) => QuizQa(
                 storyId: widget.storyId,
                 storyTitle: storyTitle,
-                questions: selectedQuestions,
+                questions: selected,
+                languagePref: _isEnglish ? 'en' : 'fil',
               ),
         ),
       );
@@ -441,67 +404,45 @@ class _StoryScreenState extends State<StoryScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final localization = Provider.of<LocalizationProvider>(
-      context,
-      listen: false,
-    );
-    // Get the favorites provider
-    final favoritesProvider = Provider.of<FavoritesProvider>(context);
-    final bool isFavorite = favoritesProvider.isFavorite(widget.storyId);
+  // --------------------------
+  // SETTINGS SHEET (with download button)
+  // --------------------------
+  void _openSettingsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModal) {
+            String localEn = _voiceEn;
+            String localTag = _voiceTag;
+            double localRate = _speakingRate;
+            double localPitch = _pitch;
 
-    return Scaffold(
-      backgroundColor: _backgroundColor,
-      body: Container(
-        child: SafeArea(
-          child:
-              isLoading
-                  ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: _primaryColor),
-                        const SizedBox(height: 20),
-                        Text(
-                          localization.translate('loadingStory'),
-                          style: GoogleFonts.fredoka(
-                            fontSize: 18,
-                            color: _primaryColor,
-                          ),
+            return Padding(
+              padding: MediaQuery.of(ctx).viewInsets,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Wrap(
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 60,
+                        height: 6,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(6),
                         ),
-                      ],
+                      ),
                     ),
-                  )
-                  : errorMessage.isNotEmpty
-                  ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: _primaryColor,
-                          size: 60,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          localization.translate('oopsError'),
-                          style: GoogleFonts.fredoka(
-                            fontSize: 18,
-                            color: Colors.red,
-                          ),
-                        ),
-                        if (errorMessage.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            errorMessage,
-                            style: GoogleFonts.fredoka(
-                              fontSize: 14,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                        ],
-                      ],
+
+                    Text(
+                      "Narration Settings",
+                      style: GoogleFonts.fredoka(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   )
                   : Column(
@@ -622,177 +563,20 @@ class _StoryScreenState extends State<StoryScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Story Title with shadow effect
-                      FadeInDown(
-                        delay: const Duration(milliseconds: 200),
-                        duration: const Duration(milliseconds: 500),
-                        child: Center(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _primaryColor.withValues(alpha: 0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                // Text shadow effect
-                                Flexible(
-                                  child: Text(
-                                    storyTitle,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 3,
-                                    overflow: TextOverflow.visible,
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      foreground:
-                                          Paint()
-                                            ..style = PaintingStyle.stroke
-                                            ..strokeWidth = 4
-                                            ..color = Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                // Main text
-                                Flexible(
-                                  child: Text(
-                                    storyTitle,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 3,
-                                    overflow: TextOverflow.visible,
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: _primaryColor,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _startOfflineDownload();
+                      },
+                    ),
 
-                      // Action buttons row
-                      FadeInDown(
-                        delay: Duration(milliseconds: 300),
-                        duration: Duration(milliseconds: 500),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              // Favorite button
-                              GestureDetector(
-                                onTap: () {
-                                  favoritesProvider
-                                      .toggleFavorite(widget.storyId, {
-                                        'id': widget.storyId,
-                                        'title': storyTitle,
-                                        'category': storyData['category'],
-                                        'image': storyData['image'],
-                                        'progress': 0.5,
-                                      });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        blurRadius: 8,
-                                        offset: Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        isFavorite
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: Colors.red,
-                                        size: 22,
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        isFavorite
-                                            ? localization.translate(
-                                              'favorited',
-                                            )
-                                            : localization.translate(
-                                              'favorite',
-                                            ),
-                                        style: GoogleFonts.fredoka(
-                                          fontSize: 14,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(width: 12),
-                              // Quiz button
-                              GestureDetector(
-                                onTap: _openQuiz,
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.grey.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.quiz,
-                                        color: _accentColor,
-                                        size: 22,
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        localization.translate('quiz'),
-                                        style: GoogleFonts.fredoka(
-                                          fontSize: 14,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    const SizedBox(height: 8),
 
                       // Page flip book container
                       Expanded(
@@ -918,116 +702,125 @@ class _StoryScreenState extends State<StoryScreen> {
                           ),
                         ),
                       ),
-
-                      // Narration Player
-                      Consumer<LocalizationProvider>(
-                        builder:
-                            (context, localization, _) => NarrationPlayer(
-                              storyId: widget.storyId,
-                              currentPage:
-                                  _currentPageIndex +
-                                  1, // Convert 0-indexed to 1-indexed
-                              language: _isEnglish ? 'en' : 'fil',
-                              totalPages: storyPages.length,
-                              primaryColor: _primaryColor,
-                              accentColor: _accentColor,
-                              onPositionChanged: (position, duration) {
-                                setState(() {
-                                  _narrationPosition = position;
-                                  _narrationDuration = duration;
-                                });
-                              },
-                            ),
-                      ),
-
-                      // Page flip instructions
-                      FadeInUp(
-                        delay: const Duration(milliseconds: 500),
-                        duration: const Duration(milliseconds: 500),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.swipe_left,
-                                    color: _accentColor,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    localization.translate('swipeToTurnPage'),
-                                    style: GoogleFonts.fredoka(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.swipe_right,
-                                    color: _accentColor,
-                                    size: 20,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-        ),
-      ),
+                      child: Text("Close", style: GoogleFonts.fredoka()),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
-}
 
-class StoryPage extends StatefulWidget {
-  final String pageContent;
-  final String imageUrl;
-  final int pageNumber;
-  final int totalPages;
-  final Color primaryColor;
-  final Function(int)? onPageViewed;
-  final double narrationPosition;
-  final double narrationDuration;
+  // ========================= PART 2 (CONTINUATION) =========================
 
-  const StoryPage({
-    super.key,
-    required this.pageContent,
-    required this.imageUrl,
-    required this.pageNumber,
-    required this.totalPages,
-    required this.primaryColor,
-    this.onPageViewed,
-    this.narrationPosition = 0,
-    this.narrationDuration = 0,
-  });
+  // --------------------------
+  // START FULL-SCREEN DOWNLOAD MODAL
+  // --------------------------
+  void _startOfflineDownload() {
+    final audio = Provider.of<AudioProvider>(context, listen: false);
 
-  @override
-  State<StoryPage> createState() => _StoryPageState();
-}
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        // Begin download after dialog loads
+        Future.microtask(() {
+          audio.preloadStoryNarration(
+            fullPages: storyPages,
+            isEnglish: _isEnglish,
+            voiceEn: _voiceEn,
+            voiceTag: _voiceTag,
+            speakingRate: _speakingRate,
+            pitch: _pitch,
+          );
+        });
 
-class _StoryPageState extends State<StoryPage> {
-  @override
-  void initState() {
-    super.initState();
-    // Notify parent that this page is now visible
-    Future.microtask(() {
-      widget.onPageViewed?.call(widget.pageNumber);
-    });
+        return StatefulBuilder(
+          builder: (ctx, setStateDialog) {
+            return Consumer<AudioProvider>(
+              builder: (context, audio, _) {
+                // Auto-close when done
+                if (!audio.isSynthesizing && audio.synthProgress == 1.0) {
+                  Future.delayed(const Duration(milliseconds: 400), () {
+                    if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Narration Downloaded!")),
+                    );
+                  });
+                }
+
+                return WillPopScope(
+                  onWillPop: () async => false,
+                  child: Material(
+                    color: Colors.black.withOpacity(0.75),
+                    child: Center(
+                      child: Container(
+                        width: 320,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Downloading Narration...",
+                              style: GoogleFonts.fredoka(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            LinearProgressIndicator(
+                              value: audio.synthProgress,
+                              backgroundColor: Colors.grey.shade300,
+                              color: _primaryColor,
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 160,
+                              child: ListView.builder(
+                                itemCount: audio.synthLog.length,
+                                itemBuilder: (ctx, i) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 2,
+                                    ),
+                                    child: Text(
+                                      audio.synthLog[i],
+                                      style: GoogleFonts.fredoka(fontSize: 14),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
+
+  // --------------------------
+  // LANGUAGE TOGGLE
+  // --------------------------
+  void _toggleLanguage() {
+    setState(() {
+      _isEnglish = !_isEnglish;
+      storyTitle = _isEnglish ? storyData['titleEng'] : storyData['titleTag'];
+      _currentPageIndex = 0;
+    });
 
   @override
   void didUpdateWidget(StoryPage oldWidget) {
@@ -1040,109 +833,128 @@ class _StoryPageState extends State<StoryPage> {
     }
   }
 
-  /// Builds Text with karaoke-style highlighting based on narration position
-  Widget _buildHighlightedText({
-    required bool isLongText,
-    required Color primaryColor,
-  }) {
-    // Calculate highlighting progress (0.0 to 1.0)
-    double progress =
-        widget.narrationDuration > 0
-            ? (widget.narrationPosition / widget.narrationDuration).clamp(0, 1)
-            : 0;
+    if (storyPages.isNotEmpty) {
+      final page = storyPages[0];
+      final text = _isEnglish ? page['textEng'] : page['textTag'];
+      final languageCode = _isEnglish ? 'en-US' : 'fil-PH';
+      final voice = _isEnglish ? _voiceEn : _voiceTag;
 
-    // Get the character index to highlight up to
-    int highlightIndex = TextSyncService.getHighlightCharIndex(
-      widget.pageContent,
-      progress,
-    );
+      List<Map<String, String>>? segments;
+      final rawSeg = page['segments'];
+      if (rawSeg is List) {
+        try {
+          segments =
+              rawSeg
+                  .where((e) => e != null)
+                  .map<Map<String, String>>(
+                    (e) => Map<String, String>.from(e as Map),
+                  )
+                  .toList();
+        } catch (_) {}
+      }
 
-    final textStyle = GoogleFonts.fredoka(
-      fontSize: isLongText ? 15 : 17,
-      fontWeight: FontWeight.w500,
-      height: 1.5,
-      letterSpacing: 0.3,
-      wordSpacing: 2,
-    );
-
-    // Split text into highlighted and remaining portions
-    final highlightedPortion = widget.pageContent.substring(0, highlightIndex);
-    final remainingPortion = widget.pageContent.substring(highlightIndex);
-
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      child: Text.rich(
-        TextSpan(
-          children: [
-            // Highlighted portion (primary color)
-            if (highlightedPortion.isNotEmpty)
-              TextSpan(
-                text: highlightedPortion,
-                style: textStyle.copyWith(
-                  color: primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            // Remaining portion (grey/black)
-            if (remainingPortion.isNotEmpty)
-              TextSpan(
-                text: remainingPortion,
-                style: textStyle.copyWith(color: Colors.black87),
-              ),
-          ],
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
+      audio.loadPageFromTts(
+        pageText: text,
+        languageCode: languageCode,
+        voiceName: voice,
+        speakingRate: _speakingRate,
+        pitch: _pitch,
+        ssmlSegments: segments,
+      );
+    }
   }
 
+  // --------------------------
+  // BUILD METHOD
+  // --------------------------
   @override
   Widget build(BuildContext context) {
     final localization = Provider.of<LocalizationProvider>(
       context,
       listen: false,
     );
-    // Calculate if text is long
-    final bool isLongText = widget.pageContent.length > 120;
+    final favorites = Provider.of<FavoritesProvider>(context);
+    final isFavorite = favorites.isFavorite(widget.storyId);
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(23),
-        color: Colors.white,
+    return ChangeNotifierProvider(
+      create: (_) => AudioProvider(),
+      child: Scaffold(
+        backgroundColor: _backgroundColor,
+        body: SafeArea(
+          child:
+              isLoading
+                  ? Center(
+                    child: CircularProgressIndicator(color: _primaryColor),
+                  )
+                  : errorMessage.isNotEmpty
+                  ? Center(
+                    child: Text(
+                      errorMessage,
+                      style: GoogleFonts.fredoka(fontSize: 16),
+                    ),
+                  )
+                  : _buildContent(localization, favorites, isFavorite),
+        ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(23),
-        child: Column(
-          children: [
-            // Image section - adaptive height (BIGGER with tap-to-expand)
-            Expanded(
-              flex: isLongText ? 52 : 62,
-              child: Stack(
-                children: [
-                  // Main image - tap to expand
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => FullscreenImageViewer(
-                                imageUrl: widget.imageUrl,
-                                heroTag: 'story-image-${widget.pageNumber}',
-                              ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+    );
+  }
+
+  // --------------------------
+  // MAIN CONTENT UI
+  // --------------------------
+  Widget _buildContent(
+    LocalizationProvider localization,
+    FavoritesProvider favoritesProvider,
+    bool isFavorite,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildTopBar(),
+        const SizedBox(height: 12),
+
+        // Story Title
+        Center(
+          child: Text(
+            storyTitle,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.fredoka(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: _primaryColor,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Favorite + Quiz
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Favorite
+              GestureDetector(
+                onTap: () {
+                  favoritesProvider.toggleFavorite(widget.storyId, {
+                    'id': widget.storyId,
+                    'title': storyTitle,
+                    'category': storyData['category'],
+                    'image': storyData['image'],
+                    'progress': 0.0,
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.22),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                       child:
                           widget.imageUrl.isNotEmpty
@@ -1198,183 +1010,250 @@ class _StoryPageState extends State<StoryPage> {
                               ),
                     ),
                   ),
-
-                  // Tap to expand hint - shown at bottom right
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                  child: Row(
+                    children: [
+                      Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: Colors.red,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(20),
+                      const SizedBox(width: 6),
+                      Text(
+                        isFavorite
+                            ? localization.translate('favorited')
+                            : localization.translate('favorite'),
+                        style: GoogleFonts.fredoka(),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.fullscreen, color: Colors.white, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Tap to expand',
-                            style: GoogleFonts.fredoka(
-                              fontSize: 10,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
+                ),
+              ),
 
-                  // Page number - top right corner on image
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+              const SizedBox(width: 12),
+
+              // Quiz Button
+              GestureDetector(
+                onTap: _openQuiz,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.22),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
-                      decoration: BoxDecoration(
-                        color: widget.primaryColor,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        '${widget.pageNumber}/${widget.totalPages}',
-                        style: GoogleFonts.fredoka(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.quiz, color: _accentColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        localization.translate('quiz'),
+                        style: GoogleFonts.fredoka(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Flipbook
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: StoryFlipbookContainer(
+              // Convert dynamic pages → String-only maps for Flipbook
+              storyPages:
+                  storyPages.map((page) {
+                    return {
+                      'textEng': page['textEng'] ?? '',
+                      'textTag': page['textTag'] ?? '',
+                      'image': page['image'] ?? '',
+                    };
+                  }).toList(),
+
+              isEnglish: _isEnglish,
+              primaryColor: _primaryColor,
+              accentColor: _accentColor,
+              buttonColor: _buttonColor,
+              lastPage: _buildLastPage(localization),
+
+              onPageViewed: (pageNum) {
+                setState(() => _currentPageIndex = pageNum - 1);
+                _saveBookmark(pageNum);
+              },
+            ),
+          ),
+        ),
+
+        // Swipe hint
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.75),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.swipe_left, color: _accentColor),
+                  const SizedBox(width: 8),
+                  Text(
+                    localization.translate('swipeToTurnPage'),
+                    style: GoogleFonts.fredoka(),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.swipe_right, color: _accentColor),
                 ],
               ),
             ),
-
-            // Thin decorative separator
-            Container(
-              height: 3,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    widget.primaryColor.withValues(alpha: 0.3),
-                    widget.primaryColor,
-                    widget.primaryColor.withValues(alpha: 0.3),
-                  ],
-                ),
-              ),
-            ),
-
-            // Text section - compact and scrollable
-            Expanded(
-              flex: isLongText ? 52 : 45,
-              child: Container(
-                width: double.infinity,
-                color: Colors.white,
-                child: Stack(
-                  children: [
-                    // Decorative corner patterns
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: CustomPaint(
-                        size: const Size(40, 40),
-                        painter: CornerDecoration(widget.primaryColor),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Transform.flip(
-                        flipX: true,
-                        child: CustomPaint(
-                          size: const Size(40, 40),
-                          painter: CornerDecoration(widget.primaryColor),
-                        ),
-                      ),
-                    ),
-
-                    // Scrollable text with proper padding
-                    Positioned.fill(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Subtle scroll indicator at top
-                              if (isLongText)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 6),
-                                  width: 40,
-                                  height: 3,
-                                  decoration: BoxDecoration(
-                                    color: widget.primaryColor.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-
-                              // Text with karaoke-style highlighting as audio plays
-                              _buildHighlightedText(
-                                isLongText: isLongText,
-                                primaryColor: widget.primaryColor,
-                              ),
-
-                              // Bottom padding for scroll space
-                              if (isLongText) const SizedBox(height: 8),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
+      ],
+    );
+  }
+
+  // --------------------------
+  // TOP BAR
+  // --------------------------
+  Widget _buildTopBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFD93D),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            onTap: () => Navigator.pop(context),
+            borderRadius: BorderRadius.circular(30),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: _primaryColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            "Back Stories",
+            style: GoogleFonts.fredoka(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: _primaryColor,
+            ),
+          ),
+          const Spacer(),
+          InkWell(
+            onTap: _toggleLanguage,
+            borderRadius: BorderRadius.circular(30),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Icon(
+                _isEnglish ? Icons.translate : Icons.g_translate,
+                color: _primaryColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: _openSettingsSheet,
+            borderRadius: BorderRadius.circular(30),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Icon(Icons.settings, color: _primaryColor),
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
-// Custom painter for decorative corners
-class CornerDecoration extends CustomPainter {
-  final Color color;
+  // --------------------------
+  // LAST PAGE: STORY COMPLETE
+  // --------------------------
+  Widget _buildLastPage(LocalizationProvider localization) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(
+            'assets/story_complete.png',
+            height: 120,
+            errorBuilder:
+                (_, __, ___) =>
+                    Icon(Icons.check_circle, size: 100, color: _accentColor),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            localization.translate('storyComplete'),
+            style: GoogleFonts.fredoka(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: _primaryColor,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _openQuiz,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _buttonColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              localization.translate('startQuiz'),
+              style: GoogleFonts.fredoka(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  CornerDecoration(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = color.withValues(alpha: 0.1)
-          ..style = PaintingStyle.fill;
-
-    final path =
-        Path()
-          ..moveTo(0, 0)
-          ..lineTo(size.width, 0)
-          ..quadraticBezierTo(0, 0, 0, size.height)
-          ..close();
-
-    canvas.drawPath(path, paint);
+  // --------------------------
+  // BOOKMARK SAVE
+  // --------------------------
+  Future<void> _saveBookmark(int pageNum) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt("bookmark_${widget.storyId}", pageNum);
+    } catch (_) {}
   }
 
   @override

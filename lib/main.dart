@@ -3,6 +3,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:testapp/core/firebase/firebase_options.dart';
 import 'package:provider/provider.dart';
+
+import 'package:testapp/features/narration/provider/audio_provider.dart';
+
 // 🧠 Providers (state management)
 import 'package:testapp/providers/recently_viewed_provider.dart';
 import 'package:testapp/providers/localization_provider.dart';
@@ -31,6 +34,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AudioProvider()),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
         ChangeNotifierProvider(create: (_) => RecentlyViewedProvider()),
         ChangeNotifierProvider(create: (_) => LocalizationProvider()),
@@ -51,10 +55,7 @@ class MyApp extends StatelessWidget {
           title: 'KwentoPinoy',
           debugShowCheckedModeBanner: false,
           locale: localizationProvider.locale,
-          supportedLocales: const [
-            Locale('en'),
-            Locale('fil'),
-          ],
+          supportedLocales: const [Locale('en'), Locale('fil')],
           localizationsDelegates: [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,

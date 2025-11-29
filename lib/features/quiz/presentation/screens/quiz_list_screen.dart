@@ -5,9 +5,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:testapp/core/services/voice_service.dart';
+import 'package:testapp/core/services/voice_search_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:testapp/features/quiz/data/models/question_model.dart';
 import 'package:testapp/features/stories/presentation/widgets/story_card.dart';
@@ -228,10 +227,10 @@ class _QuizListScreenState extends State<QuizListScreen> {
                     ),
                     onPressed: () async {
                       if (voice.isListening) {
-                        await voice.stopListening();
+                        await voice.stop();
                         setState(() {});
                       } else {
-                        await voice.startListening((text) {
+                        await voice.start((text) {
                           setState(() {
                             searchController.text = text;
                             searchQuery = text;
@@ -377,7 +376,13 @@ class _QuizListScreenState extends State<QuizListScreen> {
 
             // 🔥 Step 3: convert map to QuestionModel list
             List<QuestionModel> allQuestions =
-                raw.values.map((q) => QuestionModel.fromMap(q)).toList();
+                raw.values
+                    .map(
+                      (value) => QuestionModel.fromMap(
+                        Map<String, dynamic>.from(value),
+                      ),
+                    )
+                    .toList();
 
             allQuestions.shuffle();
 
@@ -392,6 +397,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                       storyId: story['id'],
                       storyTitle: story['title'],
                       questions: selectedQuestions,
+                      languagePref: "en", // ✔ REQUIRED
                     ),
               ),
             );

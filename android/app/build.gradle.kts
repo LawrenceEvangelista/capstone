@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.example.testapp"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -27,11 +27,10 @@ android {
         applicationId = "com.example.testapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        multiDexEnabled = true // Add this for Firebase
     }
 
     buildTypes {
@@ -45,19 +44,4 @@ android {
 
 flutter {
     source = "../.."
-}
-
-// ADD THESE DEPENDENCIES - This is what's missing!
-dependencies {
-    // Firebase BOM (Bill of Materials) - manages all Firebase versions
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
-
-    // Firebase Authentication
-    implementation("com.google.firebase:firebase-auth")
-
-    // Google Sign-In (Required for Google authentication)
-    implementation("com.google.android.gms:play-services-auth:20.7.0")
-
-    // Multi-dex support (for Firebase)
-    implementation("androidx.multidex:multidex:2.0.1")
 }
