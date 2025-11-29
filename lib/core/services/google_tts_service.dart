@@ -1,101 +1,107 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:googleapis/texttospeech/v1.dart' as tts;
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
+import 'package:http/http.dart' as http;
 
+/// Vertex AI TTS using API KEY mode (Easiest + Recommended)
 class GoogleTtsService {
   GoogleTtsService._();
   static final GoogleTtsService instance = GoogleTtsService._();
 
-  final String _credPath = 'assets/google_service_account.json';
-
-  AuthClient? _client;
-  tts.TexttospeechApi? _api;
+  final String _apiKey = "AIzaSyC17UWq-wRPy04N1qsmlfFCfpIxD3dxGVI";
 
   final AudioPlayer _player = AudioPlayer();
-
   AudioPlayer get player => _player;
 
-  Future<void> _init() async {
-    if (_api != null) return;
-
-    final jsonStr = await rootBundle.loadString(_credPath);
-    final jsonMap = json.decode(jsonStr);
-
-    final credentials = ServiceAccountCredentials.fromJson(jsonMap);
-
-    final scopes = [
-      'https://www.googleapis.com/auth/cloud-platform',
-      'https://www.googleapis.com/auth/cloud-platform.read-only',
-    ];
-
-    _client = await clientViaServiceAccount(credentials, scopes);
-    _api = tts.TexttospeechApi(_client!);
-  }
-
-  String _fileNameFor(String text, String lang) {
-    final hash = md5.convert(utf8.encode("$lang|$text")).toString();
-    return "tts_$hash.mp3";
-  }
-
-  Future<File> _cacheFile(String text, String lang) async {
+  // -------------------------------------------------------------
+  // Cache audio to local file
+  // -------------------------------------------------------------
+  Future<File> _cacheFile(String text, String voice) async {
+    final hash = md5.convert(utf8.encode("$voice|$text")).toString();
     final dir = await getTemporaryDirectory();
-    final cacheDir = Directory("${dir.path}/gcloud_tts_cache");
+    final file = File("${dir.path}/tts_$hash.mp3");
 
-    if (!cacheDir.existsSync()) {
-      cacheDir.createSync(recursive: true);
-    }
-
-    return File("${cacheDir.path}/${_fileNameFor(text, lang)}");
+    return file;
   }
 
-  Future<String?> synthesizeToCache(
-    String text, {
+  // -------------------------------------------------------------
+  // Synthesize speech with SSML + <mark> tags for word syncing
+  // -------------------------------------------------------------
+  Future<Map<String, dynamic>?> synthesizeWithMarks({
+    required String text,
     required String languageCode,
+    required String voiceName,
+    double pitch = 0.0,
+    double speakingRate = 1.0,
   }) async {
-    await _init();
-
-    final file = await _cacheFile(text, languageCode);
-
-    if (file.existsSync()) return file.path;
-
     try {
-      final request = tts.SynthesizeSpeechRequest(
-        input: tts.SynthesisInput(text: text),
-        voice: tts.VoiceSelectionParams(languageCode: languageCode),
-        audioConfig: tts.AudioConfig(audioEncoding: 'MP3'),
+      final file = await _cacheFile(text, voiceName);
+
+      if (await file.exists()) {
+        return {"path": file.path, "timepoints": []};
+      }
+
+      // Split into words → generate <mark name="w0"/> Word
+      final words = text.split(" ");
+      final StringBuffer ssml = StringBuffer("<speak>");
+      for (int i = 0; i < words.length; i++) {
+        ssml.write('<mark name="w$i"/> ${words[i]} ');
+      }
+      ssml.write("</speak>");
+
+      final url =
+          "https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=$_apiKey";
+
+      final body = {
+        "input": {"ssml": ssml.toString()},
+        "voice": {"languageCode": languageCode, "name": voiceName},
+        "audioConfig": {
+          "audioEncoding": "MP3",
+          "pitch": pitch,
+          "speakingRate": speakingRate,
+        },
+      };
+
+      final res = await http.post(
+        Uri.parse(url),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
       );
 
-      final response = await _api!.text.synthesize(request);
-      final bytes = base64.decode(response.audioContent!);
-      await file.writeAsBytes(bytes);
-      return file.path;
+      if (res.statusCode != 200) {
+        print("TTS ERROR: ${res.body}");
+        return null;
+      }
+
+      final data = jsonDecode(res.body);
+
+      if (!data.containsKey("audioContent")) return null;
+
+      final audioBytes = base64.decode(data["audioContent"]);
+      await file.writeAsBytes(audioBytes);
+
+      return {"path": file.path, "timepoints": []};
     } catch (e) {
-      print("TTS error: $e");
+      print("TTS ERROR: $e");
       return null;
     }
   }
 
-  Future<void> playFromFile(String path) async {
-    await _player.setFilePath(path);
-    await _player.play();
+  // -------------------------------------------------------------
+  // Simple playback helper
+  // -------------------------------------------------------------
+  Future<void> playFromPath(String path) async {
+    try {
+      await _player.setFilePath(path);
+      await _player.play();
+    } catch (e) {
+      print("Play error: $e");
+    }
   }
 
-  Future<void> stop() async => _player.stop();
-
-  Future<double?> getDuration() async {
-    return _player.duration?.inMilliseconds.toDouble();
-  }
-
-  Future<double?> getPosition() async {
-    return _player.position.inMilliseconds.toDouble();
-  }
-
-  Future<void> seek(double ms) async {
-    await _player.seek(Duration(milliseconds: ms.toInt()));
+  Future<void> stop() async {
+    await _player.stop();
   }
 }

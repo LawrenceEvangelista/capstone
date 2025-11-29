@@ -1,93 +1,65 @@
+import 'dart:math';
+
 class QuestionModel {
-  final String questionEng;
-  final String questionTag;
-  final List<String> optionsEng;
-  final List<String> optionsTag;
-  final int correctAnswer;
-  final String explanationEng;
-  final String explanationTag;
-
-  QuestionModel({
-    required this.questionEng,
-    required this.questionTag,
-    required this.optionsEng,
-    required this.optionsTag,
-    required this.correctAnswer,
-    required this.explanationEng,
-    required this.explanationTag,
-  });
-
-  factory QuestionModel.fromMap(Map<dynamic, dynamic> map) {
-    return QuestionModel(
-      questionEng: map['questionEng'] ?? '',
-      questionTag: map['questionTag'] ?? '',
-      optionsEng:
-          (map['optionsEng'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      optionsTag:
-          (map['optionsTag'] as List?)?.map((e) => e.toString()).toList() ?? [],
-      correctAnswer: map['correctAnswer'] ?? 0,
-      explanationEng: map['explanationEng'] ?? '',
-      explanationTag: map['explanationTag'] ?? '',
-    );
-  }
-
-  get shuffledCorrectIndex => null;
-
-  get shuffledOptionsEng => null;
-
-  void operator [](String other) {}
-}
-
-/**class QuestionModel {
   final String id;
-  final String questionEng;
-  final String? questionTag;
-  final List<String> optionsEng;
-  final List<String>? optionsTag;
-  final int? correctAnswer;
-  final int? shuffledCorrectIndex;
-  final List<String>? shuffledOptionsEng;
-  final List<String>? shuffledOptionsTag;
-  final String? type; // 'text', 'image', 'audio'
-  final String? imageUrl;
-  final String? audioUrl;
+  final String difficulty;
+  final String question;
+  final List<String> choices; // original order
+  final String answer;
+
+  // Optional assets
+  final String? image;
+  final String? audio;
+
+  // Runtime shuffle fields
+  late final List<String> shuffledChoices;
+  late final int shuffledCorrectIndex;
 
   QuestionModel({
     required this.id,
-    required this.questionEng,
-    this.questionTag,
-    required this.optionsEng,
-    this.optionsTag,
-    this.correctAnswer,
-    this.shuffledCorrectIndex,
-    this.shuffledOptionsEng,
-    this.shuffledOptionsTag,
-    this.type,
-    this.imageUrl,
-    this.audioUrl,
-  });
+    required this.difficulty,
+    required this.question,
+    required this.choices,
+    required this.answer,
+    this.image,
+    this.audio,
+  }) {
+    _shuffleChoices();
+  }
 
-  factory QuestionModel.fromMap(Map<String, dynamic> data, String id) {
+  /// Shuffle choices and compute correct index
+  void _shuffleChoices() {
+    shuffledChoices = List<String>.from(choices);
+    shuffledChoices.shuffle(Random());
+
+    shuffledCorrectIndex = shuffledChoices.indexOf(answer);
+  }
+
+  /// Firebase JSON loader (Story Quiz Screen)
+  factory QuestionModel.fromJson(Map<String, dynamic> json) {
     return QuestionModel(
-      id: id,
-      questionEng: data['questionEng'] ?? '',
-      questionTag: data['questionTag'],
-      optionsEng: List<String>.from(data['optionsEng'] ?? []),
-      optionsTag: data['optionsTag'] != null
-          ? List<String>.from(data['optionsTag'])
-          : null,
-      correctAnswer: data['correctAnswer'],
-      shuffledCorrectIndex: data['shuffledCorrectIndex'],
-      shuffledOptionsEng: data['shuffledOptionsEng'] != null
-          ? List<String>.from(data['shuffledOptionsEng'])
-          : null,
-      shuffledOptionsTag: data['shuffledOptionsTag'] != null
-          ? List<String>.from(data['shuffledOptionsTag'])
-          : null,
-      type: data['type'],
-      imageUrl: data['imageUrl'],
-      audioUrl: data['audioUrl'],
+      id: json['id']?.toString() ?? '',
+      difficulty: json['difficulty']?.toString() ?? '',
+      question: json['question']?.toString() ?? '',
+      choices:
+          (json['choices'] as List<dynamic>).map((e) => e.toString()).toList(),
+      answer: json['answer']?.toString() ?? '',
+      image: json['image']?.toString(),
+      audio: json['audio']?.toString(),
+    );
+  }
+
+  /// Firebase loader (QuizList Screen)
+  factory QuestionModel.fromMap(Map<dynamic, dynamic> map) {
+    return QuestionModel(
+      id: map['id']?.toString() ?? '',
+      difficulty: map['difficulty']?.toString() ?? '',
+      question: map['question']?.toString() ?? '',
+      choices:
+          (map['choices'] as List<dynamic>).map((e) => e.toString()).toList(),
+      answer: map['answer']?.toString() ?? '',
+      image: map['image']?.toString(),
+      audio: map['audio']?.toString(),
     );
   }
 }
-**/

@@ -9,12 +9,14 @@ class QuizQa extends StatefulWidget {
   final String storyId;
   final String storyTitle;
   final List<QuestionModel> questions;
+  final String languagePref;
 
   const QuizQa({
     super.key,
     required this.storyId,
     required this.storyTitle,
     required this.questions,
+    required this.languagePref,
   });
 
   @override
@@ -38,10 +40,9 @@ class _QuizQaState extends State<QuizQa> {
   void _submitAnswer(int selectedIndex) {
     setState(() {
       _selected[_current] = selectedIndex;
-      final q = widget.questions[_current];
 
-      // prefer shuffledCorrectIndex if provided
-      final int correctIndex = q.shuffledCorrectIndex ?? q.correctAnswer ?? 0;
+      final q = widget.questions[_current];
+      final int correctIndex = q.shuffledCorrectIndex;
 
       if (selectedIndex == correctIndex) {
         _score++;
@@ -113,8 +114,8 @@ class _QuizQaState extends State<QuizQa> {
   }
 
   Widget _buildQuestionCard(QuestionModel q, int index) {
-    final String questionText = q.questionEng ?? q.questionTag ?? '';
-    final List<String> options = q.shuffledOptionsEng ?? q.optionsEng ?? [];
+    final String questionText = q.question;
+    final List<String> options = q.shuffledChoices;
     final int selected = _selected[index];
 
     return Column(
@@ -127,8 +128,10 @@ class _QuizQaState extends State<QuizQa> {
         const SizedBox(height: 8),
         Text(questionText, style: GoogleFonts.fredoka(fontSize: 16)),
         const SizedBox(height: 12),
+
         ...List.generate(options.length, (i) {
           final bool isSelected = selected == i;
+
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.0),
             child: InkWell(

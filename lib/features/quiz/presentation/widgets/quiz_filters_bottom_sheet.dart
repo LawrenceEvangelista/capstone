@@ -110,7 +110,7 @@ class _ContentState extends State<_Content> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: categoryValue,
+          initialValue: categoryValue,
           decoration: const InputDecoration(
             isDense: true,
             enabledBorder: UnderlineInputBorder(
@@ -145,7 +145,7 @@ class _ContentState extends State<_Content> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: statusValue,
+          initialValue: statusValue,
           decoration: const InputDecoration(
             isDense: true,
             enabledBorder: UnderlineInputBorder(
