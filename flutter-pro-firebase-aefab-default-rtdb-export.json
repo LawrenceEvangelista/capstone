@@ -1,0 +1,1322 @@
+{
+  "stories": {
+    "story1": {
+      "descEng": "This legend tells the story of Old Kadyong, a selfish man who was turned into an owl as punishment for his greed.",
+      "descTag": "Ang alamat na ito ay tungkol kay Tandang Kadyong, isang matandang maramot na kalaunan ay naging kuwago bilang parusa sa kanyang pagiging madamot.",
+      "pages": {
+        "page1": {
+          "textEng": "Old Man Kadyong, the king of selfishness, lived alone in a yard full of plants. His tree was often full of fruits, but no one could ask for any because he was extremely stingy.",
+          "textTag": "Si Tandang Kadyong, hari ng karamutan, ay nag-iisang naninirahan sa gitna ng bakurang puno ng halaman. Madalas ay hitik ng bunga ang kanyang puno ngunit walang maaaring humingi dito dahil ubod ng damot ang matanda."
+        },
+        "page10": {
+          "textEng": "The bird had big eyes, as if it were guarding something. \"What bird is that?\" the children asked.",
+          "textTag": "Malaki ang mga mata ng ibon, parang nagbabantay. \"Anong ibon iyon?\" tanong ng mga bata."
+        },
+        "page11": {
+          "textEng": "\"It looks like Old Man Kadyong,\" one answered. Kadyong had turned into an owl.",
+          "textTag": "\"Kamukha ni Tandang Kadyo,\" sagot ng isa. Naging kuwago nga si Kadyo."
+        },
+        "page12": {
+          "textEng": "To this day, he still guards the fruits he once refused to share. And that is the legend of the Owl.",
+          "textTag": "Hanggang ngayon, binabantayan pa rin niya ang mga bungang ipinagdamot niya. At iyan ang alamat ng Kuwago."
+        },
+        "page2": {
+          "textEng": "\"The fruits here are for sale, not for free,\" he would always say. No one dared come near his tree because of how selfish he was.",
+          "textTag": "\"Ipinagbibili ang mga bunga dito, hindi ipinamimigay,\" lagi niyang sinasabi. Walang makalapit sa kanyang puno sa sobrang pagiging maramot niya."
+        },
+        "page3": {
+          "textEng": "One day, an old woman got lost in their area. She was tired and hungry from a long walk.",
+          "textTag": "Isang araw, may isang matandang babaeng naligaw sa kanilang lugar. Pagod at gutom na siya mula sa mahabang paglalakad."
+        },
+        "page4": {
+          "textEng": "She ended up in front of Old Man Kadyong’s house. \"So many guavas! Maybe I can ask for just one.\"",
+          "textTag": "Napadako siya sa tapat ng bahay ni Tandang Kadyo. \"Kay dami ng bunga ng bayabas! Baka puwede akong humingi kahit isa.\""
+        },
+        "page5": {
+          "textEng": "\"No! These aren't given away,\" shouted Old Man Kadyong. \"Tomorrow, my loyal customer will come and buy all of them.\"",
+          "textTag": "\"Hindi! Hindi ipinamimigay ito,\" sigaw ni Tandang Kadyo. \"Bukas darating ang suki ko at bibilhin lahat iyan.\""
+        },
+        "page6": {
+          "textEng": "\"Even just one, please,\" begged the old woman. \"I said no! I worked hard for those!\" Kadyong yelled.",
+          "textTag": "\"Kahit isa lang po,\" pakiusap ng matanda. \"Sinabing wala! Pinaghirapan ko iyan!\" sigaw ni Kadyo."
+        },
+        "page7": {
+          "textEng": "He turned away and went up to his house. He was never seen again after that.",
+          "textTag": "Tumalikod siya at umakyat sa kanyang bahay. Hindi na siya muling nakita mula noon."
+        },
+        "page8": {
+          "textEng": "Several days passed, but no one saw the old man. A child picked a guava—no one got angry.",
+          "textTag": "Lumipas ang ilang araw, pero walang nakakakita sa matanda. May batang pumitas ng bayabas—walang nagalit."
+        },
+        "page9": {
+          "textEng": "They opened the door of the house. Suddenly, a bird flew out.",
+          "textTag": "Binuksan nila ang pinto ng bahay. Isang ibon ang biglang lumipad palabas."
+        }
+      },
+      "quiz": {
+        "owl_legend": {
+          "questions": {
+            "question1": {
+              "correctAnswer": 0,
+              "explanationEng": "Kadyong was known for his extreme selfishness and greed",
+              "explanationTag": "Kilala si Kadyong sa kanyang labis na kasakiman at pagiging maramot",
+              "optionsEng": [
+                "Selfish and greedy",
+                "Kind and generous",
+                "Brave and strong"
+              ],
+              "optionsTag": [
+                "Maramot at sakim",
+                "Mabait at mapagbigay",
+                "Matapang at malakas"
+              ],
+              "questionEng": "What was Kadyong's main character trait?",
+              "questionTag": "Ano ang pangunahing katangian ni Kadyong?"
+            },
+            "question10": {
+              "correctAnswer": 0,
+              "explanationEng": "If he had shown kindness and generosity, he would not have been punished",
+              "explanationTag": "Kung siya ay nagpakita ng kabaitan at kagandahang-loob, hindi siya parurusahan",
+              "optionsEng": [
+                "Sharing and kindness",
+                "Hiding more food",
+                "Being stronger"
+              ],
+              "optionsTag": [
+                "Paghahati at kabaitan",
+                "Pagkukubli ng mas maraming pagkain",
+                "Pagiging mas malakas"
+              ],
+              "questionEng": "What could have saved Kadyong from his fate?",
+              "questionTag": "Ano ang maaaring nagligtas kay Kadyong sa kanyang kapalaran?"
+            },
+            "question2": {
+              "correctAnswer": 0,
+              "explanationEng": "He was transformed into an owl to forever wander at night",
+              "explanationTag": "Siya ay naging kuwago upang magpagala-gala magpakailanman sa gabi",
+              "optionsEng": [
+                "An owl",
+                "A crow",
+                "A frog"
+              ],
+              "optionsTag": [
+                "Isang kuwago",
+                "Isang uwak",
+                "Isang palaka"
+              ],
+              "questionEng": "What was Kadyong turned into as punishment?",
+              "questionTag": "Ano ang naging anyo ni Kadyong bilang parusa?"
+            },
+            "question3": {
+              "correctAnswer": 0,
+              "explanationEng": "They avoided him because he never shared anything and was always greedy",
+              "explanationTag": "Iniiwasan nila siya dahil hindi siya nagbahagi ng kahit ano at laging sakim",
+              "optionsEng": [
+                "He never shared food or help",
+                "He was too noisy",
+                "He told bad stories"
+              ],
+              "optionsTag": [
+                "Hindi siya nagbahagi ng pagkain o tulong",
+                "Masyado siyang maingay",
+                "Nagkukwento siya ng masasamang kwento"
+              ],
+              "questionEng": "Why did the neighbors avoid Kadyong?",
+              "questionTag": "Bakit iniiwasan ng kapitbahay si Kadyong?"
+            },
+            "question4": {
+              "correctAnswer": 0,
+              "explanationEng": "He refused to share even a small piece of his abundant food",
+              "explanationTag": "Ayaw niyang magbigay kahit maliit na piraso ng kanyang masaganang pagkain",
+              "optionsEng": [
+                "His food",
+                "His water",
+                "His house"
+              ],
+              "optionsTag": [
+                "Ang kanyang pagkain",
+                "Ang kanyang tubig",
+                "Ang kanyang bahay"
+              ],
+              "questionEng": "What did Kadyong refuse to share with a hungry old woman?",
+              "questionTag": "Ano ang ayaw ipamigay ni Kadyong sa isang gutom na matandang babae?"
+            },
+            "question5": {
+              "correctAnswer": 0,
+              "explanationEng": "The old woman was actually a supernatural being testing Kadyong",
+              "explanationTag": "Ang matandang babae ay isang supernatural na nilalang na sumusubok kay Kadyong",
+              "optionsEng": [
+                "A supernatural being in disguise",
+                "A neighbor pretending",
+                "A lost traveler"
+              ],
+              "optionsTag": [
+                "Isang supernatural na nilalang na nagkukunwari",
+                "Isang kapitbahay na nagkukunwari",
+                "Isang nawawalang manlalakbay"
+              ],
+              "questionEng": "What was the old woman's true identity?",
+              "questionTag": "Ano ang tunay na pagkatao ng matandang babae?"
+            },
+            "question6": {
+              "correctAnswer": 0,
+              "explanationEng": "The story teaches about the consequences of greed and selfishness",
+              "explanationTag": "Ang kwento ay nagtuturo tungkol sa mga bunga ng kasakiman at pagiging maramot",
+              "optionsEng": [
+                "Selfishness leads to punishment",
+                "We should hide our food",
+                "Old people are always kind"
+              ],
+              "optionsTag": [
+                "Ang kasakiman ay humahantong sa parusa",
+                "Dapat nating itago ang ating pagkain",
+                "Ang matatanda ay laging mabait"
+              ],
+              "questionEng": "What lesson does this legend teach?",
+              "questionTag": "Anong aral ang itinuturo ng alamat na ito?"
+            },
+            "question7": {
+              "correctAnswer": 0,
+              "explanationEng": "Owls are associated with night time, which is when Kadyong as an owl appears",
+              "explanationTag": "Ang mga kuwago ay nauugnay sa gabi, kung kailan lumalabas si Kadyong bilang kuwago",
+              "optionsEng": [
+                "At night",
+                "During daytime",
+                "In the morning"
+              ],
+              "optionsTag": [
+                "Sa gabi",
+                "Sa araw",
+                "Sa umaga"
+              ],
+              "questionEng": "When does the owl (Kadyong) usually appear according to the legend?",
+              "questionTag": "Kailan karaniwang lumalabas ang kuwago (Kadyong) ayon sa alamat?"
+            },
+            "question8": {
+              "correctAnswer": 0,
+              "explanationEng": "Owls make hooting sounds, which is what Kadyong does in his transformed state",
+              "explanationTag": "Ang mga kuwago ay gumagawa ng huni, na siyang ginagawa ni Kadyong sa kanyang nagbagong anyo",
+              "optionsEng": [
+                "A hooting sound",
+                "A singing voice",
+                "A crying sound"
+              ],
+              "optionsTag": [
+                "Isang huni",
+                "Isang boses na umaawit",
+                "Isang tunog ng pag-iyak"
+              ],
+              "questionEng": "What sound does Kadyong make as an owl?",
+              "questionTag": "Anong tunog ang ginagawa ni Kadyong bilang kuwago?"
+            },
+            "question9": {
+              "correctAnswer": 0,
+              "explanationEng": "People were disappointed and avoided him due to his selfish nature",
+              "explanationTag": "Ang mga tao ay nabigo at umiwas sa kanya dahil sa kanyang makasariling ugali",
+              "optionsEng": [
+                "Disappointed and avoided him",
+                "Loved and admired him",
+                "Feared and respected him"
+              ],
+              "optionsTag": [
+                "Nabigo at umiwas sa kanya",
+                "Minahal at hinangaan siya",
+                "Kinatakutan at iginalang siya"
+              ],
+              "questionEng": "How did people feel about Kadyong before his transformation?",
+              "questionTag": "Ano ang naramdaman ng mga tao kay Kadyong bago siya nagbago ng anyo?"
+            }
+          }
+        }
+      },
+      "titleEng": "The Legend of the Owl ",
+      "titleTag": "Ang Alamat ng Kwago",
+      "typeEng": "Legend",
+      "typeTag": "alamat"
+    },
+    "story10": {
+      "descEng": "The Sun and Moon were once married with many children, the stars. But the Sun’s longing led to a fateful mistake—he embraced the stars, causing them to melt. The Moon, angry and heartbroken, left a mark on her face, and now, she chases the Sun, seeking revenge.",
+      "descTag": "Mag-asawa ang araw at ng buwan. Marami silang mga anak na bituin.",
+      "pages": {
+        "page1": {
+          "textEng": "The sun and the moon were husband and wife. They had many star children.",
+          "textTag": "Mag-asawa ang araw at ng buwan. Marami silang mga anak na bituin."
+        },
+        "page10": {
+          "textEng": "“You hugged them? Don’t you lie to me!” The moon didn’t wait for his answer.",
+          "textTag": "\"Niyakap mo sila? Huwag kang magsisinungaling!” Hindi na naghintay ng sagot ang buwan."
+        },
+        "page11": {
+          "textEng": "She quickly uprooted a banana tree and tried to throw it at her husband. The sun had already forgotten his mistake.",
+          "textTag": "Mabilis niyang binunot ang isang punong saging at tinangkang ipukol sa asawa. Nakalimutan na ng araw ang kanyang kasalanan."
+        },
+        "page12": {
+          "textEng": "He only thought about how to defend himself from his furious wife. He grabbed a handful of sand and threw it at the moon’s face.",
+          "textTag": "Ang tanging nasa isip niya ay kung paano niya maipagtatanggol ang sarili sa asawang galit na galit. Dumampot siya ng isang dakot na buhangin at inihagis sa mukha ng buwan."
+        },
+        "page13": {
+          "textEng": "Because of this, the moon’s face became spotted. The moon chased the sun to get revenge for what he did.",
+          "textTag": "At dahilan sa nangyari ay nagkaroon ng batik ang mukha ng buwan. Hinabol ng buwan ang araw upang makaganti sa ginawa nito sa kanya."
+        },
+        "page14": {
+          "textEng": "And to this day, the moon still chases the sun.",
+          "textTag": "At hanggang ngayon ay hinahabol pa rin ng buwan ang araw."
+        },
+        "page2": {
+          "textEng": "The sun loved playing with the children and longed to embrace them. But the moon forbade him because the stars would melt from his heat.",
+          "textTag": "Gustung-gusto ng araw na makipaglaro sa kanyang mga anak at ibig na ibig niyang yakapin ang mga ito. Ngunit pinagbawalan siya ng buwan sapagkat matutunaw ang mga bituin sa labis na init ng araw."
+        },
+        "page3": {
+          "textEng": "The sun would scold the children whenever they came close. One day, the moon went to the river to wash dirty clothes.",
+          "textTag": "Kinagagalitan ng araw ang mga anak kapag lumalapit sa kanya. Isang araw, nagtungo sa ilog ang buwan upang maglaba ng maruruming damit."
+        },
+        "page4": {
+          "textEng": "She told her husband to watch the children but not to go near them. The sun watched over the children as told.",
+          "textTag": "Ipinagbilin niya sa asawa na bantayan ang mga anak ngunit huwag niyang lalapitan ang mga ito. Binantayan nga ng araw ang mga anak."
+        },
+        "page5": {
+          "textEng": "He happily watched them run and play. He felt eager and could not resist hugging his children.",
+          "textTag": "Buong kasiyahan niyang pinanood ang mga ito habang naghahabulan. Nakadama siya ng pananabik at hindi siya nakatiis na hindi yakapin ang mga anak."
+        },
+        "page6": {
+          "textEng": "Suddenly, he hugged the cluster of little stars. As they touched him, they instantly melted.",
+          "textTag": "Bigla niyang niyakap ang lipon ng maliliit na bituin. Nang madikit sa kanya ay biglang natunaw."
+        },
+        "page7": {
+          "textEng": "Soon after, the moon came home. She was surprised to find her husband looking sad.",
+          "textTag": "Hindi naman nagtagal at umuwi na ang buwan. Nagtaka siya sapagkat malungkot ang asawa."
+        },
+        "page8": {
+          "textEng": "She thought of counting the children, but the little ones were gone. So she searched for them everywhere.",
+          "textTag": "Naisipan niyang bilangin ang mga anak ngunit hindi niya nakita ang maliliit. Kaya't hinanap niya ang mga ito kung saan-saan."
+        },
+        "page9": {
+          "textEng": "She could not find the children. So she confronted her husband.",
+          "textTag": "Hindi niya matagpuan ang mga anak. Sa gayo'y sinumbatan niya ang asawa."
+        }
+      },
+      "titleEng": "The Mark of the Moon",
+      "titleTag": "Ang Batik ng Buwan",
+      "typeEng": "Folktale",
+      "typeTag": "Kwentong Bayan"
+    },
+    "story11": {
+      "descEng": "A wise mother hen and her chicks learn an important lesson about action and self-reliance as they escape just in time from a farmer preparing to harvest his cornfield.",
+      "descTag": "Isang matalinong inahing manok at ang kanyang mga sisiw ang natutong magtiwala sa gawa, hindi salita, at agad lumikas bago pa man magsimulang mag-ani ang magsasaka.",
+      "pages": {
+        "page1": {
+          "textEng": "He said, “It’s time to harvest my cornfield! I need to call my neighbors to help me with the harvest tomorrow!”",
+          "textTag": "Sinabi niya, \"Panahon na upang anihin ko ang aking maisan! Kailangan tawagin ko ang aking mga kapit-bahay upang tulungan ako sa aking pag-ani bukas!\""
+        },
+        "page10": {
+          "textEng": "“We still have time to live here, my children!” The next day, the mother hen was right again.",
+          "textTag": "“May panahon pa tayo para manirahan dito mga anak!” Kinabukasan nga’y tama uli ang sinabi ni inahing manok."
+        },
+        "page11": {
+          "textEng": "“We still have time to live here, my children!” The next day, the mother hen was right again.",
+          "textTag": "“May panahon pa tayo para manirahan dito mga anak!” Kinabukasan nga’y tama uli ang sinabi ni inahing manok."
+        },
+        "page12": {
+          "textEng": "He said, “Tomorrow, the two of us will harvest the crops ourselves. We can rely on no one but ourselves!”",
+          "textTag": "Sinabi niya, “Bukas na bukas din, tayong dalawa na lamang ang aani sa ating pananim. Wala tayong ibang maaasahan kundi ang ating mga sarili!”"
+        },
+        "page13": {
+          "textEng": "When the chicks heard that, they rushed to their mother. They told her what the farmer had said.",
+          "textTag": "Nang marinig iyon ng mga sisiw, dali-dali silang nagtungo sa kanilang ina. Iminungkahi rito ang sinabi ng magsasaka."
+        },
+        "page14": {
+          "textEng": "That was when the mother hen decided they should leave the place. She said, “If the farmer said he will do the harvesting himself, then we must believe him!”",
+          "textTag": "Noon nagdesisyon ang inahing manok na lumisan sila sa lugar na iyon. Sinabi niya, “Kung sinabi ng magsasaka na siya na ang gagawa ng pag-ani, dapat tayong maniwala!\""
+        },
+        "page15": {
+          "textEng": "“For truly, he has no one to rely on but himself!”",
+          "textTag": "“Sapagkat totoong walang sinuman siyang maaasahan kundi ang kanyang sarili!”"
+        },
+        "page2": {
+          "textEng": "He said, “It’s time to harvest my cornfield! I need to call my neighbors to help me with the harvest tomorrow!”",
+          "textTag": "Sinabi niya, \"Panahon na upang anihin ko ang aking maisan! Kailangan tawagin ko ang aking mga kapit-bahay upang tulungan ako sa aking pag-ani bukas!\""
+        },
+        "page3": {
+          "textEng": "The chicks heard this and quickly told their mother, “We need to leave and find a new place to live, Mother!”",
+          "textTag": "Narinig ito ng mga sisiw at agad iminungkahi sa kanilang ina, “Kailangang lumikas na tayo rito at humanap ng ibang matitirahan, Inang!”"
+        },
+        "page4": {
+          "textEng": "“If not, the harvesters will find us here tomorrow and catch us to kill us!” “Don’t worry, my children,” said the mother hen.",
+          "textTag": "“Kung hindi, matatagpuan tayo rito ng mga magsisipag-ani bukas at huhulihin upang patayin!” “Huwag kayong mabahala mga anak,” ang wika ng inahing manok."
+        },
+        "page5": {
+          "textEng": "“If he’s only relying on neighbors, they won’t move quickly! We still have time to stay here.”",
+          "textTag": "“Kung mga kapit-bahay lamang ang aasahan niya, hindi agad magsisipag-kilos ang mga iyon! May panahon pa tayo upang manirahan dito.”"
+        },
+        "page6": {
+          "textEng": "The mother hen was right. The next day, no neighbors came to help with the harvest.",
+          "textTag": "Tama nga ang sinabi ng inahing manok. Sapagkat kinabukasan nga’y walang mga kapit-bahay na dumating upang tumulong sa pag-ani."
+        },
+        "page7": {
+          "textEng": "“If I can’t rely on my neighbors, I’ll ask my relatives to help with tomorrow’s harvest!” said the farmer.",
+          "textTag": "“Kung hindi ko maasahan ang aking mga kapit-bahay, sa aking mga kamag-anak ako lalapit upang humingi ng tulong sa isasagawa kong pag-ani bukas!”"
+        },
+        "page8": {
+          "textEng": "The chicks heard what the farmer said and quickly told their mother. But once again, the mother hen was not worried.",
+          "textTag": "Narinig ng mga sisiw ang sinabi ng magsasaka at dali-daling iminungkahi sa kanilang ina. Ngunit muli, hindi nabahala ang inahing manok."
+        },
+        "page9": {
+          "textEng": "She said, “If he’s relying only on relatives, they won’t follow right away! They also have their own work and surely can’t be depended on.”",
+          "textTag": "Sinabi niya, “Kung sa mga kamag-anak lamang siya aasa, hindi magsisipag-sunod ang mga iyon! May mga trabaho ring dapat asikasuhin ang mga iyon at tiyak na hindi maasahan.”"
+        }
+      },
+      "titleEng": "The Mother Hen and Her Chicks",
+      "titleTag": "Ang Inahing Manok at ang Kanyang mga Sisiw",
+      "typeEng": "Fable",
+      "typeTag": "Pabula"
+    },
+    "story12": {
+      "descEng": "A talkative turtle dreams of flying with his goose friends and is given a chance—but only if he stays completely silent. Tempted by pride and unable to hold his tongue, the turtle learns the hard way that silence can sometimes be the key to survival.",
+      "descTag": "Nangarap ang isang madaldal na pagong na makalipad kasama ang kanyang mga kaibigang gansa. Binigyan siya ng pagkakataon—ngunit kailangan niyang manahimik. Dahil sa kayabangan at hindi mapigilang magsalita, natutunan ng pagong na minsan, ang katahimikan ay daan sa kaligtasan.",
+      "pages": {
+        "page1": {
+          "textEng": "A talkative turtle called Tom lived in a lake deep inside a forest.",
+          "textTag": "Isang masalitamang pagong na nagngangalang Tom ang nakatira sa lawa sa kailaliman ng kagubatan."
+        },
+        "page10": {
+          "textEng": "Without water, there soon won’t be any fish in the lake. I too want to leave.",
+          "textTag": "Kung walang tubig, mawawala rin ang mga isda sa lawa. Gusto ko ring umalis."
+        },
+        "page11": {
+          "textEng": "",
+          "textTag": "Gusto sana naming isama ka,” malungkot na sabi ni Bo. “Ngunit hindi ka marunong lumipad. Paano ka sasama sa amin?”"
+        },
+        "page12": {
+          "textEng": "Oh, that’s not a problem. We just have to find a sturdy log of wood.",
+          "textTag": "Ay, hindi iyan problema. Kailangan lang nating humanap ng matibay na troso."
+        },
+        "page13": {
+          "textEng": "You hold the log with your beaks and fly. I will hold on to the wood with my mouth. That way we can all leave together,” Tom said.",
+          "textTag": "Hawakan ninyo ang troso gamit ang inyong tuka at lumipad. Ako naman ay kakapit sa kahoy gamit ang aking bibig. Sa ganoong paraan, makakaalis tayong lahat nang sabay-sabay,” sabi ni Tom."
+        },
+        "page14": {
+          "textEng": "Mo looked worried, “That’s a nice plan. But Tom you love to talk. When we are up in the air you can’t open your mouth.",
+          "textTag": "Nag-aalala si Mo, “Maganda iyang plano. Ngunit Tom, mahilig kang magsalita. Hindi mo pwedeng buksan ang iyong bibig kapag nasa himpapawid na tayo."
+        },
+        "page15": {
+          "textEng": "Tom laughed, “I can keep quiet when it’s important. Let’s go guys! It’ll be an adventure.",
+          "textTag": "Tumawa si Tom, “Kaya kong manahimik kapag mahalaga. Tara na, mga kaibigan! Magiging isang pakikipagsapalaran ito."
+        },
+        "page16": {
+          "textEng": "The three friends left the next morning. Tom was excited. He could see mountains from a height.",
+          "textTag": "Umalis ang tatlong magkaibigan kinabukasan. Tuwang-tuwa si Tom. Nakikita na niya ang mga bundok mula sa taas."
+        },
+        "page17": {
+          "textEng": "Even the tall elephants looked tiny from the sky. He wanted to discuss all this with his friends. But remembering Mo’s words, he kept his mouth shut.",
+          "textTag": "Kahit ang matataas na elepante ay mukhang maliliit na lamang mula sa langit. Gusto niyang pag-usapan ito sa kanyang mga kaibigan. Ngunit naalala ang sinabi ni Mo, kaya nanatiling nakasara ang kanyang bibig."
+        },
+        "page18": {
+          "textEng": "The three soon passed over a village. The villagers shouted, “What is that?” Asked one villager. “No, no. It’s a bundle of clothes,” shouted another.",
+          "textTag": "Maya-maya, dumaan sila sa isang nayon. Sumigaw ang mga taga-bayan, “Ano iyan?” tanong ng isa. “Hindi, hindi. Isa itong supot ng damit,” sigaw ng isa pa."
+        },
+        "page19": {
+          "textEng": "Tom was confused. “What are these villagers blabbering?” he wanted to ask. But the moment he opened his mouth, he dropped straight to the ground.",
+          "textTag": "Naguluhan si Tom. “Ano itong pinagsasabi ng mga taga-bayan?” gusto niyang itanong. Ngunit sa sandaling ibinuka niya ang kanyang bibig, bumagsak siya diretso sa lupa."
+        },
+        "page2": {
+          "textEng": "He would talk all day long with anyone—from tiny ants to giant elephants.",
+          "textTag": "Araw-araw siyang nakikipag-usap kaninuman—mula sa maliliit na langgam hanggang sa dambuhalang elepante."
+        },
+        "page20": {
+          "textEng": "He hit his head on a rock and fell unconscious. When he opened his eyes, he saw Bo and Mo. Tom had learnt his lesson. He simply nodded without opening his mouth.",
+          "textTag": "Tumama ang kanyang ulo sa bato at nawalan ng malay. Nang imulat niya ang kanyang mga mata, nakita niya sina Bo at Mo. Naintindihan na ni Tom ang aral. Tumingon na lamang siya nang hindi binubuksan ang kanyang bibig."
+        },
+        "page3": {
+          "textEng": "But Tom liked to talk most with his best friends—a pair of geese called Bo and Mo.",
+          "textTag": "Ngunit higit na gusto ni Tom makipag-usap sa kanyang matalik na kaibigan—isang pares ng mga gansa na nagngangalang Bo at Mo."
+        },
+        "page4": {
+          "textEng": "The three friends lived in the same lake.",
+          "textTag": "Ang tatlong magkaibigan ay nakatira sa iisang lawa."
+        },
+        "page5": {
+          "textEng": "One day, they noticed that the water in the lake was drying up.",
+          "textTag": "Isang araw, napansin nila na natutuyo ang tubig sa lawa."
+        },
+        "page6": {
+          "textEng": "It hadn’t rained all year.",
+          "textTag": "Walang umulan sa buong taon."
+        },
+        "page7": {
+          "textEng": "Many animals in the forest were leaving the forest in search of water.",
+          "textTag": "Maraming hayop sa kagubatan ang umaalis upang maghanap ng tubig."
+        },
+        "page8": {
+          "textEng": "Bo and Mo decided to leave too. With a heavy heart, they came to say goodbye to Tom.",
+          "textTag": "Nagpasya ring umalis sina Bo at Mo. Sa mabigat na kalooban, pumunta sila upang magpaalam kay Tom."
+        },
+        "page9": {
+          "textEng": "But why are you saying goodbye?” asked Tom.",
+          "textTag": "Ngunit bakit kayo nagpapaalam?” tanong ni Tom."
+        }
+      },
+      "titleEng": "The talkative turtle",
+      "titleTag": "Pabula",
+      "typeEng": "Legend",
+      "typeTag": "Ang Madaldal na Pagong"
+    },
+    "story13": {
+      "descEng": "A loyal dog is wrongly blamed when a mischievous cockroach and his family sneak into the kitchen and feast on a birthday meal. In a heartfelt act of courage and friendship, the cockroach sacrifices himself to save his friend. A touching tale of loyalty, guilt, and redemption.",
+      "descTag": "Isang tapat na aso ang napagbintangan sa kasalanang hindi niya ginawa, matapos pagpyestahan ng isang tusong ipis at ng kanyang pamilya ang handa sa kaarawan. Sa isang makabagbag-damdaming sakripisyo, inako ng ipis ang kasalanan upang mailigtas ang kaibigan. Isang kwento ng katapatan, pagsisisi, at kabayanihan.",
+      "pages": {
+        "pag10": {
+          "textEng": "Cockroach couldn’t help himself, so he called his children and relatives who were also hungry. They ate more than half of the cake and drank the broth of the pinikpikan with etag.",
+          "textTag": "Hindi napigilan ni Ipis ang kanyang sarili kaya tinawag niya na rin ang kanyang mga anak at mga kapamilya na alam niyang gutom din. Kinain nila ang higit sa kalahati ng cake at humigop ng sabaw ng pinikpikan na may etag."
+        },
+        "page1": {
+          "textEng": "Tall trees surrounded the house. There was also a wide garden at the back.",
+          "textTag": "Mataas ang mga punong nakapaligid sa bahay. Malawak din ang hardin sa likuran."
+        },
+        "page11": {
+          "textEng": "When Mang Kardo returned home with his grandchild, they were shocked to see the cake and dishes scattered. Mang Kardo was furious.",
+          "textTag": "Nang umuwi si Mang Kardo kasama ang apo nito ay nagulat sila ng makita nila ang cake at ang ilang putahe na nagkalat. Galit na galit si Mang Kardo."
+        },
+        "page12": {
+          "textEng": "He called the dog and locked him up, thinking he had done the mischief. The dog knew it was his friend Cockroach, but he didn’t tell his master.",
+          "textTag": "Tinawag niya ang aso at ikinulong ito sa pag-aakalang ito ang gumawa ng kalokohang iyon. Alam ng aso na ang kaibigang ipis ang gumawa ng bagay na ito, pero hindi niya ito sinabi sa kanyang amo."
+        },
+        "page13": {
+          "textEng": "Cockroach saw the dog’s suffering and felt pity for his friend. He tried to think of a way to save him but couldn’t, so a plan formed in his mind.",
+          "textTag": "Nakita ng ipis ang paghihirap ng Aso at naawa siya sa kanyang kaibigan. Nag-isip siya ng paraan para iligtas ang kaibigan ngunit wala siyang magawa kaya isang plano ang nabuo sa kanyang isip."
+        },
+        "page14": {
+          "textEng": "“My friend is pitiful. I must pay for the sin I committed,” thought Cockroach. One morning while Mang Kardo was preparing breakfast, Cockroach climbed onto the table and deliberately ate the food in front of him.",
+          "textTag": "\"Kawawa ang kaibigan ko. Kailangang ako ang magbayad sa kasalanang ginawa ko,\" naisaisip ni ipis. Isang umagang naghahanda ng almusal si Mang Kardo ay umakyat ang ipis sa lamesa at sinadyang ipakita sa matanda ang paglantak sa almusal nito."
+        },
+        "page15": {
+          "textEng": "The dog saw what Cockroach was doing and barked at him. “Stop, Cockroach! If my master sees you, he’ll lock you up just like he did to me,” he barked.",
+          "textTag": "Nakita ng aso ang ginagawa ng ipis at tinahulan niya ito. \"Huwag ipis, kung makita ka ng amo ko ay ikulong ka katulad ko,\" tahol pa nito."
+        },
+        "page16": {
+          "textEng": "“Let him know I’m the one doing this, so you can be free,” said Cockroach. Mang Kardo saw the cockroach and with one strike of the book in his hand, the cockroach died.",
+          "textTag": "\"Hayaan mong malaman niya na ako ang gumagawa nito para makalaya ka,\" sagot ni Ipis. Nakita nga ni Mang Kardo ang ipis at sa isang hampas nito ng aklong hawak ay namatay ang ipis."
+        },
+        "page17": {
+          "textEng": "He realized that it was also the one who ate the food meant for his grandchild, so he released the dog and loved him once again. The dog was happy to be free but felt sorrow for his friend Cockroach.",
+          "textTag": "Naisip niya na ito rin ang kumain sa handa ng kanyang apo at dahil dito ay pinakawalan niya at muling minahal ang aso. Masaya ang aso na malaya na siya ngunit nahabag naman siya sa kaibigang ipis."
+        },
+        "page18": {
+          "textEng": "“May your soul rest in peace,” prayed the Dog.",
+          "textTag": "\"Sumalangit nawa ang iyong kaluluwa,\" dalangin ng Aso."
+        },
+        "page2": {
+          "textEng": "Mang Kardo’s house was surrounded by rice fields and crops. In front, near the door, was the dog’s sleeping area.",
+          "textTag": "Napaligiran ng mga palay at mga pananim ang bahay ni Mang Kardo. Sa harap naman, malapit sa pintuan ay ang tulugan ng aso."
+        },
+        "page3": {
+          "textEng": "The house was small, but its surroundings felt like paradise. Mang Kardo’s house stood alone on the mountain, while his neighbor lived on the next one.",
+          "textTag": "Maliit lang ang bahay ngunit parang paraiso ang kapaligiran nito. Nag-iisa kasi ang bahay ni Mang Kardo sa bundok na iyon at ang kanyang kapitbahay ay sa kabilang bundok pa nakitira."
+        },
+        "page4": {
+          "textEng": "It was Monday, and Mang Kardo was busy cooking inside the house. It was his grandchild’s birthday, and he had prepared a surprise.",
+          "textTag": "Araw ng Lunes at abalang nagluluto si Mang Kardo sa loob ng bahay. Kaarawan kasi ng kanyang apo at isang surpresa ang kanyang inihanda."
+        },
+        "page5": {
+          "textEng": "He cooked the most delicious rice he had pounded that very morning. He also made pinikpikan with etag to make the dish even tastier.",
+          "textTag": "Nagluto siya ng pinakamasarap na kanin na kanyang ibinayo lamang kaninang umaga. Naghanda rin siya ng pinikpikan at nilagyan ng etag upang mas lalo pang maging masarap ang kanilang ulam."
+        },
+        "page6": {
+          "textEng": "To make his grandchild even happier, he baked a two-layer cake. He instructed his dog to guard the house while he fetched his grandchild from the other mountain.",
+          "textTag": "At upang mas lalong maging masaya ang apo ay nagluto rin siya ng dalawang patong na cake. Binilin niya ang kanyang aso na bantayan ang kanilang bahay dahil susunduin niya ang kanyang apo sa kabilang bundok."
+        },
+        "page7": {
+          "textEng": "He said it would take a while, so the dog should take care of their home. “Alright, take care going down the mountain. You can count on me to guard the house and the food,” said the dog.",
+          "textTag": "Sinabi niyang matatagalan pa ito kaya ang aso muna ang bahala sa kanilang bahay. \"Sige, mag-iingat ka sa pagbaba ng bundok, makakaasa ka na babantayan ko ang bahay pati na rin ang mga niluto mong mga pagkain,\" yan ang sabi ng aso."
+        },
+        "page8": {
+          "textEng": "He thought his master would surely give him some food, so he decided to guard the house well. The dog called his friend Cockroach and asked him to help watch the house.",
+          "textTag": "Naisip niya na siguradong bibigyan naman siya ng kanyang amo sa inihanda nitong pagkain kaya minabuti niyang bantayan ng mabuti ang bahay. Tinawag ng Aso ang kaibigang Ipis at sinabing tulungan siya sa pagbabantay ng bahay."
+        },
+        "page9": {
+          "textEng": "He told him to climb up the roof to spot anyone with bad intentions and alert him right away. The cockroach climbed up but saw the cake on the table and suddenly felt hungry.",
+          "textTag": "Pinaakyat niya ito sa bubungan ng bahay para makita niya ang mga taong may masasamang balak at upang masabihan siya agad. Umakyat nga ang ipis ngunit nakita nito ang cake sa lamesa, bigla siyang nagutom."
+        }
+      },
+      "titleEng": "The Dog and the Cockroach",
+      "titleTag": "Si Aso at si Ipis",
+      "typeEng": "Fable",
+      "typeTag": "Pabula"
+    },
+    "story14": {
+      "descEng": "When the rainy season nears, a hardworking ant family prepares for the storm. But one curious young ant strays from the path in search of a sweet treat—only to face a bitter lesson. A heartfelt fable about obedience, danger, and the importance of listening to those who care.",
+      "descTag": "Habang papalapit ang tag-ulan, abala ang mag-anak na langgam sa paghahanda. Ngunit isang pasaway na munting langgam ang lumihis sa utos at sumubok kumuha ng kendi—at hinarap ang mapait na aral. Isang makabagbag-damdaming pabula tungkol sa pagsunod, panganib, at pagmamalasakit ng magulang.",
+      "pages": {
+        "page1": {
+          "textEng": "The rainy season was fast approaching, so a family of ants was busy gathering food for their hiding place. “Don’t stray from the path to our nest because there’s a small canal on the left,” warned Father Ant.",
+          "textTag": "Malapit-lapit na naman ang tag-ulan kung kaya't ang isang mag-anak na langgam ay abalang-abala sa paghahakot ng pagkain para sa kanilang pinagtataguan. \"Huwag kayong lilihis ng landas patungo sa ating lungga dahil sa may gawing kaliwa ay may munting kanal,\" sabi ni Tatay Langgam."
+        },
+        "page2": {
+          "textEng": "“We won’t go far,” said the Eldest Little Ant. Everyone was so busy collecting food that they didn’t notice the Youngest Ant slowly straying from the line.",
+          "textTag": "\"Hindi po kami lalayo,\" sabi ni Unang Munting Langgam. Abala sa paghahakot ng mga pagkain ang bawat isa kung kaya't hindi nila napansing ang Bunsong Langgam ay unti-unting humiwalay sa pila."
+        },
+        "page3": {
+          "textEng": "“Gathering food is so tiring. The rainy season is still far off, yet we’re already preparing,” said the Youngest Ant to himself.",
+          "textTag": "\"Nakakapagod naman ang paghahakot ng pagkain. Matagal pa naman ang tag-ulan ay naghahanda na kami,\" sabi sa sarili ng Bunsong Langgam."
+        },
+        "page4": {
+          "textEng": "“I better look for something tastier.” Suddenly, he spotted a piece of candy very close to the canal his father warned him about.",
+          "textTag": "\"Buti pa'y maghanap ako ng mas masarap na pagkain.\" Walang anu-ano'y nakakita ng isang kendi na malapit na malapit sa kanal na ipinagbabawal na puntahan ng kanyang ama."
+        },
+        "page5": {
+          "textEng": "“I won’t fall into the canal if I grab the candy slowly,” he thought. In his eagerness to get the candy, he didn’t notice the small thread that tangled around his foot.",
+          "textTag": "\"Siguro naman ay hindi ako mahuhulog sa kanal kung dahan-dahan kong kukunin ang kendi.\" Sa kasabikan niyang makuha ang kendi ay hindi niya napansin ang munting sinulid na kinapatiran ng kanyang paa."
+        },
+        "page6": {
+          "textEng": "He lost his balance and fell straight into the canal. Father Ant grew uneasy when he couldn’t find his youngest child in the line.",
+          "textTag": "Nawalan siya ng panimbang at tuloy-tuloy na nahulog sa kanal. Hindi mapakali ang Amang Langgam nang hindi niya makita ang kanyang Bunsong anak sa pila."
+        },
+        "page7": {
+          "textEng": "So he quickly set out to look for him and ended up at the forbidden area. When he looked down, he saw his youngest child floating in the water.",
+          "textTag": "Kaya dali-dali siyang umalis upang ito'y hanapin hanggang sa siya'y mapadako sa ipinagbabawal na pook. Pagtingin niya sa ibaba ay nakita niyang nakalutang sa tubig ang kanyang bunsong anak."
+        },
+        "page8": {
+          "textEng": "Though it pained him, he whispered to himself, “That’s what happens to children who don’t listen.”",
+          "textTag": "Masakit man sa kalooban ay naibulong niya sa kanyang sarili na, \"Iyan ang napapala ng mga anak na matigas ang ulo.\""
+        }
+      },
+      "titleEng": "The Ant Family",
+      "titleTag": "Ang Mag-Anak na Langgam",
+      "typeEng": "Fable",
+      "typeTag": "Pabula"
+    },
+    "story15": {
+      "descEng": "A proud rooster rejects his own kind to fit in with others, only to be hurt and cast aside. In the end, it's the family he once shamed that saves him. A lesson on pride, loyalty, and true belonging.",
+      "descTag": "Isang tandang ang tumalikod sa sariling kalahi para mapabilang sa iba, ngunit siya’y nasaktan at tinanggihan. Sa huli, ang kinahiya niyang pamilya pa rin ang tumulong sa kanya. Aral ito tungkol sa yabang, katapatan, at tunay na pagkakakilanlan.",
+      "pages": {
+        "page1": {
+          "textEng": "Since Toniong Rooster drove Tenoriong Talisain away, the Talisain looked for another place and quickly thrived again. The Leghorn roosters there were easily dazzled by the news of Tenoriong Talisain’s speed and strength.",
+          "textTag": "Buhat nang mapatakbo ni Toniong Tandang si Tenoriong Talisain ay humanap na ng ibang libutan at madaling nakapamayagpag na muli ang Talisain. Ang mga Katyaw na leghorn doon ay madaling nasilaw sa balitang bilis at lakas ni Tenoriong Talisain."
+        },
+        "page10": {
+          "textEng": "One leg was limping, his whole body bruised, and he could barely move. “What happened?” asked the other chickens.",
+          "textTag": "Pilay pa ang isang paa, pasa-pasa ang buong katawan at hindi halos makagulapay. \"Bakit ano ang nangyari?\" ang tanungan ng mga kalahing manok."
+        },
+        "page11": {
+          "textEng": "“He had long been disliked by the Leghorn roosters,” said Toniong Rooster. “I saw four of them ganging up on him earlier.”",
+          "textTag": "\"Iyan pala ay maluwat nang kinaiinisan ng mga katyaw na Leghorn\", ang wika ni Toniong Tandang. \"Kangina'y nakita ko na lamang na pinagtutulungan ng apat na katyaw na leghorn.\""
+        },
+        "page12": {
+          "textEng": "“Why didn’t you just let them finish him off?” asked the native chickens. “He’s ashamed of us and even disowns us…”",
+          "textTag": "\"Bakit hindi mo pa pinabayaang mapatay?\" ang wika ng mga kalahing manok. \"Tayo rin lamang ay ikinahihiya niya at itinatakwil pa...\""
+        },
+        "page13": {
+          "textEng": "“I really did want to leave him,” said Toniong Rooster. “But in the end, I just couldn’t bear it.”",
+          "textTag": "\"Talaga nga sanang ibig ko nang pabayaan\", ang wika ni Toniong Tandang. \"Ngunit hindi rin ako nakatiis.\""
+        },
+        "page14": {
+          "textEng": "“If I hadn’t helped, Tenoriong Talisain would be gone by now.” “You see now, Tenoriong Talisain!” said Aling Marta Hen.",
+          "textTag": "\"At talagang namang kung hindi ako sumaklolo'y nasirang Tenoriong Talisain na siya ngayon.\" \"Nakita mo na, Tenoriong Talisain!\" ang wika ni Aling Martang Manok."
+        },
+        "page15": {
+          "textEng": "“Your own kind—no matter how badly you treat them—can never truly abandon you.”",
+          "textTag": "\"Iyang kalahi, kahit masamain mo'y talagang hindi makatitiis.\""
+        },
+        "page2": {
+          "textEng": "He quickly became friends with the most beautiful of the foreign hens—Lolitang Leghorn. One day, Denang the young hen came home furious.",
+          "textTag": "At madali niyang naging kaibigan ang pinakamaganda sa mga banyagang manok na si Lolitang Leghorn. Isang araw ay galit na galit na umuwi si Denang Dumalaga."
+        },
+        "page3": {
+          "textEng": "“Oh no!” cried the young hen. “It turns out Tenoriong Talisain is spreading lies about me—saying I was once his sweetheart…”",
+          "textTag": "\"Naku!\" ang bulalas ng dumalaga. \"Ako pala ay sinisiraan ni Tenoriong Talisain. Ako raw ay naging kasintahan niya...\""
+        },
+        "page4": {
+          "textEng": "“Really?” gasped Aling Marta Hen. “And that Talisain is spreading all sorts of insults against his own kind.”",
+          "textTag": "\"Diyata't?\" ang bulalas din ni Aling Martang Manok. \"At katakot-takot na paninira raw laban sa mga kalahi ang ginagawa ng Talisaing iyan.\""
+        },
+        "page5": {
+          "textEng": "“He says he’s ashamed of us. He claims we come from a bad breed…” That’s also what angered Toniong Rooster when he arrived.",
+          "textTag": "\"Tayo raw ay ikinahihiya niya. Masamang lahi raw tayo...\" Gayon din ang ikinagalit ni Toniong Tandang nang siya'y dumating."
+        },
+        "page6": {
+          "textEng": "“That Tenoriong Talisain is a terrible rooster,” said Toniong. “I saw him earlier. He walks and talks like the leghorns now.”",
+          "textTag": "\"Napakasamang manok iyang si Tenoriong Talisain\", ang wika ng tandang. \"Kangina'y nakita ko. Kung lumakad at magsalita'y ginagaya ang mga leghorn.\""
+        },
+        "page7": {
+          "textEng": "“I even heard he had his feathers styled to look more like a leghorn. It gives me chills.”",
+          "textTag": "\"Ang balita ko pa'y nagpasuklay ng balahibo upang maging mistulang leghorn na. Nakapang-nginig ng laman.\""
+        },
+        "page8": {
+          "textEng": "“Let him be,” said Aling Marta Hen. “He will regret what he has done.”",
+          "textTag": "\"Bayaan ninyo siya\", ang wika ni Aling Martang Manok. \"Pagsisisihan din niya ang kanyang ginawang iyan.\""
+        },
+        "page9": {
+          "textEng": "A few days later, Toniong Rooster returned—bringing Tenoriong Talisain with him. The rooster’s feathers were all ruffled.",
+          "textTag": "Ilang araw, pagkatapos ay dumating si Toniong Tandang na kasama si Tenoriong Talisain. Gusot-gusot na ang balahibo ng katyaw."
+        }
+      },
+      "titleEng": "The Unkind Rooster",
+      "titleTag": "Ang Masamang Kalahi",
+      "typeEng": "Fable",
+      "typeTag": "Pabula"
+    },
+    "story2": {
+      "descEng": "This legend explains why rabbits have long ears—it was a punishment from the owl king after the rabbit refused to attend an important animal meeting.",
+      "descTag": "Ang alamat na ito ay nagpapaliwanag kung bakit mahaba ang taynga ng kuneho—isang parusa mula sa haring Kuwago dahil sa kanyang katamaran at pagsuway.",
+      "pages": {
+        "page1": {
+          "textEng": "The owl, king of the animals, called for a meeting. He said there were important matters to discuss about the problems and how they could be solved.",
+          "textTag": ""
+        },
+        "page10": {
+          "textEng": "\"I'll go to the meeting now. Please stop making my ears longer.\" He quickly went to the meeting place.",
+          "textTag": "\"Pupunta na ako sa pulong. Ihinto mo na ang pagpapahaba ng aking taynga.\" Pumunta siya agad sa pinagdarausan ng pulong."
+        },
+        "page11": {
+          "textEng": "When the other animals saw him, they laughed loudly. \"Here I am, Your Majesty,\" he pleaded.",
+          "textTag": "Nang makita siya ng mga kapwa hayop, malakas ang tawanan nila. \"Narito po ako, Mahal na Hari,\" samo niya."
+        },
+        "page12": {
+          "textEng": "\"Please make my ears smaller again.\" \"That’s not possible. That’s my punishment for not obeying my orders.\"",
+          "textTag": "\"Paliitin po ninyo uli ang aking taynga.\" \"Hindi maaari. Parusa ko iyan sa hindi tumatalima sa ipinag-utos ko.\""
+        },
+        "page13": {
+          "textEng": "\"You must learn a lesson,\" Owl answered angrily. \"Now you will listen from now on.\"",
+          "textTag": "\"Kailangan mong magtanda.\" galit na sagot ni Kuwago. \"Ngayon ay makikinig ka nang lagi.\""
+        },
+        "page14": {
+          "textEng": "That is the reason why Rabbit's ears became so long.",
+          "textTag": "Iyan ang dahilan kung bakit naging mahaba ang taynga ng kuneho."
+        },
+        "page2": {
+          "textEng": "The animals arrived. Birds, deer, sheep, horses, carabaos, lizards, and other animals from both air and land.",
+          "textTag": "Nagsidating ang mga hayop. Mga ibon, usa, tupa, kabayo, kalabaw, butiki, mga iba pang hayop ng himpapawid at kalupaan."
+        },
+        "page3": {
+          "textEng": "But Rabbit was not there. \"Where is Rabbit? Why isn't he here?\" asked Owl.",
+          "textTag": "Ngunit wala si Kuneho. \"Nasaan si Kuneho? Bakit wala rito?\" tanong ni Kuwago."
+        },
+        "page4": {
+          "textEng": "\"Everyone must be here. What we are going to discuss is important.\" Owl flew to Rabbit's home.",
+          "textTag": "\"Kailangan ay narito ang lahat. Mahalaga ang ating tatalakayin.\" Lumipad si kuwago sa tirahan ni Kuneho."
+        },
+        "page5": {
+          "textEng": "",
+          "textTag": "\"Kuneho! Kuneho! Nandiyan ka ba?\" Nasa loob ng kweba nya si Kuneho."
+        },
+        "page6": {
+          "textEng": "\"I'll pretend to be asleep,\" he whispered to himself. \"I don't want to attend the meetings. I get bored.\"",
+          "textTag": "\"Magtutulog-tulugan ako.\" bulong nya sa sarili. \"Ayaw ko ngang dumalo sa mga pagpupulong. Nababagot ako.\""
+        },
+        "page7": {
+          "textEng": "\"Rabbit!\" shouted Owl. \"I know you're inside. You heard me.\"",
+          "textTag": "\"Kuneho!\" sigaw ni Kuwago, \"Alam kong nariyan ka sa loob. Narinig mo ako.\""
+        },
+        "page8": {
+          "textEng": "\"If you don't come out, I'll make your ears longer.\" Rabbit still pretended not to hear.",
+          "textTag": "\"Kapag hindi ka pa lumabas diyan ay pahahabain ko ang taynga mo.\" Nagbingi-bingihan parin si Kuneho."
+        },
+        "page9": {
+          "textEng": "Soon, he felt his ears growing longer and longer. \"Friend Owl!\" he shouted.",
+          "textTag": "Maya-maya, naramdaman niyang lumalaki at humahaba ang kanyang taynga. \"Kaibigang Kuwago!\" sigaw niya."
+        }
+      },
+      "quiz": {
+        "doc1": {
+          "ansEng": "Owl",
+          "ansTag": "Kuwago",
+          "o1Eng": "Rabbit",
+          "o1Tag": "Kuneho",
+          "o2Eng": "Horse",
+          "o2Tag": "Kabayo",
+          "o3Eng": "Owl",
+          "o3Tag": "Kuwago",
+          "o4Eng": "Carabao",
+          "o4Tag": "Kalabaw",
+          "qEng": "Who is the king of the animals in the story?",
+          "qTag": "Sino ang hari ng mga hayop sa kuwento?"
+        },
+        "doc2": {
+          "ansEng": "To discuss problems",
+          "ansTag": "Para pag-usapan ang mga suliranin",
+          "o1Eng": "To play",
+          "o1Tag": "Para maglaro",
+          "o2Eng": "To eat",
+          "o2Tag": "Para kumain",
+          "o3Eng": "To discuss problems",
+          "o3Tag": "Para pag-usapan ang mga suliranin",
+          "o4Eng": "To compete",
+          "o4Tag": "Para magpaligsahan",
+          "qEng": "Why did the animals gather for a meeting?",
+          "qTag": "Bakit nagtipon ang mga hayop?"
+        },
+        "doc3": {
+          "ansEng": "Rabbit",
+          "ansTag": "Kuneho",
+          "o1Eng": "Sheep",
+          "o1Tag": "Tupa",
+          "o2Eng": "Lizard",
+          "o2Tag": "Butiki",
+          "o3Eng": "Rabbit",
+          "o3Tag": "Kuneho",
+          "o4Eng": "Deer",
+          "o4Tag": "Usa",
+          "qEng": "Who didn’t attend the meeting?",
+          "qTag": "Sino ang hindi dumalo sa pulong?"
+        },
+        "doc4": {
+          "ansEng": "He pretended to sleep because he was bored",
+          "ansTag": "Nagkunwaring natutulog dahil nababagot siya",
+          "o1Eng": "He was asleep",
+          "o1Tag": "Natutulog siya",
+          "o2Eng": "He was sick",
+          "o2Tag": "Nagkasakit siya",
+          "o3Eng": "He pretended to sleep because he was bored",
+          "o3Tag": "Nagkunwaring natutulog dahil nababagot siya",
+          "o4Eng": "He wasn’t invited",
+          "o4Tag": "Hindi siya naimbitahan",
+          "qEng": "Why didn’t Rabbit attend the meeting?",
+          "qTag": "Ano ang dahilan ni Kuneho kung bakit hindi siya dumalo sa pulong?"
+        },
+        "doc5": {
+          "ansEng": "Make his ears grow longer",
+          "ansTag": "Pahabain ang kanyang taynga",
+          "o1Eng": "Eat him",
+          "o1Tag": "Kakainin siya",
+          "o2Eng": "Make his ears grow longer",
+          "o2Tag": "Pahabain ang kanyang taynga",
+          "o3Eng": "Expel him",
+          "o3Tag": "Palalayasin siya",
+          "o4Eng": "Take his home",
+          "o4Tag": "Kukunin ang kanyang bahay",
+          "qEng": "What threat did Owl make to Rabbit?",
+          "qTag": "Ano ang banta ni Kuwago kay Kuneho kung hindi siya lalabas?"
+        }
+      },
+      "titleEng": "Why the Rabbit Has Long Ears",
+      "titleTag": "Bakit Naging Mahaba ang Taynga ng Kuneho",
+      "typeEng": "Legend",
+      "typeTag": "Alamat "
+    },
+    "story3": {
+      "descEng": "Juan Tamad is a lazy young man who always seeks the easiest way out, often to comedic effect. His story teaches the importance of hard work and initiative through his hilarious and carefree antics.",
+      "descTag": "Si Juan Tamad ay isang binatang tamad na laging naghahanap ng pinakamadaling paraan, kadalasan ay nakakatawa. Ang kanyang kwento ay nagtuturo ng kahalagahan ng sipag at pagsusumikap sa kabila ng kanyang nakaaaliw na katamaran.",
+      "pages": {
+        "page1": {
+          "textEng": "Maring was washing clothes by the river while singing as she scrubbed. She noticed a young man behind her.",
+          "textTag": "Naglalaba si Maring sa tabing ilog, at umaawit habang kinukusot ang mga damit. Napansin niyang may binatang nasa likuran niya."
+        },
+        "page10": {
+          "textEng": "\"I’ll come back,\" replied the young man. \"You cannot come with me because my world is different.\"",
+          "textTag": "\"Babalik din ako,\" sagot ng binata. \"Hindi ka maaring sumama dahil iba ang mundo ko.\""
+        },
+        "page11": {
+          "textEng": "\"Why different? Where are you from?\" Maring asked. \"I’m an enchanted being,\" answered the young man.",
+          "textTag": "\"Bakit iba? Tagasaan ka ba?\" tanong ni Maring. \"Engkantado ako,\" sagot ng binata."
+        },
+        "page12": {
+          "textEng": "\"You won’t be able to enter where I live,\" he added. \"Alright, I’m leaving now.\"",
+          "textTag": "\"Hindi ka makakapasok sa tinitirahan ko,\" dagdag niya. \"Sige, aalis na ako.\""
+        },
+        "page13": {
+          "textEng": "Maring held the young man’s hand. \"Don’t leave me. What about me?\"",
+          "textTag": "Hinawakan ni Maring ang kamay ng lalaki. \"Huwag mo akong iwan. Paano ako?\""
+        },
+        "page14": {
+          "textEng": "As she held tightly to his hand, it suddenly detached. She was left holding it while the young man vanished.",
+          "textTag": "Sa pagpigil niya sa kamay ng lalaki, biglang natanggal ito. Naiwan sa kamay niya habang ang binata ay biglang naglaho."
+        },
+        "page15": {
+          "textEng": "\"Oh no, what is this?\" Maring exclaimed in shock. \"What will I do with this hand?\"",
+          "textTag": "\"Naku, ano ba ito?\" gulat na sabi ni Maring. \"Anong gagawin ko sa kamay na ito?\""
+        },
+        "page16": {
+          "textEng": "She decided to bury the hand beside the rock the young man used to sit on. The next day, she came back to check on it.",
+          "textTag": "Naisipan niyang ibaon ang kamay sa tabi ng batong inuupuan ng binata. Kinabukasan, bumalik siya upang tingnan ito."
+        },
+        "page17": {
+          "textEng": "She was shocked to see a tall plant growing there. Its fruits looked like human fingers.",
+          "textTag": "Laking gulat niya nang makitang may mataas nang halaman. Ang bunga nito’y tila mga galamay ng tao."
+        },
+        "page18": {
+          "textEng": "She never saw her lover again. Her only memory was the tree they later called the banana.",
+          "textTag": "Hindi na niya muli pang nakita ang kasintahan. Ang tanging alaala niya ay ang punong tinawag na saging."
+        },
+        "page19": {
+          "textEng": "And that is the legend of the banana.",
+          "textTag": "At iyon nga ang alamat ng saging."
+        },
+        "page2": {
+          "textEng": "\"You have such a beautiful voice,\" said the young man. The surprised young woman didn’t answer right away.",
+          "textTag": "\"Kay ganda ng boses mo,\" bati ng binata. Hindi agad nakasagot ang nabiglang dalaga."
+        },
+        "page3": {
+          "textEng": "After a moment, she smiled and said, \"Not really.\" \"I’m just entertaining myself so I won’t get too tired.\"",
+          "textTag": "Maya-maya'y ngumiti siya at nagsabi, \"Hindi naman po.\" \"Nililibang ko lang po ang aking sarili para hindi gaanong mapagod.\""
+        },
+        "page4": {
+          "textEng": "The young man sat on a big rock by the water. He watched Maring as she did her laundry.",
+          "textTag": "Umupo ang binata sa malaking bato sa tabi ng tubig. Binantayan niya si Maring habang naglalaba."
+        },
+        "page5": {
+          "textEng": "From then on, they often saw each other. The young man waited for Maring as she washed clothes.",
+          "textTag": "Mula noon ay madalas na silang nagkikita. Hinihintay ng binata si Maring habang siya'y naglalaba."
+        },
+        "page6": {
+          "textEng": "He even carried the basin of clothes to help Maring. Eventually, they became lovers.",
+          "textTag": "Dinadala pa niya ang palanggana ng mga damit upang tulungan si Maring. Di naglaon, naging magkasintahan sila."
+        },
+        "page7": {
+          "textEng": "They loved each other for several months. One morning, the young man met Maring with a sad face.",
+          "textTag": "Ilang buwan din silang nagmahalan. Isang umaga, malungkot na sinalubong ng binata si Maring."
+        },
+        "page8": {
+          "textEng": "\"Maring, my love,\" he said, \"I’m leaving today.\" \"I must go home; I was told my father is calling for me.\"",
+          "textTag": "\"Maring, mahal ko,\" sabi niya, \"Aalis ako ngayon.\" \"Uuwi ako, pinapatawag daw ako ng aking ama.\""
+        },
+        "page9": {
+          "textEng": "\"Where?\" asked the worried girl. \"Where are you going? I’ll go with you.\"",
+          "textTag": "\"Saan?\" tanong ng balisang dalaga. \"Saan ka uuwi? Sasama ako.\""
+        }
+      },
+      "titleEng": "Legend of the Banana",
+      "titleTag": "Alamat ng Saging",
+      "typeEng": "Legend",
+      "typeTag": "Alamat"
+    },
+    "story4": {
+      "descEng": "The Legend of the Pineapple tells the story of a lazy girl named Pina who refused to help her mother. One day, after being scolded, she mysteriously disappeared. In her place grew a strange fruit with many eyes—just like the eyes her mother wished she had. That fruit became known as the pineapple.",
+      "descTag": "Ang **Alamat ng Pinya** ay kuwento ng isang batang tamad na nagngangalang Pina na ayaw tumulong sa kanyang ina. Isang araw, matapos siyang pagsabihan, bigla na lang siyang nawala. Sa kanyang kinaroroonan, tumubo ang isang prutas na may maraming mata—gaya ng mata na hiniling ng kanyang ina na sana'y meron siya. Ang prutas na ito ay tinawag na pinya.",
+      "pages": {
+        "page1": {
+          "textEng": "Long ago, in a faraway place, there lived a mother and her daughter. The mother’s name was Aling Rosa, and her daughter was Pinang.",
+          "textTag": "Noong unang panahon, sa isang malayong lugar, may mag-inang naninirahan. Ang pangalan ng ina ay Aling Rosa, at ang anak naman ay si Pinang."
+        },
+        "page10": {
+          "textEng": "She quietly left to look for the ladle. That night, she never came home.",
+          "textTag": "Tahimik siyang umalis upang hanapin ang sandok. Hindi na siya nakauwi noong gabing iyon."
+        },
+        "page11": {
+          "textEng": "Aling Rosa became worried. She called out for her daughter, but no one answered.",
+          "textTag": "Nag-alala si Aling Rosa. Tinawag niya si Pinang, ngunit walang sumagot."
+        },
+        "page12": {
+          "textEng": "She was forced to get up and prepare food herself. A few days passed, and Aling Rosa began to recover.",
+          "textTag": "Napilitan siyang bumangon at maghanda ng pagkain para sa sarili. Lumipas ang ilang araw, at unti-unting gumaling si Aling Rosa."
+        },
+        "page13": {
+          "textEng": "She looked for Pinang, asking the neighbors if they had seen her. But Pinang had disappeared without a trace.",
+          "textTag": "Hinahanap niya si Pinang at tinanong ang mga kapitbahay kung may nakakita sa kanya. Ngunit parang naglaho si Pinang na parang bula."
+        },
+        "page14": {
+          "textEng": "One morning, while sweeping the yard, Aling Rosa saw a strange plant growing where Pinang used to play. Its leaves were long, pointed, and green, unlike anything she had planted before. Curious, she decided to let it grow.",
+          "textTag": "Isang umaga, habang nagwawalis sa bakuran, may nakita si Aling Rosa na kakaibang halaman na tumutubo sa lugar kung saan madalas maglaro si Pinang. Mahahaba, matutulis, at luntiang-luntian ang mga dahon nito—hindi katulad ng alinmang itinanim niya noon. Dahil sa pag-uusisa, hinayaan niyang ito ay lumago."
+        },
+        "page15": {
+          "textEng": "Days passed, and the plant grew taller and stronger. Soon, it bore a golden fruit covered in rough skin and tiny eye-like marks all over it. Aling Rosa looked at the fruit closely and felt a sudden ache in her heart—it reminded her of her missing daughter.",
+          "textTag": "Lumipas ang mga araw, at ang halaman ay lalong tumangkad at tumibay. Di nagtagal, nagkaroon ito ng gintong bunga na magaspang ang balat at tila punô ng maliliit na matang nakapaligid dito. Tinitigan ito ni Aling Rosa at biglang nakaramdam ng kirot sa dibdib—naalala niya ang kanyang nawawalang anak."
+        },
+        "page16": {
+          "textEng": "With tears in her eyes, Aling Rosa whispered softly, “Pinang…” From then on, the fruit was called pinya, named after her daughter Pinang. People from nearby villages came to see the strange fruit, and they remembered the lesson of Pinang— to be obedient, helpful, and mindful of your mother’s words.",
+          "textTag": "May luha sa kanyang mga mata nang marahang bulong ni Aling Rosa, “Pinang…” Mula noon, tinawag ang prutas na pinya, hango sa pangalan ng kanyang anak na si Pinang. Dumayo ang mga tao mula sa karatig na baryo upang makita ang kakaibang bunga, at kanilang inalala ang aral ni Pinang— maging masunurin, matulungin, at laging makinig sa salita ng ina."
+        },
+        "page2": {
+          "textEng": "Aling Rosa loved her only daughter very much, which led to Pinang being spoiled as she grew up. Aling Rosa wanted Pinang to learn household chores, but Pinang always claimed that she already knew how to do them.",
+          "textTag": "Mahal na mahal ni Aling Rosa ang nag-iisa niyang anak, kaya lumaking spoiled si Pinang. Gusto ni Aling Rosa na matuto si Pinang ng mga gawaing bahay, ngunit palagi nitong sinasabing marunong na siya."
+        },
+        "page3": {
+          "textEng": "So her mother eventually gave up trying to teach her. One day, Aling Rosa fell ill.",
+          "textTag": "Kaya kalaunan ay sumuko na ang ina sa pagtuturo sa kanya. Isang araw, nagkasakit si Aling Rosa."
+        },
+        "page4": {
+          "textEng": "She couldn't get up or do any chores. She asked Pinang to cook rice porridge.",
+          "textTag": "Hindi siya makabangon at hindi rin makagawa ng kahit anong gawain. Inutusan niya si Pinang na magluto ng lugaw."
+        },
+        "page5": {
+          "textEng": "Pinang started cooking it but forgot about it because she was busy playing. The porridge stuck to the pot and got burned.",
+          "textTag": "Nagsimulang magluto si Pinang pero nakalimutan niya ito dahil abala siya sa paglalaro. Dumikit sa kaldero ang lugaw at nasunog."
+        },
+        "page6": {
+          "textEng": "Aling Rosa patiently accepted it—at least her daughter tried to serve her. Aling Rosa's illness lasted for days, so Pinang was forced to take care of the house.",
+          "textTag": "Matiyagang tinanggap ito ni Aling Rosa—ang mahalaga'y sinubukan siyang pagsilbihan ng anak. Ilang araw ang lumipas at di pa rin gumagaling si Aling Rosa, kaya napilitang mag-asikaso si Pinang sa bahay."
+        },
+        "page7": {
+          "textEng": "One day, while cooking, she couldn’t find the matches. She asked her mother where they were.",
+          "textTag": "Isang araw habang nagluluto, hindi niya mahanap ang posporo. Tinanong niya ang kanyang ina kung nasaan iyon."
+        },
+        "page8": {
+          "textEng": "Another time, she couldn’t find the ladle. This kept happening—she couldn't find things and would always ask her mother.",
+          "textTag": "Sa ibang pagkakataon, hindi niya mahanap ang sandok. Paulit-ulit itong nangyari—hindi niya makita ang mga gamit kaya lagi siyang nagtatanong."
+        },
+        "page9": {
+          "textEng": "Annoyed by her constant questions, Aling Rosa said, “Pinang, I wish you had many eyes so you could see everything and wouldn’t have to keep asking me!” Knowing her mother was angry, Pinang didn’t respond.",
+          "textTag": "Dahil sa inis, sinabi ni Aling Rosa, “Pinang, sana'y magkaroon ka ng maraming mata para makita mo ang lahat at hindi ka na tanong nang tanong!\" Alam ni Pinang na galit ang ina, kaya hindi siya sumagot."
+        }
+      },
+      "titleEng": "Legend of the Pineapple",
+      "titleTag": "Alamat ng Pinya",
+      "typeEng": "Legend",
+      "typeTag": "Alamat"
+    },
+    "story5": {
+      "descEng": "This is the legend of the Maya bird. It tells the story of a stubborn girl named Maria who disobeyed her mother’s warning not to eat raw rice. Her disobedience led to a magical transformation, giving rise to the bird we now call the \"Maya.\"",
+      "descTag": "Ito ang alamat ng ibong Maya. Isinasalaysay nito ang kuwento ng batang si Maria na matigas ang ulo at hindi sumusunod sa bilin ng kanyang ina na huwag kumain ng hilaw na bigas. Dahil sa kanyang pagsuway, siya ay nagbago sa isang mahiwagang paraan at naging ibong tinawag na \"Maya.\"",
+      "pages": {
+        "page1": {
+          "TextTag": "Bukod sa pagiging malikot, matigas pa ang ulo ng batang si Maria.",
+          "textEng": "Aside from being restless, the child Maria was also stubborn."
+        },
+        "page10": {
+          "textEng": "The mother did not notice, so she ate a lot of the raw rice inside the container.",
+          "textTag": "Hindi namalayan ng ina kaya nakakain siyang mabuti ng bigas sa loob ng lalagyan."
+        },
+        "page11": {
+          "textEng": "Her mother finished pounding. \"Where could Maria be now?\" she asked.",
+          "textTag": "Natapos ang ina sa pagbabayo. \"Nasaan na naman kaya si Maria?\" ang kanyang tanong."
+        },
+        "page12": {
+          "textEng": "She must have gone back to her play area. I better cook some rice first so we can eat early.",
+          "textTag": "Siguro ay bumalik na naman sa laruang lugar. Mabuti pa'y magsaing na muna ako at makakain kami ng maaga."
+        },
+        "page13": {
+          "textEng": "When she opened the rice container, a small bird flew out. The color of its feathers was like that of her child's dress.",
+          "textTag": "Nang buksan niya ang bigasan, may lumipad na palabas na munting ibon. Ang kulay ng balahibo ay katulad sa baro ng anak."
+        },
+        "page14": {
+          "textEng": "Maria was never seen again, and people assumed that the bird from the rice container was her and no one else.",
+          "textTag": "Si Maria ay hindi na nakita at hinaka ng mga tao na ang ibong galing sa lalagyan ng bigas ay siya at wala ng iba pa."
+        },
+        "page15": {
+          "textEng": "The bird was named Maya, derived from the name Maria. And that is the Legend of the Maya Bird.",
+          "textTag": "Ang itinawag sa ibon ay maya, galing sa pangalang Maria. At iyon ang alamat ng Ibong Maya."
+        },
+        "page2": {
+          "TextEng": "Disobedient.",
+          "TextTag": "Hindi masunurin."
+        },
+        "page3": {
+          "TextEng": "She did not heed her mother's instructions",
+          "TextTag": "Hindi niya pinapansin ang mga bilin ng kanyang ina,"
+        },
+        "page4": {
+          "textEng": "such as when she often said, \"Don't eat the unhusked rice (palay).",
+          "textTag": "tulad ng madalas sabihin nito, \"Huwag kang kakain ng bigas."
+        },
+        "page5": {
+          "TextEng": "It needs to be cooked first and made into steamed rice before eating.",
+          "TextTag": "Kailangang lutuin muna iyan at magawang kanin bago kainin."
+        },
+        "page6": {
+          "textEng": "One day, after playing, Maria saw her mother pounding palay (unhusked rice).",
+          "textTag": "Isang araw, pagkagaling ni Maria sa laruan, nakita niyang nagbabayo ng palay ang ina."
+        },
+        "page7": {
+          "textEng": "She watched the pounding for a moment.",
+          "textTag": "Pinanood niyang sandali ang pagbabayo."
+        },
+        "page8": {
+          "textEng": "After pounding, the mother placed the rice in a large rice container (bigasan) and covered it with a woven tray (bilao).",
+          "textTag": "Pagkakabayo, ang bigas ay inilalagay ng ina sa isang malaking bigasan at tinatakpan ng bilao."
+        },
+        "page9": {
+          "textEng": "When the mother turned her back, Maria lifted the tray and climbed into the large rice container.",
+          "textTag": "Nang nakatalikod ang ina, inangat ni Maria ang bilao at pumasok siya sa malaking bigasan."
+        }
+      },
+      "textEng": "Aside from being restless, the young girl Maria was also very stubborn. She wouldn’t listen. She ignored her mother’s warnings, like when her mother would often say, “Don’t eat rice. It needs to be cooked and made into steamed rice before it can be eaten.”  One day, after playing outside, Maria saw her mother pounding rice. She watched for a moment as her mother worked. After pounding, her mother placed the rice into a large container and covered it with a winnowing basket.  When her mother turned her back, Maria lifted the cover and entered the container. Her mother didn’t notice, and inside, Maria ate plenty of raw rice.  Once the mother finished her work, she asked, “Where could Maria be again?”  “She must have gone back to the playground. I’d better start cooking rice so we can eat early.”  But when she opened the rice container, a small bird flew out. The bird’s feathers were the same color as Maria’s clothes.  Maria was never seen again, and the people believed that the bird that flew out of the rice container was none other than Maria herself.  The bird was named \"maya,\" which came from the name Maria.  And that is the legend of the Maya bird.",
+      "textTag": "Bukod sa pagiging malikot, matigas pa ang ulo ng batang si Maria. Hindi masunurin. Hindi niya pinapansin ang mga bilin ng kanyang ina, tulad ng madalas sabihin nito, \"Huwag kang kakain ng bigas. Kailangang lutuin muna iyan at magawang kanin bago kainin.\"  Isang araw, pagkagaling ni Maria sa laruan, nakita niyang nagbabayo ng palay ang ina. Pinanood niyang sandali ang pagbabayo.    Pagkakabayo, ang bigas ay inilalagay ng ina sa isang malaking bigasan at tinatakpan ng bilao.   Nang nakatalikod ang ina, inangat ni Maria ang bilao at pumasok siya sa malaking bigasan. Hindi namalayan ng ina kaya nakakain siyang mabuti ng bigas sa loob ng lalagyan.  Natapos ang ina sa pagbabayo. \"Nasaan na naman kaya si Maria?\" ang kanyang tanong.  \"Siguro ay bumalik na naman sa laruang lugar. Mabuti pa'y magsaing na muna ako at makakain kami ng maaga.\"  Nang buksan niya ang bigasan, may lumipad na palabas na munting ibon. Ang kulay ng balahibo ay katulad sa baro ng anak.  Si Maria ay hindi na nakita at hinaka ng mga tao na ang ibong galing sa lalagyan ng bigas ay siya at wala ng iba pa.  Ang itinawag sa ibon ay maya, galing sa pangalang Maria.  At iyon ang alamat ng Ibong Maya.",
+      "titleEng": "The Legend of the Maya Bird",
+      "titleTag": "Alamat ng Ibong Maya",
+      "typeEng": "Legend",
+      "typeTag": "Alamat"
+    },
+    "story6": {
+      "descEng": "Maria is a kind, hardworking girl known for daydreaming. One day, her dreams shatter when she breaks the eggs she hoped to sell for a beautiful dress.",
+      "descTag": "Si Maria ay isang masipag at masayahing dalaga na kilala sa pagiging palaging nangangarap. Isang araw, nag-ipon siya ng itlog mula sa kanyang mga manok upang ibenta at makabili ng magandang damit. Ngunit habang siya ay nangangarap nang gising, nahulog niya ang mga itlog. Kasabay nito ang pagguho ng kanyang mga pangarap—na nagtuturo sa atin na gawing makatotohanan ang ating mga adhikain upang ito'y maisakatuparan.",
+      "pages": {
+        "page1": {
+          "textEng": "Maria was a beautiful young woman. She was hardworking and energetic.",
+          "textTag": "Magandang dalaga si Maria. Masipag siya at masigla."
+        },
+        "page10": {
+          "textEng": "Maria counted how many eggs her twelve hens would lay in a week. Her happiness over her dream was obvious.",
+          "textTag": "At kinuwenta ni Maria ang bilang ng itlog na ibibigay ng labindalawang alagang manok sa loob ng pitong araw sa isang linggo. Kitang-kita ang saya ni Maria sa kanyang pangarap."
+        },
+        "page11": {
+          "textEng": "So Maria began collecting the eggs daily. Eventually, she gathered five dozen eggs.",
+          "textTag": "At inipon na nga ni Maria ang itlog ng mga inahing manok sa araw-araw. Nabuo ito sa limang dosenang itlog."
+        },
+        "page12": {
+          "textEng": "One Sunday, Maria went to town. She carried the five dozen eggs on her head.",
+          "textTag": "At isang araw ng linggo ay pumunta sa bayan si Maria. Sunong niya ang limang dosenang itlog."
+        },
+        "page13": {
+          "textEng": "While walking along the road, Maria began to daydream. She imagined selling all five dozen eggs.",
+          "textTag": "Habang nasa daan ay nangangarap nang gising si Maria. Ipagbibili niyang lahat ang limang dosenang itlog."
+        },
+        "page14": {
+          "textEng": "Then she would buy a beautiful fabric and have it sewn into a lovely dress. She would walk gracefully and proudly.",
+          "textTag": "Pagkatapos, bibili siya ng magandang tela, ipapatahi niya ito ng magandang bistida. At saka lumakad siya ng pakendeng-kendeng."
+        },
+        "page15": {
+          "textEng": "Maria exaggerated her graceful walk and—BOG! All five dozen eggs fell!",
+          "textTag": "Lalong pinaganda ni Maria ang paglakad nang pakendeng-kendeng at BOG! Nahulog ang limang dosenang itlog!"
+        },
+        "page16": {
+          "textEng": "Maria couldn’t speak out of shock. Then she cried and cried.",
+          "textTag": "Hindi nakapagsalita si Maria sa kabiglaan. Saka siya umiyak nang umiyak."
+        },
+        "page17": {
+          "textEng": "Her dream shattered along with the five dozen eggs she had been carrying.",
+          "textTag": "Naguho ang kanyang pangarap kasabay ng pagbagsak ng limang dosenang itlog na kanyang sunung-sunong."
+        },
+        "page18": {
+          "moralEng": "Make your goals realistic in order to achieve them.",
+          "moralTag": "Gawing makatotohanan ang layunin o adhika upang ito ay maisakatuparan.",
+          "textEng": "Maria learned a valuable lesson that dreams are not just meant to be reached, but to inspire perseverance, faith, and growth along the journey.",
+          "textTag": "Natutuhan ni Maria na ang mga pangarap ay hindi lamang para maabot, kundi upang magturo ng pagtitiyaga, pananampalataya, at paglago sa paglalakbay."
+        },
+        "page2": {
+          "textEng": "She was also joyful and intelligent. She could be considered a model young woman—except she was overly dreamy.",
+          "textTag": "Masaya at matalino rin siya. Ano pa't masasabing isa na siyang ulirang dalaga, kaya lang sobra siyang pamangarapin."
+        },
+        "page3": {
+          "textEng": "Whether morning or noon, she was always daydreaming. She was often seen staring into the distance, lost in thought and dreams.",
+          "textTag": "Umaga o tanghali man ay nangangarap siya. Lagi na lamang siyang nakikitang nakatingin sa malayo, waring nag-iisip at nangangarap nang gising."
+        },
+        "page4": {
+          "textEng": "Because of this, she became known as “Mariang the Dreamer.” Maria didn’t get offended—she even seemed to like the nickname.",
+          "textTag": "Dahil dito, nakilala siya sa tawag na Mariang Mapangarapin. Hindi naman nagalit si Maria bagkos pa ngang ikinatuwa pa yata niya ang bansag na ikinabit sa pangalan niya."
+        },
+        "page5": {
+          "textEng": "One day, a young man gifted her a dozen young hens. Maria was overjoyed!",
+          "textTag": "Minsan niregaluhan siya ng isang binata ng isang dosenang dumalagang manok. Tuwang-tuwa si Maria!"
+        },
+        "page6": {
+          "textEng": "Inalagaan niyang mabuti ang alaalang bigay sa kanya ng iisang manliligaw niya. Nagpagawa siya sa kanyang ama ng kulungan para sa mga manok niya.",
+          "textTag": "Inalagaan niyang mabuti ang alaalang bigay sa kanya ng iisang manliligaw niya. Nagpagawa siya sa kanyang ama ng kulungan para sa mga manok niya."
+        },
+        "page7": {
+          "textEng": "Maria gave them more than ordinary care. She fed and gave them water every morning, noon, and afternoon.",
+          "textTag": "Higit sa karaniwang pag-aalaga ang ginawa ni Maria. Pinatuka niya at pinaiinom ang mga ito sa umaga, sa tanghali at sa hapon."
+        },
+        "page8": {
+          "textEng": "She even gave them vitamins and supplements. Maria dreamed of the day her hens would lay many eggs.",
+          "textTag": "Dinagdagan pa ito ng pagpapainom ng gamot at pataba. At pinangarap ni Maria ang pagdating ng araw na magkakaroon siya ng mga inahing manok na magbibigay ng maraming itlog."
+        },
+        "page9": {
+          "textEng": "Months passed until the day came when all of Maria’s hens began laying eggs. They gave a total of twelve eggs every day.",
+          "textTag": "Lumipas ang ilang buwan hanggang sa dumating ang araw na nag-itlog ang lahat na inahing manok na alaga ni Maria. Labindalawang itlog ang ibinibigay ng mga inahing manok araw-araw."
+        }
+      },
+      "titleEng": "Maria the Dreamer",
+      "titleTag": "Si Mariang Mapangarapin",
+      "typeEng": "Folktale",
+      "typeTag": "Kwentong Bayan"
+    },
+    "story7": {
+      "descEng": "The proud trees mocked the humble bamboo—until a strong wind came and proved that humility bends but never breaks.",
+      "descTag": "Tinawanan ng mga punong mayayabang ang payat na kawayan—hanggang dumaan ang malakas na hangin at tanging siya lamang ang nanatiling nakatayo.",
+      "pages": {
+        "page1": {
+          "textEng": "In a yard, there were several trees with their own characteristics. The Santol is fruitful, the Mango is lush, the Kabalyero is full of flowers, and the Coconut is straight and fruitful.",
+          "textTag": "Sa isang bakuran, may ilang punungkahoy na may kanya-kanyang katangian. Mabunga ang Santol, mayabong ang Mangga, mabulaklak ang Kabalyero, tuwid at mabunga ang Niyog."
+        },
+        "page10": {
+          "textEng": "It blew harder and harder. For an hour in its fury, it made the flowers fall, the fruits drop, and the trees of the proud ones collapse.",
+          "textTag": "Pinalakas niya nang pinalakas ang kanyang paghiip. At isang oras niyang pagkagalit ay nalagas ang mga bulaklak, nahulog ang mga bunga at nangabuwal ang puno ng mayayabang na punungkahoy."
+        },
+        "page11": {
+          "textEng": "Only the humble Bamboo followed the gust of the strong wind, standing tall and unscathed.",
+          "textTag": "Tanging ang mababang-loob na si Kawayan ang sumunud-sunod sa hilip ng malakas na hangin ang nakatayo at di nasalanta."
+        },
+        "page12": {
+          "moralEng": "Humility brings praise.",
+          "moralTag": "Ang kababaang-loob, papuri ang dulot."
+        },
+        "page2": {
+          "textEng": "But in one corner of the yard stood the thin Bamboo. One day, the trees competed with each other.",
+          "textTag": "Ngunit sa isang tabi ng bakuran ay naroroon ang payat na Kawayan. Minsan, napaligsahan ang mga punungkahoy."
+        },
+        "page3": {
+          "textEng": "\"Look at me,\" said Santol. \"I am full of fruit, which is why the children love me.\"",
+          "textTag": "Tingnan ninyo ako, wika ni Santol. Hitik sa bunga kaya mahal ako ng mga bata."
+        },
+        "page4": {
+          "textEng": "\"I surpass you,\" said Mango. \"My leaves are lush and I am full of fruit, which is why many birds rest on my branches.\"",
+          "textTag": "Daig kita, wika ni Mangga. Mayabong ang aking mga dahon at hitik pa sa bunga kaya maraming ibon sa aking mga sanga."
+        },
+        "page5": {
+          "textEng": "\"I am more beautiful,\" said Kabalyero. \"My flowers are many and bright red.\"",
+          "textTag": "Higit akong maganda, wika ni Kabalyero. Bulaklak ko'y marami at pulang-pula."
+        },
+        "page6": {
+          "textEng": "\"Even from afar, I am visible. Look at me,\" said Coconut. \"My tree is straight, my leaves are broad, and I am fruitful.\"",
+          "textTag": "Kahit malayo, ako ay kitang-kita na. Ako ang tingnan ninyo. Tuwid ang puno, malapad ang mga dahon at mabunga, wika ni Niyog."
+        },
+        "page7": {
+          "textEng": "\"Even from afar, I am visible. Look at me,\" said Coconut. \"My tree is straight, my leaves are broad, and I am fruitful.\"",
+          "textTag": "Tekayo, kaawa-awa naman si Kawayan. Payat na at wala pang bulaklak at bunga."
+        },
+        "page8": {
+          "textEng": "Look at it. It doesn't even move. It looks even more pitiful. The trees laughed at it.",
+          "textTag": "Tingnan ninyo. Wala siyang kakibu-kibo. Lalo na siyang nagmumukhang kaawa-awa. Nagtawanan ang mga punungkahoy."
+        },
+        "page9": {
+          "textEng": "They mocked the Bamboo Tree. The Wind became angry at what it heard from the trees.",
+          "textTag": "Pinagtawanan nila ang Punong Kawayan. Nagalit si Hangin sa narinig na usapan ng mga punungkahoy."
+        }
+      },
+      "titleEng": "The Bamboo Tree",
+      "titleTag": "Ang Punong Kawayan",
+      "typeEng": "Folktale",
+      "typeTag": "Kwentong Bayan"
+    },
+    "story8": {
+      "descEng": "The datu married two women who loved him dearly—but in trying to make him look young and old at the same time, they accidentally left him bald!",
+      "descTag": "Dahil sa pagmamahal ng dalawang asawa, nabunutan ng puti at itim na buhok ang datu—at sa huli, laking gulat niya nang makita ang sarili: kalbo na siya!",
+      "pages": {
+        "page1": {
+          "textEng": "This story is about our Muslim fellow countrymen. Filipino Muslims have a native culture regarding marriage.",
+          "textTag": "Ang kuwentong ito ay tungkol sa ating kababayang Muslim. May katutubong kultura ang mga Pilipinong Muslim tungkol sa pag-aasawa."
+        },
+        "page10": {
+          "textEng": "Out of love for her old husband, Hasmin thought of a way to make him look younger. \"Ah! I will pull out the datu's white hairs.\"",
+          "textTag": "Dahil sa pagmamahal sa matandang datu, umisip si Hasmin ng paraan upang magmukhang bata ang asawa. Ah! Bubunutin ko ang mapuputing buhok ng datu."
+        },
+        "page11": {
+          "textEng": "This way, he will look as young as I am. And so Hasmin did it.",
+          "textTag": "Sa ganito, magmumukhang kasinggulang ko lamang siya. Ganoon nga ang ginawa ni Hasmin."
+        },
+        "page12": {
+          "textEng": "Whenever the datu would rest, Hasmin would pull out his white hairs. Because of this, the datu fell asleep easily and had deep sleep.",
+          "textTag": "Sa tuwing mamamahinga ang datu, binubunutan ni Hasmin ng puting buhok ang asawa. Dahil dito, madaling nakakatulog ang datu at napakahimbing pa."
+        },
+        "page13": {
+          "textEng": "The datu also loved Farida, his other wife. Farida was beautiful and kind but as old as the datu.",
+          "textTag": "Mahal din ng datu si Farida, ang isa pa niyang asawa. Maganda, mabait si Farida ngunit kasintanda ng datu."
+        },
+        "page14": {
+          "textEng": "Farida was delighted whenever she saw the datu's white hairs. Even though she was beautiful, she didn’t want to appear old.",
+          "textTag": "Tuwang-tuwa si Farida kapag nakikita ang mga puting buhok ng datu. Kahit maganda siya, ayaw niyang magmukhang matanda."
+        },
+        "page15": {
+          "textEng": "Tuwing tanghali, sinusuklayan ni Farida ang datu. Kapag tulog na ang datu, palihim niyang binubunot ang itim na buhok ng asawa.",
+          "textTag": "Every noon, Farida would comb the datu's hair. When the datu was asleep, she secretly pulled out his black hairs."
+        },
+        "page16": {
+          "textEng": "Because of the love shown to him by the two wives, the datu was very happy in life. He was so happy that he regretted not marrying sooner.",
+          "textTag": "Dahil sa ipinakikitang pagmamahal ng dalawa sa asawa, siyang-siya sa buhay ang datu. Maligayang-maligaya ang datu at pinagsisihan niya kung bakit di kaagad siya nag-asawa."
+        },
+        "page17": {
+          "textEng": "But he was shocked when he looked in the mirror one day. He didn’t recognize himself. \"Bald! I’m bald!\" the datu shouted.",
+          "textTag": "Ngunit gayon na lamang ang kanyang pagkabigla nang minsang manalamin siya, Hindi niya nakilala ang kanyang sarili. Kalbo! Kalbo, ako! sigaw ng datu."
+        },
+        "page18": {
+          "textEng": "The datu became bald because of the love from Hasmin and Farida.",
+          "textTag": "Nakalbo ang datu dahil sa pagmamahal ni Hasmin at ni Farida."
+        },
+        "page19": {
+          "moralEng": "Love can be shown in many ways.",
+          "moralTag": "Ang pagmamahal ay naipakikita sa iba't-ibang paraan"
+        },
+        "page2": {
+          "textEng": "In their culture, a man can marry two or more women if he can support the wife and their future family.",
+          "textTag": "Sa kanilang kalinangan, ang isang lalaki ay maaaring mag-asawa nang dalawa o higit pa kung makakaya nilang masustentuhan ang pakakasalang babae at ang magiging pamilya nila"
+        },
+        "page3": {
+          "textEng": "There was a datu who remained a bachelor because of his service to his people. He was always busy managing his community.",
+          "textTag": "May isang datu na tumandang binata dahil sa paglilingkod sa kanyang mga nasasakupan. Lagi siyang abala sa pamamahala ng kanilang pook."
+        },
+        "page4": {
+          "textEng": "The datu forgot to marry. He was advised by the elder counselors that he needed to marry to have a child who would be his heir.",
+          "textTag": "Nalimutan ng datu ang mag-asawa. Siya ay pinayuhan ng matatandang tagapayo na kinakailangan niyang mag-asawa upang magkaroon siya ng anak na magiging tagapagmana niya."
+        },
+        "page5": {
+          "textEng": "The datu was forced to choose a woman to be his life partner. The datu became picky because of the many beautiful young women in his community.",
+          "textTag": "Napilitang mamili ang datu ng kakasamahin niya habang buhay. Naging pihikan ang datu dahil sa dami ng magagandang dilag sa pinamumunuang pamayanan."
+        },
+        "page6": {
+          "textEng": "With the patient advice of the elders in the council, the datu also learned to love. But the datu chose not one, but two beautiful and kind young women.",
+          "textTag": "Sa tulong ng matiyagang pagpapayo ng matatandang bumubuo ng konseho, natuto ring umibig ang datu. Ngunit hindi lamang iisang dilag ang napili ng datu kundi dalawang dalagang maganda na ay mababait pa."
+        },
+        "page7": {
+          "textEng": "Because he could not choose between the two, he married both of the young women.",
+          "textTag": "Dahil sa wala siyang itulak-kabigin kung sino sa dalawa ang higit niyang mahal kaya pinakasalan niya ang dalawang dalaga."
+        },
+        "page8": {
+          "textEng": "One of the young women married by the datu was Hasmin. She was very young and very sweet.",
+          "textTag": "Ang isa sa dalagang pinakasalan ng datu ay si Hasmin. Siya ay batang-bata at napakalambing."
+        },
+        "page9": {
+          "textEng": "Even though the datu was old, Hasmin loved her husband. The datu loved her very much, so he granted her every wish.",
+          "textTag": "Kahit na matanda na ang datu, mahal ni Hasmin ang asawa. Mahal na mahal din siya ng datu kaya ipinagkaloob sa kanya ang bawat hilingin niya."
+        }
+      },
+      "titleEng": "The Bald Datu",
+      "titleTag": "Nakalbo ang Datu",
+      "typeEng": "Folktale",
+      "typeTag": "Kuwentong Bayan"
+    },
+    "story9": {
+      "descEng": "In this Filipino folktale, Bathala, the Creator, plants a squash and a java plum tree, eager to see how they will grow. But when the trees bear fruit, Bathala realizes that their fruits aren’t quite right. Through a thoughtful decision, Bathala swaps their fruits, proving that everything has its place and purpose.",
+      "descTag": "Sa kuwentong bayan na ito, nagtanim si Bathala ng kalabasa at duhat, nais niyang makita kung paano sila lalaki. Nang magbunga ang mga puno, napansin ni Bathala na hindi tama ang mga bunga. Sa pamamagitan ng maingat na desisyon, ipinalit niya ang mga bunga, at napatunayan na bawat isa ay may sariling layunin at pwesto.",
+      "pages": {
+        "page1": {
+          "textEng": "Because Bathala planted them, they grew easily. The Duhat grew upward, pointing towards the sky, and in a few days, it was ready to bear fruit.",
+          "textTag": "Dahil si Bathala ang nagtanim, kaydali nilang lumaki. Si Duhat ay lumaki pataas na ang itinuturo’y kalangitan, at ilang araw pa ay nakahanda na itong mamunga."
+        },
+        "page10": {
+          "textEng": "Indeed, he was not satisfied. He decided to swap the fruits of the two plants.",
+          "textTag": "Tunay na hindi siya nasiyahan. Napagpasiyahan niyang ipagpalit ang mga bunga ng mga ito."
+        },
+        "page11": {
+          "textEng": "And he proved that his decision was correct because the Squash, even when ripe, would not fall off since its vine only crawls.",
+          "textTag": "At napatunayan niyang tama ang kanyang ginawa, sapagkat ang kalabasa, mahinog man ito’y hindi malalaglag dahil ang puno ay gumagapang lamang."
+        },
+        "page12": {
+          "textEng": "While the Duhat, though it falls, is light and won’t break, and he made the Squash green because it is far from the sun.",
+          "textTag": "Samantalang ang duhat, malaglag man ay magaan, hindi masisira at ginawa naman niyang kulay berde ang kalabasa sa dahilang ito’y malayo sa araw."
+        },
+        "page13": {
+          "textEng": "And the Duhat was made black because it was near the sun.",
+          "textTag": "At kulay itim naman ang duhat. Pagkat ito’y malapit sa araw."
+        },
+        "page14": {
+          "textEng": "And with what he did, Bathala’s satisfaction was complete.",
+          "textTag": "At sa kanyang ginawa’y nalubos ang kasiyahan ni Bathala."
+        },
+        "page2": {
+          "textEng": "Because Bathala planted them, they grew easily. The Duhat grew upward, pointing towards the sky, and in a few days, it was ready to bear fruit.",
+          "textTag": "Dahil si Bathala ang nagtanim, kaydali nilang lumaki. Si Duhat ay lumaki pataas na ang itinuturo’y kalangitan, at ilang araw pa ay nakahanda na itong mamunga."
+        },
+        "page3": {
+          "textEng": "\"I am eager to bear fruit,\" said Duhat. On the other hand, the Squash grew long but did not rise.",
+          "textTag": "Sabik na sabik na akong mamunga, wika ni Duhat. Si Kalabasa naman ay humaba, ngunit hindi tumaas."
+        },
+        "page4": {
+          "textEng": "It just crawled and crawled until it was ready to bear fruit. However, Bathala couldn't decide what kind of fruit to give these two plants.",
+          "textTag": "Gumapang lang ito nang gumapang, hanggang sa ito’y nakatakda nang mamunga. Ngunit hindi malaman ni Bathala kung anong uri ng bunga ang ipagkakaloob niya sa dalawang ito."
+        },
+        "page5": {
+          "textEng": "Bathala thought deeply. \"The duhat I created is large, so it deserves to have large fruit.\"",
+          "textTag": "Matamang nag-isip si Bathala. Ang duhat na nilikha ko’y malaki, nararapat lamang na malaki rin ang kanyang bunga."
+        },
+        "page6": {
+          "textEng": "\"And the Squash just crawls and cannot stand up, so it deserves to bear only small fruits,\" said Bathala.",
+          "textTag": "At si Kalabasa naman ay gumagapang lamang, at walang kakayahang tumayo, nararapat lamang na ang mga bunga nito’y maliliit lamang. Wika ni Bathala."
+        },
+        "page7": {
+          "textEng": "And so it happened. The Duhat bore fruit as large as a jar.",
+          "textTag": "Ganyan nga ang nangyari. Si Duhat ay namunga ng sinlaki ng banga."
+        },
+        "page8": {
+          "textEng": "He immediately saw that it was wrong because its branches were breaking under the weight of the fruit. On the other hand, the Squash didn’t seem right because its fruit was small.",
+          "textTag": "Agad niyang nakita na hindi tama ito, sapagkat nababali ang mga sanga nito dahil sa bigat ng bunga. Si Kalabasa nama’y hindi bagay dahil maliit ang bunga."
+        },
+        "page9": {
+          "textEng": "Its fruits were ignored, especially as they were covered by the broad leaves. Bathala thought deeply once more.",
+          "textTag": "Di pansinin ang mga bunga nito lalo’t natatakpan sa malalapad na dahon. Muling nag-isip ng malalim si Bathala."
+        }
+      },
+      "titleEng": "The Squash and the Java Plum",
+      "titleTag": "Ang Kalabasa at ang Duhat",
+      "typeEng": "Folktale",
+      "typeTag": "Kwentong Bayan"
+    }
+  }
+}
